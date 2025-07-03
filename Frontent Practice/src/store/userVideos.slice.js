@@ -26,7 +26,15 @@ let currentUserVideosSlice = createSlice({
     deletOneVideo: (state, action) => {
       const id = action.payload;
       state.data = state.data?.filter((video) => video._id !== id);
-    }
+    },
+    incrementView: (state, action) => {
+      state.data = state.data?.map((video) => {
+        if(video._id == action.payload){
+            return {...video,views:video.views+1}
+        };
+        return video
+      });
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(fetchcurrentUserVideos.pending, (state, actions) => {
@@ -43,6 +51,6 @@ let currentUserVideosSlice = createSlice({
   },
 });
 
-let {clearCurrentUserVideos,deletOneVideo} = currentUserVideosSlice.actions
+let {clearCurrentUserVideos,deletOneVideo,incrementView} = currentUserVideosSlice.actions
 
-export { currentUserVideosSlice, fetchcurrentUserVideos,clearCurrentUserVideos,deletOneVideo };
+export { currentUserVideosSlice, fetchcurrentUserVideos,clearCurrentUserVideos,deletOneVideo,incrementView };

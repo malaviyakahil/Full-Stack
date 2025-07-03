@@ -1,9 +1,11 @@
 import React from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import Skeleton from "./Skeleton";
 import { Link } from "react-router-dom";
+import { formatDistanceToNow } from "date-fns";
 
 const VideoCard = ({ video }) => {
+  let dispatch = useDispatch()
   let formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60)
@@ -25,12 +27,14 @@ const VideoCard = ({ video }) => {
         </div>
       </div>
       <div className="flex flex-row mt-3 gap-3">
-        <div className="w-9 h-9 overflow-hidden rounded-full">
-          <img
-            className="object-cover h-full w-full"
-            src={video?.owner?.avatar}
-          />
-        </div>
+        <Link to={`/app/dashboard/single-channel/${video.owner._id}`}>
+          <div className="w-9 h-9 overflow-hidden rounded-full">
+            <img
+              className="object-cover h-full w-full"
+              src={video?.owner?.avatar}
+            />
+          </div>
+        </Link>
         <div className="flex flex-col flex-1 overflow-hidden">
           <h3 className="text-sm font-semibold leading-tight break-words overflow-hidden text-ellipsis line-clamp-2">
             {video?.title}
@@ -44,7 +48,9 @@ const VideoCard = ({ video }) => {
             </p>
             <p className="text-[12px] text-gray-400">•</p>
             <p className="text-xs text-gray-400 whitespace-nowrap overflow-hidden text-ellipsis">
-              {new Date(video?.createdAt).toDateString()}
+              {formatDistanceToNow(new Date(video?.createdAt), {
+                addSuffix: true,
+              })}
             </p>
           </div>
         </div>
@@ -55,15 +61,17 @@ const VideoCard = ({ video }) => {
 
 const Videos = () => {
   let videos = useSelector((store) => store.videos);
+  let dispatch = useDispatch();
 
   return (
     <>
       {videos.loading ? (
         <Skeleton />
       ) : (
-        <div className="flex flex-wrap justify-center gap-6 p-4">
+        <div className="flex flex-wrap justify-center gap-6 py-4">
           {videos.data?.map((video) => (
-            <Link key={video._id}
+            <Link
+              key={video._id}
               to={`/app/dashboard/single-video/${video.owner._id}/${video._id}`}
             >
               <VideoCard key={video._id} video={video} />

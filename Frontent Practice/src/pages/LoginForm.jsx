@@ -39,9 +39,9 @@ const LoginForm = () => {
   return (
     <div className="flex justify-center items-center min-h-screen">
       <div className="w-full max-w-md justify-end p-5">
-        <h1 className="text-center text-[40px]">Login Here</h1>
-        <form className="m-1  w-full" onSubmit={handleSubmit(submit)}>
-          <label className="input validator w-full my-3">
+        <h1 className="text-center text-[40px] mb-5">Login Here</h1>
+        <form className="w-full" onSubmit={handleSubmit(submit)}>
+          <label className="input validator w-full my-2">
             <svg
               className="h-[1em]"
               xmlns="http://www.w3.org/2000/svg"
@@ -72,7 +72,7 @@ const LoginForm = () => {
             />
           </label>
 
-          <label className="input validator w-full my-3">
+          <label className="input validator w-full my-2">
             <svg
               className="h-[1em]"
               xmlns="http://www.w3.org/2000/svg"
@@ -99,7 +99,7 @@ const LoginForm = () => {
             />
           </label>
 
-          <label className="input validator w-full my-3">
+          <label className="input validator w-full my-2">
             <svg
               className="h-[1em]"
               xmlns="http://www.w3.org/2000/svg"
@@ -123,10 +123,11 @@ const LoginForm = () => {
               required
               {...register("password")}
               placeholder="Password"
+              pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"
             />
           </label>
-          {error && <p className="text-red-500 text-center mb-3.5">{error}</p>}
-          <button className="btn btn-primary w-full my-3" type="submit">
+          {error && <p className="text-red-500 text-center my-2">{error}</p>}
+          <button className="btn btn-primary w-full my-2" type="submit">
           {loader?<span className="loading loading-dots loading-lg"></span>:"Login"}
           </button>
         </form>

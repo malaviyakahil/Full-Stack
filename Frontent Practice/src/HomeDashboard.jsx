@@ -1,13 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import { Outlet } from "react-router-dom";
 
 const HomeDashboard = () => {
   return (
-    <>
-      <div className="h-screen w-full overflow-y-auto">
+      <div className="h-screen w-full overflow-y-scroll px-5">
         <Outlet/>
       </div>
-    </>
   );
 };
 

@@ -14,7 +14,7 @@ const Refresh = () => {
         dispatch(fetchVideos());
       }}
     >
-      <RiRefreshLine className="text-[18px]" /> Refresh
+      <RiRefreshLine className="text-[18px]" />
     </button>
   );
 };

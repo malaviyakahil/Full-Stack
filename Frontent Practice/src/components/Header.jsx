@@ -66,8 +66,7 @@ const Header = () => {
       ) : (
         <div className="navbar bg-base-100 shadow-sm px-6">
           <div className="flex-1">
-            <a className="btn btn-ghost text-xl p-0">Dashboard</a>
-
+            <Link className=" text-xl p-0 font-semibold" to="/app/dashboard/all">Dashboard</Link>
           </div>
           <div className="flex gap-3 items-center">
             <h3 className="capitalize">{currentUser?.data?.name}</h3>

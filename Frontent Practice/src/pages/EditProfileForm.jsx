@@ -5,10 +5,11 @@ import axios from "axios";
 import { updateCurrentUser } from "../store/user.slice";
 
 const EditProfileForm = () => {
+  
   let currentUser = useSelector((store) => store.currentUser);
+
   let dispatch = useDispatch()
   let { register, handleSubmit } = useForm();
-
   let [error, setError] = useState(false);
   let [loader, setLoader] = useState(false);
   let [showAvatarFileInput, setShowAvatarFileInput] = useState(false);
@@ -21,7 +22,6 @@ const EditProfileForm = () => {
 
   let submit = async (data) => {
     setLoader(true);
-
     let formData = new FormData();
     formData.append("fullName", data?.fullName || currentUser.data?.fullName);
     formData.append("avatar", data.avatar?.[0] || currentUser.data?.avatar);
@@ -53,20 +53,19 @@ const EditProfileForm = () => {
       setLoader(false);
       setError(error?.response?.data?.message);
     }
-    console.log(currentUser.data);
     
   };
 
   return (
     <div className="flex justify-center h-full ">
       <div className="w-full max-w-md justify-end p-5">
-        <h1 className="text-center text-[40px]">Edit profile</h1>
-        <form className="m-1 w-full" onSubmit={handleSubmit(submit)}>
-          <p className="text-md font-semibold mb-2">Full name</p>
+        <h1 className="text-center text-[40px] mb-5">Edit profile</h1>
+        <form className="w-full" onSubmit={handleSubmit(submit)}>
+          <p className="text-md font-semibold my-2">Full name</p>
           <input
             type="text"
             defaultValue={currentUser.data?.fullName}
-            className="input w-full mb-3"
+            className="input w-full"
             required
             {...register("fullName")}
             placeholder="Full name"
@@ -74,9 +73,9 @@ const EditProfileForm = () => {
             maxLength="30"
           />
 
-          <p className="text-md font-semibold mb-2">Avatar</p>
+          <p className="text-md font-semibold my-2">Avatar</p>
 
-          <div className="relative aspect-video overflow-hidden rounded-lg bg-black flex justify-center mb-4">
+          <div className="relative aspect-video overflow-hidden rounded-lg bg-black flex justify-center ">
             <img
               src={currentUser.data?.avatar}
               alt="img"
@@ -105,9 +104,9 @@ const EditProfileForm = () => {
               <label className="fieldset-label">Max size 2MB</label>
             </fieldset>
           )}
-          <p className="text-md font-semibold mb-2">Cover Image</p>
+          <p className="text-md font-semibold my-2">Cover Image</p>
 
-          <div className="relative aspect-video overflow-hidden rounded-lg bg-black flex justify-center mb-4">
+          <div className="relative aspect-video overflow-hidden rounded-lg bg-black flex justify-center">
             <img
               src={currentUser.data?.coverImage}
               alt="img"
@@ -137,8 +136,8 @@ const EditProfileForm = () => {
             </fieldset>
           )}
 
-          {error && <p className="text-red-500 text-center mb-3.5">{error}</p>}
-          <button className="btn btn-primary w-full my-3" type="submit">
+          {error && <p className="text-red-500 text-center my-2">{error}</p>}
+          <button className="btn btn-primary w-full my-2" type="submit">
             {loader ? (
               <span className="loading loading-dots loading-lg"></span>
             ) : (

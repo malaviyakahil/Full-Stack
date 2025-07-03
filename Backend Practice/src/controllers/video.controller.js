@@ -110,28 +110,53 @@ let editVideo = asyncHandler(async (req, res) => {
 });
 
 let deleteVideo = asyncHandler(async (req, res) => {
-  let owner = req.user?._id;
-  let videoId = req.params?.id;
+  const owner = req.user?._id;
+  const videoId = req.params?.id;
 
-  let video = await Video.findById(videoId);
-
+  const video = await Video.findById(videoId);
   if (!video) {
-    throw new error(400, "Video does not exists");
+    throw new error(400, "Video does not exist");
   }
 
-  if (!owner.equals(video?.owner)) {
-    throw new error(400, "These video does not belong to you");
+  if (!owner.equals(video.owner)) {
+    throw new error(400, "This video does not belong to you");
   }
 
-  let deleteVideoSuccess = await Video.findByIdAndDelete(video?._id);
-  let deleteReviewsSuccess = await Review.deleteMany({ video: video?._id });
+  const session = await Video.startSession();
+  session.startTransaction();
 
-  if (!deleteVideoSuccess && !deleteReviewsSuccess) {
-    throw new error(500, "Error while deleting video");
+  try {
+    // Step 1: Find comments related to the video
+    const comments = await Comment.find({ video: video._id }).session(session);
+    const commentIds = comments.map((comment) => comment._id);
+
+    // Step 2: Delete comment reviews associated with the comments
+    await CommentReview.deleteMany({ comment: { $in: commentIds } }).session(
+      session,
+    );
+
+    // Step 3: Delete comments related to the video
+    await Comment.deleteMany({ video: video._id }).session(session);
+
+    // Step 4: Delete reviews related to the video
+    await Review.deleteMany({ video: video._id }).session(session);
+
+    // Step 5: Delete the video itself
+    await Video.findByIdAndDelete(video._id).session(session);
+
+    await session.commitTransaction();
+    session.endSession();
+
+    res.status(200).json(new response(200, [], "Video deleted successfully"));
+  } catch (err) {
+    await session.abortTransaction();
+    session.endSession();
+    throw new error(500, "Error while deleting video and associated data");
   }
-  console.log("deleted");
 
-  res.status(200).json(new response(200, [], "Video deleted successfully"));
+  res
+    .status(200)
+    .json(new response(200, [], "Video and related data deleted successfully"));
 });
 
 let getAllVideo = asyncHandler(async (req, res) => {
@@ -298,18 +323,50 @@ let disLikeComment = asyncHandler(async (req, res) => {
   res.status(200).json(new response(200, [], "Disliked comment successfully"));
 });
 
+let giveHeart = asyncHandler(async (req, res) => {
+  let commentId = req.params?.id;
+
+  let hearted = await Comment.findByIdAndUpdate(commentId, {
+    $set: {
+     heartByChannel:true
+    },
+  });
+
+  if (!hearted) {
+    throw new error(500, "Something went wrong while hearting comment");
+  }
+
+  res.status(200).json(new response(200, [], "Hearted comment successfully"));
+});
+
+let takeHeart = asyncHandler(async (req, res) => {
+  let commentId = req.params?.id;
+
+  let unhearted = await Comment.findByIdAndUpdate(commentId, {
+    $set: {
+     heartByChannel:false
+    },
+  });
+
+  if (!unhearted) {
+    throw new error(500, "Something went wrong while unhearting comment");
+  }
+
+  res.status(200).json(new response(200, [], "Unhearted comment successfully"));
+});
+
 let deleteReview = asyncHandler(async (req, res) => {
   let user = req.user?.id;
   let video = req.params?.id;
-
+  
   let deleteSuccess = await Review.findOneAndDelete({
     $and: [{ video }, { user }],
   });
-
+  
   if (!deleteSuccess) {
     throw new error(500, "Error while deleting review");
   }
-
+  
   res.status(200).json(new response(200, [], "Review deleted successfully"));
 });
 
@@ -344,7 +401,45 @@ let addComment = asyncHandler(async (req, res) => {
     user,
   });
 
-  res.status(200).json(new response(200, commentAdded , "Comment added successfully"));
+  res
+    .status(200)
+    .json(new response(200, commentAdded, "Comment added successfully"));
+});
+
+let deleteComment = asyncHandler(async (req, res) => {
+  let user = req.user?.id;
+  let comment = req.params?.id;
+
+  let deleteSuccess = await Comment.findByIdAndDelete(comment);
+  let deleteReviewSuccess = await CommentReview.deleteMany({
+    comment: new mongoose.Types.ObjectId(comment),
+  });
+
+  if (!(deleteSuccess && deleteReviewSuccess)) {
+    throw new error(500, "Error while deleting comment");
+  }
+
+  res.status(200).json(new response(200, [], "Comment deleted successfully"));
+});
+
+let editComment = asyncHandler(async (req, res) => {
+
+  let commentId = req.params?.id;
+
+  let { comment } = req.body;
+
+  if(comment.trim()==""){
+    throw new error(500, "Comment can not be empty");
+  }
+
+  let editSuccess = await Comment.findByIdAndUpdate(commentId,{$set:{comment:comment,edited:true}});
+
+
+  if (!editSuccess) {
+    throw new error(500, "Error while editing comment");
+  }
+
+  res.status(200).json(new response(200, [], "Comment edited successfully"));
 });
 
 export {
@@ -356,7 +451,11 @@ export {
   disLikeVideo,
   likeComment,
   disLikeComment,
+  giveHeart,
+  takeHeart,
   deleteReview,
   deleteCommentReview,
-  addComment
+  addComment,
+  deleteComment,
+  editComment
 };

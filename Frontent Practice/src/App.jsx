@@ -1,17 +1,13 @@
-import React  from "react";
+import React from "react";
 import Header from "./components/Header";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 
 const App = () => {
-
-
   return (
-    <>
-      <div className="wrapper h-screen flex flex-col">
-        <Header />
-        <Outlet />
-      </div>
-    </>
+    <div className="wrapper h-screen flex flex-col">
+      <Header />
+      <Outlet />
+    </div>
   );
 };
 

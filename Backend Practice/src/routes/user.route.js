@@ -12,14 +12,16 @@ import {
   changeFullName,
   subscribeTo,
   unsubscribeTo,
-  getChannel,
+  getChannelAndVideo,
   getVideo,
   getHistory,
   getSubStatus,
   getReviewStatus,
   getChannelDetails,
   editProfile,
-  getComments
+  getComments,
+  searchAll,
+  getChannel
 } from "../controllers/user.controller.js";
 import upload from "../middlewares/multer.middleware.js";
 import auth from "../middlewares/auth.middleware.js";
@@ -64,10 +66,12 @@ userRouter.post("/edit-profile", upload.fields([
 ]), auth,editProfile);
 userRouter.post('/subscribe-to/:id',upload.none(),auth,subscribeTo)
 userRouter.post('/unsubscribe-to/:id',upload.none(),auth,unsubscribeTo)
-userRouter.get('/get-channel/:name',upload.none(),getChannel)
+userRouter.get('/search-channel-and-video/:name',upload.none(),auth,getChannelAndVideo)
 userRouter.get('/get-channel-details/:id',upload.none(),getChannelDetails)
 userRouter.post('/get-video/:id',upload.none(),auth,getVideo)
+userRouter.get('/get-channel/:id',upload.none(),auth,getChannel)
 userRouter.get('/get-comments/:id',upload.none(),auth,getComments)
+userRouter.get('/search-all',upload.none(),auth,searchAll)
 
 
 export default userRouter;

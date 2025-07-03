@@ -1,14 +1,25 @@
 import axios from "axios";
-import React, { useEffect, useState } from "react";
-import { BiLike, BiSolidLike, BiSolidDislike, BiDislike } from "react-icons/bi";
+import React, { useEffect, useRef, useState } from "react";
+import {
+  BiLike,
+  BiSolidLike,
+  BiDotsVertical,
+  BiSolidDislike,
+  BiDislike,
+} from "react-icons/bi";
+import { FaHeart, FaRegHeart } from "react-icons/fa";
 import { useSelector } from "react-redux";
+import { formatDistanceToNow } from "date-fns";
 
-const CommentSection = ({ videoId }) => {
+const CommentSection = ({ videoId, channelDetails, ownerId }) => {
   let currentUser = useSelector((store) => store.currentUser);
-
   const [comments, setComments] = useState([]);
   const [loader, setLoader] = useState(false);
   let [loading, setLoading] = useState(false);
+  const [commentText, setCommentText] = useState("");
+  const [edit, setEdit] = useState("");
+  const commentRefs = useRef({});
+
   useEffect(() => {
     setLoading(true);
     (async () => {
@@ -16,12 +27,36 @@ const CommentSection = ({ videoId }) => {
         `http://localhost:8000/user/get-comments/${videoId}`,
         { withCredentials: true },
       );
-      setComments([...res.data?.data]);
+      setComments(
+        [...res.data.data].map((comment) => ({
+          ...comment,
+          showDropdown: false,
+          readMore: false,
+          hasOverflow: false,
+        })),
+      );
       setLoading(false);
     })();
   }, []);
 
-  const [commentText, setCommentText] = useState("");
+  useEffect(() => {
+    comments.forEach((comment) => {
+      const el = commentRefs.current[comment._id];
+      if (el) {
+        const textBlock = el.querySelector(".comment-text");
+        if (textBlock) {
+          const hasOverflow = textBlock.scrollHeight > textBlock.clientHeight;
+          if (comment.hasOverflow !== hasOverflow) {
+            setComments((prev) =>
+              prev.map((c) =>
+                c._id === comment._id ? { ...c, hasOverflow } : c,
+              ),
+            );
+          }
+        }
+      }
+    });
+  }, [comments]);
 
   const handlePostComment = () => {
     if (!commentText.trim()) return;
@@ -29,39 +64,244 @@ const CommentSection = ({ videoId }) => {
     let formData = new FormData();
     formData.append("comment", commentText);
 
-    (async () => {
-      setLoader(true);
-      let res = await axios.post(
-        `http://localhost:8000/video/add-comment/${videoId}`,
-        formData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-          withCredentials: true,
-        },
+    if (edit) {
+      setComments(
+        comments.map((item) => {
+          if (item._id == edit) {
+            return {
+              ...item,
+              comment: commentText,
+              showDropdown: false,
+              edited: true,
+            };
+          }
+          return item;
+        }),
       );
-      setLoader(false);
-      setComments([
-        {
-          ...res.data?.data,
-          user: { ...currentUser.data },
-          like: { count: 0, status: false },
-          dislike: { count: 0, status: false },
-        },
-        ...comments,
-      ]);
-    })();
+      setEdit("");
+      axios.post(`http://localhost:8000/video/edit-comment/${edit}`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+        withCredentials: true,
+      });
+    } else {
+      (async () => {
+        setLoader(true);
+        let res = await axios.post(
+          `http://localhost:8000/video/add-comment/${videoId}`,
+          formData,
+          {
+            headers: { "Content-Type": "multipart/form-data" },
+            withCredentials: true,
+          },
+        );
+        setLoader(false);
+        setComments([
+          {
+            ...res.data?.data,
+            user: { ...currentUser.data },
+            like: { count: 0, status: false },
+            dislike: { count: 0, status: false },
+            showDropdown: false,
+            readMore: false,
+            hasOverflow: false,
+          },
+          ...comments,
+        ]);
+      })();
+    }
 
     setCommentText("");
+  };
+
+  let toggleLike = (id) => {
+    if (comments.find((item) => item._id === id).like.status === true) {
+      setComments((prevData) =>
+        prevData.map((item) =>
+          item._id === id
+            ? {
+                ...item,
+                like: {
+                  ...item.like,
+                  status: false,
+                  count: item.like.count - 1,
+                },
+              }
+            : item,
+        ),
+      );
+      axios.post(
+        `http://localhost:8000/video/delete-comment-review/${id}`,
+        [],
+        { withCredentials: true },
+      );
+    } else {
+      if (comments.find((item) => item._id === id).dislike.status === true) {
+        setComments((prevData) =>
+          prevData.map((item) =>
+            item._id === id
+              ? {
+                  ...item,
+                  like: {
+                    ...item.like,
+                    status: true,
+                    count: item.like.count + 1,
+                  },
+                  dislike: {
+                    ...item.dislike,
+                    status: false,
+                    count: item.dislike.count - 1,
+                  },
+                }
+              : item,
+          ),
+        );
+      } else {
+        setComments((prevData) =>
+          prevData.map((item) =>
+            item._id === id
+              ? {
+                  ...item,
+                  like: {
+                    ...item.like,
+                    status: true,
+                    count: item.like.count + 1,
+                  },
+                }
+              : item,
+          ),
+        );
+      }
+      axios.post(`http://localhost:8000/video/like-comment/${id}`, [], {
+        withCredentials: true,
+      });
+    }
+  };
+
+  let toggleDislike = (id) => {
+    if (comments.find((item) => item._id === id).dislike.status === true) {
+      setComments((prevData) =>
+        prevData.map((item) =>
+          item._id === id
+            ? {
+                ...item,
+                dislike: {
+                  ...item.dislike,
+                  status: false,
+                  count: item.dislike.count - 1,
+                },
+              }
+            : item,
+        ),
+      );
+      axios.post(
+        `http://localhost:8000/video/delete-comment-review/${id}`,
+        [],
+        { withCredentials: true },
+      );
+    } else {
+      if (comments.find((item) => item._id === id).like.status === true) {
+        setComments((prevData) =>
+          prevData.map((item) =>
+            item._id === id
+              ? {
+                  ...item,
+                  dislike: {
+                    ...item.dislike,
+                    status: true,
+                    count: item.dislike.count + 1,
+                  },
+                  like: {
+                    ...item.like,
+                    status: false,
+                    count: item.like.count - 1,
+                  },
+                }
+              : item,
+          ),
+        );
+      } else {
+        setComments((prevData) =>
+          prevData.map((item) =>
+            item._id === id
+              ? {
+                  ...item,
+                  dislike: {
+                    ...item.dislike,
+                    status: true,
+                    count: item.dislike.count + 1,
+                  },
+                }
+              : item,
+          ),
+        );
+      }
+      axios.post(`http://localhost:8000/video/dislike-comment/${id}`, [], {
+        withCredentials: true,
+      });
+    }
+  };
+
+  const toggleDropdown = (id) => {
+    setComments((prevData) =>
+      prevData.map((item) =>
+        item._id === id
+          ? { ...item, showDropdown: !item.showDropdown }
+          : { ...item, showDropdown: false },
+      ),
+    );
+    setCommentText("");
+  };
+
+  const toggleReadMore = (id) => {
+    setComments((prevData) =>
+      prevData.map((item) =>
+        item._id === id ? { ...item, readMore: !item.readMore } : item,
+      ),
+    );
+  };
+
+  const toggleHeart = (heart, id) => {
+    if (heart) {
+      console.log("reach");
+
+      setComments((prevData) =>
+        prevData.map((item) =>
+          item._id === id ? { ...item, heartByChannel: false } : item,
+        ),
+      );
+      axios.post(`http://localhost:8000/video/take-heart/${id}`, [], {
+        withCredentials: true,
+      });
+    } else {
+      setComments((prevData) =>
+        prevData.map((item) =>
+          item._id === id ? { ...item, heartByChannel: true } : item,
+        ),
+      );
+      axios.post(`http://localhost:8000/video/give-heart/${id}`, [], {
+        withCredentials: true,
+      });
+    }
+  };
+
+  const deleteComment = (id) => {
+    setCommentText("");
+    setComments(comments.filter((item) => item._id != id));
+    axios.post(`http://localhost:8000/video/delete-comment/${id}`, [], {
+      withCredentials: true,
+    });
+  };
+
+  const editComment = (id, text) => {
+    setCommentText(text);
+    setEdit(id);
   };
 
   return (
     <>
       {loading ? (
         <div className="mb-4 animate-pulse">
-          {/* Title */}
           <div className="h-6 w-32 bg-gray-700 rounded-2xl mb-4" />
-
-          {/* Input and Button Skeleton */}
           <div className="flex gap-2">
             <div className="w-full border-gray-300">
               <div className="h-10 bg-gray-700 rounded-2xl w-full" />
@@ -70,13 +310,13 @@ const CommentSection = ({ videoId }) => {
           </div>
         </div>
       ) : (
-        <div className="mx-auto pt-5">
+        <div className="mx-auto">
           <h2 className="text-xl font-semibold mb-4 text-white">
             {comments.length} Comments
           </h2>
 
           <div className="flex gap-2 mb-4">
-            <div className="w-full border-b border-gray-300">
+            <div className="w-full border-b border-gray-700">
               <input
                 type="text"
                 className="rounded px-3 py-2 w-full outline-none"
@@ -86,12 +326,13 @@ const CommentSection = ({ videoId }) => {
               />
             </div>
             <button
-              className="bg-gray-700 text-nowrap hover:bg-gray-600 text-white px-10 py-2 rounded"
+              className="bg-gray-700 hover:bg-gray-600 text-white min-w-[7rem] px-6 py-2 rounded text-center"
               onClick={handlePostComment}
             >
-              Comment
+              {edit ? "Save" : "Comment"}
             </button>
           </div>
+
           {loader && (
             <div className="h-[100px] w-full justify-center flex items-center">
               <span className="loading loading-spinner loading-lg"></span>
@@ -100,8 +341,9 @@ const CommentSection = ({ videoId }) => {
 
           {comments.map((comment) => (
             <div
-              key={comment?._id}
-              className="mb-4 border-b pb-4 border-gray-300 flex gap-3"
+              key={comment._id}
+              className="mb-4 border-b pb-4 border-gray-700 flex gap-3"
+              ref={(el) => (commentRefs.current[comment._id] = el)}
             >
               <img
                 src={comment?.user?.avatar}
@@ -111,165 +353,41 @@ const CommentSection = ({ videoId }) => {
               <div className="flex-1">
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-gray-200">
-                    @{comment?.user?.name}
+                    @{comment?.user?.name}{" "}
+                    <span className="text-gray-400 font-normal text-[13px]">
+                      {formatDistanceToNow(new Date(comment?.createdAt), {
+                        addSuffix: true,
+                      })}{" "}
+                      {comment?.edited && "(edited)"}
+                    </span>
                   </span>
                 </div>
-                <p className="mt-1 text-gray-400">{comment?.comment}</p>
-                <div className="flex gap-4 mt-2 text-sm text-gray-300">
+                <div
+                  className={`comment-text text-sm text-gray-100 whitespace-pre-line transition-all duration-300 break-all ${
+                    comment.readMore ? "" : "line-clamp-3"
+                  }`}
+                >
+                  {comment?.comment}
+                </div>
+                {comment?.hasOverflow && (
+                  <button
+                    onClick={() => toggleReadMore(comment?._id)}
+                    className="mt-2 text-white text-sm font-medium"
+                  >
+                    {comment.readMore ? "Show less" : "Show more"}
+                  </button>
+                )}
+                <div className="flex gap-4 mt-2 text-sm text-gray-300 items-center">
                   <button
                     className="flex items-center gap-1"
-                    onClick={() => {
-                      let id = comment._id;
-
-                      if (
-                        comments.find((item) => item._id === id).like.status ===
-                        true
-                      ) {
-                        setComments((prevData) =>
-                          prevData.map((item) =>
-                            item._id === id
-                              ? {
-                                  ...item,
-                                  like: {
-                                    ...item.like,
-                                    status: false,
-                                    count: item.like.count - 1,
-                                  },
-                                }
-                              : item,
-                          ),
-                        );
-                        axios.post(
-                          `http://localhost:8000/video/delete-comment-review/${comment._id}`,
-                          [],
-                          { withCredentials: true },
-                        );
-                      } else {
-                        if (
-                          comments.find((item) => item._id === id).dislike
-                            .status === true
-                        ) {
-                          setComments((prevData) =>
-                            prevData.map((item) =>
-                              item._id === id
-                                ? {
-                                    ...item,
-                                    like: {
-                                      ...item.like,
-                                      status: true,
-                                      count: item.like.count + 1,
-                                    },
-                                    dislike: {
-                                      ...item.dislike,
-                                      status: false,
-                                      count: item.dislike.count - 1,
-                                    },
-                                  }
-                                : item,
-                            ),
-                          );
-                        } else {
-                          setComments((prevData) =>
-                            prevData.map((item) =>
-                              item._id === id
-                                ? {
-                                    ...item,
-                                    like: {
-                                      ...item.like,
-                                      status: true,
-                                      count: item.like.count + 1,
-                                    },
-                                  }
-                                : item,
-                            ),
-                          );
-                        }
-                        axios.post(
-                          `http://localhost:8000/video/like-comment/${comment._id}`,
-                          [],
-                          { withCredentials: true },
-                        );
-                      }
-                    }}
+                    onClick={() => toggleLike(comment?._id)}
                   >
                     {comment?.like?.status ? <BiSolidLike /> : <BiLike />}{" "}
                     {comment?.like?.count}
                   </button>
                   <button
                     className="flex items-center gap-1"
-                    onClick={() => {
-                      let id = comment._id;
-
-                      if (
-                        comments.find((item) => item._id === id).dislike
-                          .status === true
-                      ) {
-                        setComments((prevData) =>
-                          prevData.map((item) =>
-                            item._id === id
-                              ? {
-                                  ...item,
-                                  dislike: {
-                                    ...item.dislike,
-                                    status: false,
-                                    count: item.dislike.count - 1,
-                                  },
-                                }
-                              : item,
-                          ),
-                        );
-                        axios.post(
-                          `http://localhost:8000/video/delete-comment-review/${comment._id}`,
-                          [],
-                          { withCredentials: true },
-                        );
-                      } else {
-                        if (
-                          comments.find((item) => item._id === id).like
-                            .status === true
-                        ) {
-                          setComments((prevData) =>
-                            prevData.map((item) =>
-                              item._id === id
-                                ? {
-                                    ...item,
-                                    dislike: {
-                                      ...item.dislike,
-                                      status: true,
-                                      count: item.dislike.count + 1,
-                                    },
-                                    like: {
-                                      ...item.like,
-                                      status: false,
-                                      count: item.like.count - 1,
-                                    },
-                                  }
-                                : item,
-                            ),
-                          );
-                        } else {
-                          setComments((prevData) =>
-                            prevData.map((item) =>
-                              item._id === id
-                                ? {
-                                    ...item,
-                                    dislike: {
-                                      ...item.dislike,
-                                      status: true,
-                                      count: item.dislike.count + 1,
-                                    },
-                                  }
-                                : item,
-                            ),
-                          );
-                        }
-                        axios.post(
-                          `http://localhost:8000/video/dislike-comment/${comment._id}`,
-                          [],
-                          { withCredentials: true },
-                        );
-                      }
-                    }}
+                    onClick={() => toggleDislike(comment?._id)}
                   >
                     {comment?.dislike?.status ? (
                       <BiSolidDislike />
@@ -278,8 +396,114 @@ const CommentSection = ({ videoId }) => {
                     )}{" "}
                     {comment?.dislike?.count}
                   </button>
+
+                  {ownerId == currentUser.data._id ? (
+                    <button
+                      onClick={() => {
+                        toggleHeart(comment?.heartByChannel, comment?._id);
+                      }}
+                    >
+                      {comment?.heartByChannel ? (
+                        <div className="w-4 h-4 rounded-full relative">
+                          <img
+                            src={channelDetails?.avatar}
+                            alt="Avatar"
+                            className="object-cover h-full w-full rounded-full"
+                          />
+                          <FaHeart className="absolute top-[60%] left-[60%] text-red-700 text-[10px]" />
+                        </div>
+                      ) : (
+                        <FaRegHeart className="text-[15px]" />
+                      )}
+                    </button>
+                  ) : (
+                    comment?.heartByChannel && (
+                      <div className="w-4 h-4 rounded-full  relative">
+                        <img
+                          src={channelDetails?.avatar}
+                          alt="Avatar"
+                          className="object-cover h-full w-full rounded-full"
+                        />
+                        <FaHeart className="absolute top-[60%] left-[60%] text-red-700 text-[10px]" />
+                      </div>
+                    )
+                  )}
                 </div>
               </div>
+
+              {ownerId == currentUser?.data?._id ? (
+                <div className="relative ml-3">
+                  <button
+                    className="text-gray-200"
+                    onClick={() => toggleDropdown(comment?._id)}
+                  >
+                    <BiDotsVertical size={20} />
+                  </button>
+                  {comment?.showDropdown && (
+                    <div className="absolute right-0 w-32 mt-2 bg-gray-700 rounded-md shadow-lg overflow-hidden">
+                      <ul className="text-sm text-gray-100">
+                       {currentUser?.data?._id == comment.user._id && <li>
+                          <button
+                            className="block w-full px-4 py-2 text-left hover:bg-gray-600"
+                            onClick={() => {
+                              editComment(comment?._id, comment?.comment);
+                            }}
+                          >
+                            Edit
+                          </button>
+                        </li>}
+                        <li>
+                          <button
+                            className="block w-full px-4 py-2 text-left hover:bg-gray-600"
+                            onClick={() => {
+                              deleteComment(comment?._id);
+                            }}
+                          >
+                            Delete
+                          </button>
+                        </li>
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              ) : comment.user._id == currentUser.data._id ? (
+                <div className="relative ml-3">
+                  <button
+                    className="text-gray-200"
+                    onClick={() => toggleDropdown(comment?._id)}
+                  >
+                    <BiDotsVertical size={20} />
+                  </button>
+                  {comment?.showDropdown && (
+                    <div className="absolute right-0 w-32 mt-2 bg-gray-700 rounded-md shadow-lg overflow-hidden">
+                      <ul className="text-sm text-gray-100">
+                        <li>
+                          <button
+                            className="block w-full px-4 py-2 text-left hover:bg-gray-600"
+                            onClick={() => {
+                              editComment(comment?._id, comment?.comment);
+                            }}
+                          >
+                            Edit
+                          </button>
+                        </li>
+                        <li>
+                          <button
+                            className="block w-full px-4 py-2 text-left hover:bg-gray-600"
+                            onClick={() => {
+                              deleteComment(comment?._id);
+                            }}
+                          >
+                            Delete
+                          </button>
+                        </li>
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                ""
+              )}
             </div>
           ))}
         </div>

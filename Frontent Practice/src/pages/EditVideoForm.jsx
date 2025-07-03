@@ -33,7 +33,7 @@ const EditVideoForm = () => {
         {
           headers: { "Content-Type": "multipart/form-data" },
           withCredentials: true,
-        }
+        },
       );
 
       setLoader(false);
@@ -52,27 +52,29 @@ const EditVideoForm = () => {
     <div className="flex justify-center items-center h-full">
       <div className="w-full max-w-md justify-end p-5">
         <h1 className="text-center text-[40px]">Edit video</h1>
-        <form className="m-1 w-full" onSubmit={handleSubmit(submit)}>
+        <form className="w-full" onSubmit={handleSubmit(submit)}>
+          <p className="text-md font-semibold my-2">Title</p>
           <input
             type="text"
             defaultValue={title}
-            className="input w-full my-3"
+            className="input w-full"
             required
             {...register("title")}
             placeholder="Title"
             minLength="3"
             maxLength="30"
           />
+          <p className="text-md font-semibold my-2">Description</p>
           <input
             type="text"
             defaultValue={description}
-            className="input w-full my-3"
+            className="input w-full"
             required
             {...register("description")}
             placeholder="Description"
           />
-
-          <div className="relative aspect-video overflow-hidden rounded-lg bg-black flex justify-center mb-4">
+          <p className="text-md font-semibold my-2">Thumbnail</p>
+          <div className="relative aspect-video overflow-hidden rounded-lg bg-black flex justify-center ">
             <img
               src={thumbnail}
               alt={title}

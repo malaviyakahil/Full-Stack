@@ -3,11 +3,10 @@ import { useDispatch, useSelector } from "react-redux";
 import { BiDislike, BiLike } from "react-icons/bi";
 import { Link, useNavigate } from "react-router-dom";
 import Skeleton from "./Skeleton";
-import {
-  deletOneVideo,
-  fetchcurrentUserVideos,
-} from "../store/userVideos.slice";
+import { deletOneVideo } from "../store/userVideos.slice";
 import axios from "axios";
+import { formatDistanceToNow } from "date-fns";
+import { incrementView } from "../store/userVideos.slice.js";
 
 const UserVideoCard = ({ video }) => {
   let dispatch = useDispatch();
@@ -19,6 +18,18 @@ const UserVideoCard = ({ video }) => {
       .padStart(2, "0");
     return `${mins}:${secs}`;
   };
+
+  const deleteVideo = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dispatch(deletOneVideo(video?._id));
+    await axios.post(
+      `http://localhost:8000/video/delete-video/${video?._id}`,
+      [],
+      { withCredentials: true },
+    );
+  };
+
   return (
     <div className="flex flex-col w-full sm:w-[320px] md:w-[336px] lg:w-[360px] xl:w-[380px] cursor-pointer">
       <div className="relative aspect-video overflow-hidden rounded-lg bg-black flex justify-center">
@@ -36,25 +47,15 @@ const UserVideoCard = ({ video }) => {
           {video?.title}
         </h3>
         <div className="flex items-center justify-between gap-4 ">
-          <div className="flex gap-4">
-            <button className="flex items-center gap-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
-              <BiLike className="text-gray-400 text-[14px]" />
-              <span className="text-[12px] text-gray-400">{video?.likes}</span>
-            </button>
-            <button className="flex items-center gap-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
-              <BiDislike className="text-gray-400 text-[14px]" />
-              <span className="text-[12px] text-gray-400">
-                {video?.dislikes}
-              </span>
-            </button>
-          </div>
           <p className="text-xs text-gray-400 whitespace-nowrap overflow-hidden text-ellipsis">
             {video?.views} views
           </p>
         </div>
         <div>
           <p className="text-xs text-gray-400 whitespace-nowrap overflow-hidden text-ellipsis">
-            {new Date(video?.createdAt).toDateString()}
+            {formatDistanceToNow(new Date(video?.createdAt), {
+              addSuffix: true,
+            })}
           </p>
         </div>
         <div className="flex gap-2 pt-2">
@@ -66,21 +67,14 @@ const UserVideoCard = ({ video }) => {
               thumbnail: video?.thumbnail,
             }}
           >
-            <button className="bg-gray-700 hover:bg-gray-600 px-4 py-0.5 rounded-md text-[14px]">
+            <button
+              className="bg-gray-700 hover:bg-gray-600 px-4 py-0.5 rounded-md text-[14px]"
+            >
               Edit
             </button>
           </Link>
           <button
-            onClick={() => {
-              (async () => {
-                dispatch(deletOneVideo(video?._id));
-                await axios.post(
-                  `http://localhost:8000/video/delete-video/${video?._id}`,
-                  [],
-                  { withCredentials: true },
-                );
-              })();
-            }}
+            onClick={deleteVideo}
             className="bg-gray-700 hover:bg-gray-600 px-4 py-0.5 rounded-md text-[14px]"
           >
             Delete
@@ -93,6 +87,8 @@ const UserVideoCard = ({ video }) => {
 
 const UserVideos = () => {
   let currentUserVideos = useSelector((store) => store.currentUserVideos);
+  let currentUser = useSelector((store) => store.currentUser);
+  let dispatch = useDispatch();
   let navigate = useNavigate();
   return (
     <>
@@ -114,7 +110,15 @@ const UserVideos = () => {
             {currentUserVideos.data?.length > 0 ? (
               <div className="flex flex-wrap justify-center gap-6 p-4">
                 {currentUserVideos.data?.map((video) => (
-                  <UserVideoCard key={video._id} video={video} />
+                  <Link
+                    key={video._id}
+                    to={`/app/dashboard/single-video/${currentUser.data._id}/${video._id}`}
+                    onClick={() => {
+                      dispatch(incrementView(video._id));
+                    }}
+                  >
+                    <UserVideoCard video={video} />
+                  </Link>
                 ))}
               </div>
             ) : (

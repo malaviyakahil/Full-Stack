@@ -20,6 +20,8 @@ import MyProfile from "./pages/MyProfile.jsx";
 import SettingDashboard from "./SettingDashboard.jsx";
 import EditProfileForm from "./pages/EditProfileForm.jsx";
 import ChangePasswordForm from "./pages/ChangePasswordForm.jsx";
+import SearchChannelAndVideo from "./pages/SearchChannelAndVideo.jsx";
+import SingleChannel from "./pages/SingleChannel.jsx";
 
 let router = createBrowserRouter([
   {
@@ -45,6 +47,14 @@ let router = createBrowserRouter([
           {
             path: "all",
             element: <Dashboard />,
+          },
+          {
+            path: "search-channel-and-video/:name",
+            element: <SearchChannelAndVideo />,
+          },
+          {
+            path: "single-channel/:ownerId",
+            element: <SingleChannel />,
           },
           {
             path: "single-video/:ownerId/:videoId",

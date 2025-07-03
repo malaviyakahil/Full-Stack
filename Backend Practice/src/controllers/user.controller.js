@@ -89,11 +89,15 @@ let registerUser = asyncHandler(async (req, res) => {
 let loginUser = asyncHandler(async (req, res) => {
   let { name, email, password } = req.body;
 
+  name= name.trim()
+  email= email.trim()
+  password= password.trim()
+
   if ([name, email, password].some((e) => e?.trim == "")) {
     throw new error(401, "Credentials cannot be empty");
   }
 
-  let isUserRegistered = await User.findOne({ $or: [{ name }, { email }] });
+  let isUserRegistered = await User.findOne({ $and: [{ name }, { email }] });
 
   if (!isUserRegistered) {
     throw new error(
@@ -447,54 +451,125 @@ let unsubscribeTo = asyncHandler(async (req, res) => {
   res.status(200).json(new response(200, [], `Unsubscribed to ${user?.name}`));
 });
 
-let getChannel = asyncHandler(async (req, res) => {
+let getChannelAndVideo = asyncHandler(async (req, res) => {
   let name = req.params?.name;
+  let currentUserId = req.user?._id;
 
-  let channel = await User.aggregate([
-    {
-      $match: {
-        name,
+  const [channel, video] = await Promise.all([
+    User.aggregate([
+      {
+        $match: {
+          name: { $regex: `^${name}$`, $options: "i" } // Case-insensitive exact match
+        }
       },
-    },
-    {
-      $lookup: {
-        from: "videos",
-        localField: "_id",
-        foreignField: "owner",
-        as: "videos",
+      {
+        $lookup: {
+          from: "videos",
+          localField: "_id",
+          foreignField: "owner",
+          as: "videos"
+        }
       },
-    },
-    {
-      $lookup: {
-        from: "subscriptions",
-        localField: "_id",
-        foreignField: "channel",
-        as: "subarray",
+      {
+        $lookup: {
+          from: "subscriptions",
+          let: { channelId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ["$channel", "$$channelId"] }
+              }
+            }
+          ],
+          as: "allSubscriptions"
+        }
       },
-    },
-    {
-      $addFields: {
-        subs: {
-          $size: "$subarray",
+      {
+        $lookup: {
+          from: "subscriptions",
+          let: { channelId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$channel", "$$channelId"] },
+                    { $eq: ["$subscriber", new mongoose.Types.ObjectId(currentUserId)] }
+                  ]
+                }
+              }
+            }
+          ],
+          as: "subscriptionStatus"
+        }
+      },
+      {
+        $addFields: {
+          subStatus: { $gt: [{ $size: "$subscriptionStatus" }, 0] },
+          subscribersCount: { $size: "$allSubscriptions" }
+        }
+      },
+      {
+        $project: {
+          name: 1,
+          fullName: 1,
+          email: 1,
+          avatar: 1,
+          videos: 1,
+          subStatus: 1,
+          subscribersCount: 1
+        }
+      },
+      {
+        $limit: 10
+      }
+    ]),
+    Video.aggregate([
+      {
+        $match: {
+          title: { $regex: `^${name}$`, $options: "i" },
         },
       },
-    },
-    {
-      $project: {
-        name: 1,
-        fullName: 1,
-        email: 1,
-        videos: 1,
-        subs: 1,
+      {
+        $lookup: {
+          from: "users",
+          localField: "owner",
+          foreignField: "_id",
+          as: "result",
+        },
       },
-    },
+      {
+        $addFields: {
+          owner: { $first: "$result" },
+        },
+      },
+      {
+        $project: {
+          thumbnail: 1,
+          title: 1,
+          duration: 1,
+          views: 1,
+          "owner._id": 1,
+          "owner.name": 1,
+          "owner.email": 1,
+          "owner.avatar": 1,
+          createdAt: 1,
+        },
+      },
+      {
+        $sort: {
+          createdAt: -1,
+        },
+      },
+      {
+        $limit: 10,
+      },
+    ])
   ]);
 
-  if (!channel) {
-    throw new error(500, "Something went wrong while fetching channel");
-  }
-
-  res.status(200).json(new response(200, channel, "Channel details"));
+  res
+    .status(200)
+    .json(new response(200, {channel:[...channel],video:[...video]}, "Channel details"));
 });
 
 let getVideo = asyncHandler(async (req, res) => {
@@ -528,6 +603,7 @@ let getVideo = asyncHandler(async (req, res) => {
         _id: 0,
         review: "$_id",
         count: 1,
+        createdAt: 1,
       },
     },
     {
@@ -567,116 +643,92 @@ let getVideo = asyncHandler(async (req, res) => {
   res.status(200).json(new response(200, video, "Video fetched successfully"));
 });
 
+let getChannel = asyncHandler(async (req, res) => {
+  let userId = req.params?.id;
+  let currentUserId = req.user?._id;
+
+  let channel = await  User.aggregate([
+    {
+      $match: {
+        _id: new mongoose.Types.ObjectId(userId)
+      }
+    },
+    {
+      $lookup: {
+        from: "videos",
+        localField: "_id",
+        foreignField: "owner",
+        as: "videos"
+      }
+    },
+    {
+      $lookup: {
+        from: "subscriptions",
+        let: { channelId: "$_id" },
+        pipeline: [
+          {
+            $match: {
+              $expr: { $eq: ["$channel", "$$channelId"] }
+            }
+          }
+        ],
+        as: "allSubscriptions"
+      }
+    },
+    {
+      $lookup: {
+        from: "subscriptions",
+        let: { channelId: "$_id" },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  { $eq: ["$channel", "$$channelId"] },
+                  { $eq: ["$subscriber", new mongoose.Types.ObjectId(currentUserId)] }
+                ]
+              }
+            }
+          }
+        ],
+        as: "subscriptionStatus"
+      }
+    },
+    {
+      $addFields: {
+        subStatus: { $gt: [{ $size: "$subscriptionStatus" }, 0] },
+        subscribersCount: { $size: "$allSubscriptions" }
+      }
+    },
+    {
+      $project: {
+        name: 1,
+        fullName: 1,
+        email: 1,
+        avatar: 1,
+        coverImage:1,
+        videos: 1,
+        subStatus: 1,
+        subscribersCount: 1
+      }
+    },
+    {
+      $limit: 10
+    }
+  ])
+
+  if (!channel) {
+    throw new error(500, "Something went wrong while fetching channel");
+  }
+
+  res.status(200).json(new response(200, channel[0], "Channel fetched successfully"));
+});
+
 let getComments = asyncHandler(async (req, res) => {
   let videoId = req.params?.id;
   let currentUserId = req.user?._id;
 
   let comments = await Comment.aggregate([
-    // {
-    //   $match: {
-    //     video: new mongoose.Types.ObjectId(videoId),
-    //   },
-    // },
-    // {
-    //   $lookup: {
-    //     from: "users",
-    //     localField: "user",
-    //     foreignField: "_id",
-    //     as: "user",
-    //   },
-    // },
-    // {
-    //   $unwind: "$user",
-    // },
-    // {
-    //   $project: {
-    //     heartByChannel: 1,
-    //     _id: 1,
-    //     video: 1,
-    //     user: {
-    //       _id: "$user._id",
-    //       avatar: "$user.avatar",
-    //       name: "$user.name",
-    //       fullName: "$user.fullName",
-    //     },
-    //     comment: 1,
-    //     createdAt: 1,
-    //   },
-    // },
-    // { $sort: { createdAt: -1 } },
-
-    // ////////////
-
-    // {
-    //   $match: {
-    //     video: new mongoose.Types.ObjectId(videoId)
-    //   }
-    // },
-    // {
-    //   $lookup: {
-    //     from: "users",
-    //     localField: "user",
-    //     foreignField: "_id",
-    //     as: "user"
-    //   }
-    // },
-    // {
-    //   $unwind: "$user"
-    // },
-    // {
-    //   $lookup: {
-    //     from: "commentreviews",
-    //     localField: "_id",         // comment ID
-    //     foreignField: "comment",   // match in review collection
-    //     as: "reviews"
-    //   }
-    // },
-    // {
-    //   $addFields: {
-    //     likes: {
-    //       $size: {
-    //         $filter: {
-    //           input: "$reviews",
-    //           as: "review",
-    //           cond: { $eq: ["$$review.review", "Like"] }
-    //         }
-    //       }
-    //     },
-    //     dislikes: {
-    //       $size: {
-    //         $filter: {
-    //           input: "$reviews",
-    //           as: "review",
-    //           cond: { $eq: ["$$review.review", "Dislike"] }
-    //         }
-    //       }
-    //     }
-    //   }
-    // },
-    // {
-    //   $project: {
-    //     _id: 1,
-    //     video: 1,
-    //     comment: 1,
-    //     heartByChannel: 1,
-    //     createdAt: 1,
-    //     likes: 1,
-    //     dislikes: 1,
-    //     user: {
-    //       _id: "$user._id",
-    //       name: "$user.name",
-    //       avatar: "$user.avatar",
-    //       fullName: "$user.fullName"
-    //     }
-    //   }
-    // },
-    // {
-    //   $sort: { createdAt: -1 }
-    // }
-
-
-    /////////////////////
-
     {
       $match: {
         video: new mongoose.Types.ObjectId(videoId),
@@ -721,7 +773,12 @@ let getComments = asyncHandler(async (req, res) => {
                     cond: {
                       $and: [
                         { $eq: ["$$review.review", "Like"] },
-                        { $eq: ["$$review.user", new mongoose.Types.ObjectId(currentUserId)] },
+                        {
+                          $eq: [
+                            "$$review.user",
+                            new mongoose.Types.ObjectId(currentUserId),
+                          ],
+                        },
                       ],
                     },
                   },
@@ -751,7 +808,12 @@ let getComments = asyncHandler(async (req, res) => {
                     cond: {
                       $and: [
                         { $eq: ["$$review.review", "Dislike"] },
-                        { $eq: ["$$review.user", new mongoose.Types.ObjectId(currentUserId)] },
+                        {
+                          $eq: [
+                            "$$review.user",
+                            new mongoose.Types.ObjectId(currentUserId),
+                          ],
+                        },
                       ],
                     },
                   },
@@ -772,11 +834,11 @@ let getComments = asyncHandler(async (req, res) => {
         createdAt: 1,
         like: 1,
         dislike: 1,
+        pinByChannel: 1,
+        edited: 1,
       },
     },
     { $sort: { createdAt: -1 } },
-    
-    
   ]);
 
   if (!comments) {
@@ -982,6 +1044,47 @@ let editProfile = asyncHandler(async (req, res) => {
     .json(new response(200, editUser, "Profile edited successfully"));
 });
 
+let searchAll = asyncHandler(async (req, res) => {
+  const { query } = req.query;
+
+  if (!query) {
+    res.status(200).json(new response(200, [], "Data fetched successfully"));
+    return;
+  }
+
+  const [videos, users] = await Promise.all([
+    Video.find({ title: { $regex: query, $options: "i" } })
+      .select("_id title")
+      .limit(5),
+    User.find({ name: { $regex: query, $options: "i" } })
+      .select("_id name")
+      .limit(5),
+  ]);
+
+  const combined = [
+    ...users.map((user) => ({ _id: user._id, value: user.name, type: "user" })),
+    ...videos.map((video) => ({
+      _id: video._id,
+      value: video.title,
+      type: "video",
+    })),
+  ];
+
+  const uniqueSet = new Set();
+  const uniqueResults = [];
+
+  combined.forEach((item) => {
+    if (!uniqueSet.has(item.value)) {
+      uniqueSet.add(item.value);
+      uniqueResults.push(item);
+    }
+  });
+
+  res
+    .status(200)
+    .json(new response(200, uniqueResults, "Data fetched successfully"));
+});
+
 export {
   registerUser,
   loginUser,
@@ -995,12 +1098,14 @@ export {
   changeFullName,
   subscribeTo,
   unsubscribeTo,
-  getChannel,
+  getChannelAndVideo,
   getChannelDetails,
   getVideo,
+  getChannel,
   getComments,
   getHistory,
   getSubStatus,
   getReviewStatus,
   editProfile,
+  searchAll,
 };

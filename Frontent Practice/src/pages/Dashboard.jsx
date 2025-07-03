@@ -1,12 +1,11 @@
 import React, { useEffect } from "react";
 import Videos from "../components/Videos";
-import Refresh from "../components/Refresh";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchVideos } from "../store/videos.slice";
+import Panel from "../components/Panel";
+const Dashboard = ({dry,setDry}) => {
+  let videos = useSelector((store) => store.videos);
 
-const Dashboard = () => {
-  let  videos  = useSelector((store) => store.videos);
-  
   let dispatch = useDispatch();
   useEffect(() => {
     if (!videos?.data) {
@@ -16,10 +15,8 @@ const Dashboard = () => {
 
   return (
     <>
-      <div className="h-full p-3 overflow-y-scroll">
-        <div className="w-full flex items-center justify-center">
-          <Refresh />
-        </div>
+      <div className="h-full py-3 p-5">
+        <Panel />
         <Videos />
       </div>
     </>

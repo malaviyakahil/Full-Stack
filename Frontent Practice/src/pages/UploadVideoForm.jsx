@@ -30,11 +30,9 @@ const UploadVideoForm = () => {
           withCredentials: true,
         },
       );
-
       setLoader(false);
 
       if (res.data?.success) {
-        console.log('readch');
         dispatch(clearCurrentUserVideos());
         navigate("/app/my-videos/uploaded-videos");
       }

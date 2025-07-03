@@ -1,7 +1,7 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 
-let fetchVideos = createAsyncThunk("fetchVideos",async () => {
+let fetchVideos = createAsyncThunk("fetchVideos", async () => {
   let res = await axios.get("http://localhost:8000/video/get-all-videos", {
     withCredentials: true,
   });
@@ -11,11 +11,19 @@ let fetchVideos = createAsyncThunk("fetchVideos",async () => {
 let videosSlice = createSlice({
   name: "videos",
   initialState: { data: null, loading: false, error: null },
-  reducers:{
+  reducers: {
     clearVideos: (state, action) => {
       state.data = null;
       state.loading = false;
       state.error = null;
+    },
+    incrementView: (state, action) => {
+      state.data = state.data?.map((video) => {
+        if(video._id == action.payload){
+            return {...video,views:video.views+1}
+        };
+        return video
+      });
     },
   },
   extraReducers: (builder) => {
@@ -28,11 +36,11 @@ let videosSlice = createSlice({
     });
     builder.addCase(fetchVideos.rejected, (state, actions) => {
       state.loading = false;
-      state.error = actions.payload.data;      
+      state.error = actions.payload.data;
     });
   },
 });
 
-let {clearVideos}=videosSlice.actions
+let { clearVideos,incrementView } = videosSlice.actions;
 
-export { videosSlice, fetchVideos ,clearVideos};
+export { videosSlice, fetchVideos, clearVideos ,incrementView};

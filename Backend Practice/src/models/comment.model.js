@@ -18,6 +18,14 @@ let commentSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    pinByChannel: {
+      type: Boolean,
+      default: false,
+    },
+    edited: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true },
 );

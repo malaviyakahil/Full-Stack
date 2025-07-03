@@ -42,9 +42,9 @@ const RegisterForm = () => {
 
       <div className="flex justify-center items-center min-h-screen">
         <div className="w-full max-w-md justify-end p-5">
-          <h1 className="text-center text-[40px]">Register Here</h1>
-          <form className="m-1  w-full" onSubmit={handleSubmit(submit)}>
-            <label className="input validator w-full my-3">
+          <h1 className="text-center text-[40px] mb-5">Register Here</h1>
+          <form className="w-full" onSubmit={handleSubmit(submit)}>
+            <label className="input validator w-full my-2">
               <svg
                 className="h-[1em]"
                 xmlns="http://www.w3.org/2000/svg"
@@ -75,7 +75,7 @@ const RegisterForm = () => {
               />
             </label>
 
-            <label className="input validator w-full my-3">
+            <label className="input validator w-full my-2">
               <svg
                 className="h-[1em]"
                 xmlns="http://www.w3.org/2000/svg"
@@ -104,7 +104,7 @@ const RegisterForm = () => {
               />
             </label>
 
-            <label className="input validator w-full my-3 ">
+            <label className="input validator w-full my-2">
               <svg
                 className="h-[1em]"
                 xmlns="http://www.w3.org/2000/svg"
@@ -131,7 +131,7 @@ const RegisterForm = () => {
               />
             </label>
 
-            <label className="input validator w-full my-3">
+            <label className="input validator w-full my-2">
               <svg
                 className="h-[1em]"
                 xmlns="http://www.w3.org/2000/svg"
@@ -168,7 +168,7 @@ const RegisterForm = () => {
 
             <br />
 
-            <fieldset className="fieldset mb-3">
+            <fieldset className="fieldset my-2">
               <legend className="fieldset-legend opacity-50">
                 Pick an image for Avatar
               </legend>
@@ -183,7 +183,7 @@ const RegisterForm = () => {
               <label className="fieldset-label">Max size 2MB</label>
             </fieldset>
 
-            <fieldset className="fieldset mb-3 ">
+            <fieldset className="fieldset my-2 ">
               <legend className="fieldset-legend opacity-50">
                 Pick an image for Cover-Image ( Optional )
               </legend>
@@ -196,9 +196,9 @@ const RegisterForm = () => {
               />
               <label className="fieldset-label w-full">Max size 2MB</label>
             </fieldset>
-            {error && <p className="text-red-500 text-center mb-3.5">{error}</p>}
+            {error && <p className="text-red-500 text-center my-2">{error}</p>}
 
-            <button className="btn btn-primary w-full" type="submit">
+            <button className="btn btn-primary w-full my-2" type="submit">
               {loader ? (
                 <span className="loading loading-dots loading-lg"></span>
               ) : (

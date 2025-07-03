@@ -30,7 +30,7 @@ const SettingDashboard = () => {
         </div>
 
         {/* Content Area */}
-        <div className="w-full f-full lg:w-3/4 overflow-y-auto">
+        <div className="w-full h-full lg:w-3/4 overflow-y-auto">
           <Outlet />
         </div>
       </div>

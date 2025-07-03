@@ -5,6 +5,7 @@ const videoSchema = new mongoose.Schema(
     video: {
       type: String,
       reqired: true,
+      
     },
     thumbnail: {
       type: String,
@@ -13,6 +14,7 @@ const videoSchema = new mongoose.Schema(
     title: {
       type: String,
       reqired: true,
+      index:true
     },
     description: {
       type: String,
