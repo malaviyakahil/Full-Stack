@@ -113,13 +113,18 @@ const ChangePasswordForm = () => {
           </label>
 
           {error && <p className="text-red-500 text-center my-2">{error}</p>}
-          <button className="btn btn-primary w-full my-2" type="submit">
-            {loader ? (
-              <span className="loading loading-dots loading-lg"></span>
-            ) : (
-              "Save"
-            )}
-          </button>
+          {loader ? (
+                   <div className="relative w-full h-[40px] rounded-lg overflow-hidden border border-gray-600 my-2">
+                   <div className="absolute top-[0px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-5" />
+                   <div className="absolute top-[9px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-3" />
+                   <div className="absolute top-[17px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-4" />
+                   <div className="absolute top-[22px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-6" />
+                 </div>
+          ) : (
+            <button className="btn bg-gray-600 w-full my-2" type="submit">
+              Change
+            </button>
+          )}
         </form>
       </div>
     </div>

@@ -3,7 +3,7 @@ import { Outlet } from "react-router-dom";
 
 const ProfileDashboard = () => {
   return (
-      <div className="h-screen w-full overflow-y-auto">
+      <div className="h-full w-full px-5">
         <Outlet/>
       </div>
   );

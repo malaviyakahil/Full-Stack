@@ -1,6 +1,7 @@
 import { User } from "../models/user.model.js";
 import jsonWebToken from "jsonwebtoken";
 import error from "../utils/error.js";
+
 let auth = async (req, res, next) => {
   try {
     let token =
@@ -20,13 +21,11 @@ let auth = async (req, res, next) => {
     }
 
     req.user = user;
-
     next();
+    
   } catch (error) {
     next(error);
   }
 };
-
-
 
 export default auth;

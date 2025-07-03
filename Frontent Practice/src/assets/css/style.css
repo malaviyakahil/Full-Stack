@@ -9,3 +9,27 @@
   --breakpoint-xl: 1280px;
   --breakpoint-2xl: 1536px;
 }
+@keyframes slide-left {
+  0% {
+    left: 0%;
+  }
+  50% {
+    left: calc(100% - 20px);
+  }
+  100% {
+    left: 0%;
+  }
+}
+
+.animate-slide-left-3 {
+  animation: slide-left 3s ease-in-out infinite;
+}
+.animate-slide-left-4 {
+  animation: slide-left 4s ease-in-out infinite;
+}
+.animate-slide-left-5 {
+  animation: slide-left 5s ease-in-out infinite;
+}
+.animate-slide-left-6 {
+  animation: slide-left 6s ease-in-out infinite;
+}

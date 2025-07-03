@@ -7,8 +7,11 @@ import { deletOneVideo } from "../store/userVideos.slice";
 import axios from "axios";
 import { formatDistanceToNow } from "date-fns";
 import { incrementView } from "../store/userVideos.slice.js";
+import { RiEditBoxLine } from "react-icons/ri";
+import { MdDeleteOutline } from "react-icons/md";
 
 const UserVideoCard = ({ video }) => {
+
   let dispatch = useDispatch();
 
   let formatTime = (seconds) => {
@@ -46,18 +49,14 @@ const UserVideoCard = ({ video }) => {
         <h3 className="text-sm font-semibold leading-tight break-words overflow-hidden text-ellipsis line-clamp-2 my-1">
           {video?.title}
         </h3>
-        <div className="flex items-center justify-between gap-4 ">
-          <p className="text-xs text-gray-400 whitespace-nowrap overflow-hidden text-ellipsis">
-            {video?.views} views
-          </p>
-        </div>
-        <div>
-          <p className="text-xs text-gray-400 whitespace-nowrap overflow-hidden text-ellipsis">
-            {formatDistanceToNow(new Date(video?.createdAt), {
-              addSuffix: true,
-            })}
-          </p>
-        </div>
+
+        <p className="text-xs text-gray-400 whitespace-nowrap overflow-hidden text-ellipsis">
+          {video?.views} views •{" "}
+          {formatDistanceToNow(new Date(video?.createdAt), {
+            addSuffix: true,
+          })}
+        </p>
+
         <div className="flex gap-2 pt-2">
           <Link
             to={`/app/my-videos/edit-video/${video?._id}`}
@@ -67,17 +66,15 @@ const UserVideoCard = ({ video }) => {
               thumbnail: video?.thumbnail,
             }}
           >
-            <button
-              className="bg-gray-700 hover:bg-gray-600 px-4 py-0.5 rounded-md text-[14px]"
-            >
-              Edit
+            <button className="bg-gray-700 hover:bg-gray-600 px-4 py-0.5 rounded-md text-[14px] flex gap-2 justify-center items-center ">
+             <RiEditBoxLine/> Edit
             </button>
           </Link>
           <button
             onClick={deleteVideo}
-            className="bg-gray-700 hover:bg-gray-600 px-4 py-0.5 rounded-md text-[14px]"
+            className="bg-gray-700 hover:bg-gray-600 px-4 py-0.5 rounded-md text-[14px] flex gap-2 justify-center items-center "
           >
-            Delete
+           <MdDeleteOutline className="text-[16px]"/> Delete
           </button>
         </div>
       </div>
@@ -86,49 +83,53 @@ const UserVideoCard = ({ video }) => {
 };
 
 const UserVideos = () => {
+
   let currentUserVideos = useSelector((store) => store.currentUserVideos);
   let currentUser = useSelector((store) => store.currentUser);
   let dispatch = useDispatch();
   let navigate = useNavigate();
+  
   return (
     <>
-      <div className="h-full w-full">
-        <div className="flex w-full justify-center">
-          <button
-            className=" bg-gray-700 hover:bg-gray-600 rounded-lg p-2 px-4"
-            onClick={() => {
-              navigate("/app/my-videos/upload-video");
-            }}
-          >
-            + Upload video
-          </button>
-        </div>
-        {currentUserVideos.loading ? (
-          <Skeleton />
-        ) : (
-          <>
-            {currentUserVideos.data?.length > 0 ? (
-              <div className="flex flex-wrap justify-center gap-6 p-4">
-                {currentUserVideos.data?.map((video) => (
-                  <Link
-                    key={video._id}
-                    to={`/app/dashboard/single-video/${currentUser.data._id}/${video._id}`}
-                    onClick={() => {
-                      dispatch(incrementView(video._id));
-                    }}
-                  >
-                    <UserVideoCard video={video} />
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <div className="pt-70">
-                <h2 className="text-center">You haven't uploaded any video</h2>
-              </div>
-            )}
-          </>
-        )}
+      <div className="mx-auto max-w-6xl flex w-full items-center justify-center flex-wrap gap-5">
+        <button
+          className=" bg-gray-700 hover:bg-gray-600 rounded-lg p-2 px-4 "
+          onClick={() => {
+            navigate("/app/my-videos/upload-video");
+          }}
+        >
+          + Upload video
+        </button>
+        <button className=" bg-gray-700 hover:bg-gray-600 rounded-lg p-2 px-4">
+          {currentUser.data.subs} subscribers • {" "}
+          {currentUser.data.totalViews} Total views
+        </button>
       </div>
+      {currentUserVideos.loading ? (
+        <Skeleton />
+      ) : (
+        <>
+          {currentUserVideos.data?.length > 0 ? (
+            <div className="flex flex-wrap justify-center gap-6 py-4">
+              {currentUserVideos.data?.map((video) => (
+                <Link
+                  key={video._id}
+                  to={`/app/dashboard/single-video/${currentUser.data._id}/${video._id}`}
+                  onClick={() => {
+                    dispatch(incrementView(video._id));
+                  }}
+                >
+                  <UserVideoCard video={video} />
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="pt-70">
+              <h2 className="text-center">You haven't uploaded any video</h2>
+            </div>
+          )}
+        </>
+      )}
     </>
   );
 };

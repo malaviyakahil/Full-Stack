@@ -6,6 +6,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { clearCurrentUserVideos } from "../store/userVideos.slice";
 
 const EditVideoForm = () => {
+  
   const location = useLocation();
   const { title, description, thumbnail } = location.state || {};
   let { id } = useParams();
@@ -105,13 +106,18 @@ const EditVideoForm = () => {
           )}
 
           {error && <p className="text-red-500 text-center mb-3.5">{error}</p>}
-          <button className="btn btn-primary w-full my-3" type="submit">
-            {loader ? (
-              <span className="loading loading-dots loading-lg"></span>
-            ) : (
-              "Upload"
-            )}
-          </button>
+          {loader ? (
+                   <div className="relative w-full h-[40px] rounded-lg overflow-hidden border border-gray-600 my-2">
+                   <div className="absolute top-[0px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-5" />
+                   <div className="absolute top-[9px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-3" />
+                   <div className="absolute top-[17px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-4" />
+                   <div className="absolute top-[22px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-6" />
+                 </div>
+          ) : (
+            <button className="btn bg-gray-600 w-full my-2" type="submit">
+              Save
+            </button>
+          )}
         </form>
       </div>
     </div>

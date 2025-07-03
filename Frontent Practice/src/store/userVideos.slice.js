@@ -24,15 +24,14 @@ let currentUserVideosSlice = createSlice({
       state.error = null;
     },
     deletOneVideo: (state, action) => {
-      const id = action.payload;
-      state.data = state.data?.filter((video) => video._id !== id);
+      state.data = state.data?.filter((video) => video._id !== action.payload);
     },
     incrementView: (state, action) => {
       state.data = state.data?.map((video) => {
-        if(video._id == action.payload){
-            return {...video,views:video.views+1}
-        };
-        return video
+        if (video._id == action.payload) {
+          return { ...video, views: video.views + 1 };
+        }
+        return video;
       });
     },
   },
@@ -51,6 +50,13 @@ let currentUserVideosSlice = createSlice({
   },
 });
 
-let {clearCurrentUserVideos,deletOneVideo,incrementView} = currentUserVideosSlice.actions
+let { clearCurrentUserVideos, deletOneVideo, incrementView } =
+  currentUserVideosSlice.actions;
 
-export { currentUserVideosSlice, fetchcurrentUserVideos,clearCurrentUserVideos,deletOneVideo,incrementView };
+export {
+  currentUserVideosSlice,
+  fetchcurrentUserVideos,
+  clearCurrentUserVideos,
+  deletOneVideo,
+  incrementView,
+};

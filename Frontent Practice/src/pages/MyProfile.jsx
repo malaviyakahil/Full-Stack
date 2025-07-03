@@ -2,7 +2,9 @@ import React from "react";
 import { useSelector } from "react-redux";
 
 const MyProfile = () => {
+
   let currentUser = useSelector((store) => store.currentUser);
+  
   return (
     <div className="flex justify-center items-center h-full overflow-y-auto p-4">
       <div className="w-full max-w-md justify-center p-10">

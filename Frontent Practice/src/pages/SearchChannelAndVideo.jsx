@@ -6,6 +6,7 @@ import { useSelector } from "react-redux";
 import { formatDistanceToNow } from "date-fns";
 
 const SearchChannelAndVideo = () => {
+  
   let { name } = useParams();
   let [loading, setLoading] = useState(false);
   let [data, setData] = useState({ channel: [], video: [] });
@@ -77,15 +78,15 @@ const SearchChannelAndVideo = () => {
 
   return (
     <>
-      <div className="h-full w-full py-3 p-5">
+      <div className=" w-full py-3">
         <Panel />
-        <div className="flex flex-col items-center px-6 pt-5">
+        <div className="flex flex-col items-center pt-5">
           {loading ? (
-            <div className="flex flex-col gap-5 py-5">
+            <>
               {[...Array(4)].map((_, index) => (
                 <div
                   key={index}
-                  className="md:flex gap-5 w-full cursor-pointer sm:w-full md:w-[536px] lg:w-[760px] xl:w-[980px] animate-pulse"
+                  className="md:flex py-2.5 gap-5 w-full cursor-pointer sm:w-full md:w-[536px] lg:w-[760px] xl:w-[980px] animate-pulse"
                 >
                   <div className="relative w-full aspect-video overflow-hidden rounded-lg bg-gray-800 flex justify-center items-center">
                     <div className="h-full w-full bg-gray-700"></div>
@@ -112,7 +113,7 @@ const SearchChannelAndVideo = () => {
                   </div>
                 </div>
               ))}
-            </div>
+            </>
           ) : (
             <>
               {data.channel.map((profile) => (
@@ -224,12 +225,7 @@ const SearchChannelAndVideo = () => {
                           </div>
                           <div className="hidden md:block">
                             <p className="my-2 leading-tight text-gray-300 break-words overflow-hidden text-ellipsis line-clamp-2">
-                              {video.description} Lorem ipsum dolor sit, amet
-                              consectetur adipisicing elit. Aspernatur minus
-                              voluptates culpa possimus odio perferendis esse
-                              itaque provident facilis sit dicta aliquam est,
-                              alias odit blanditiis nihil numquam doloremque
-                              suscipit?
+                              {video.description}
                             </p>
                           </div>
                         </div>
@@ -245,21 +241,27 @@ const SearchChannelAndVideo = () => {
                     className="md:flex gap-5 w-full cursor-pointer sm:w-full md:w-[536px] lg:w-[760px] xl:w-[980px]"
                   >
                     <div className="relative  w-full aspect-video overflow-hidden rounded-lg bg-black flex justify-center">
-                      <img
-                        src={video?.thumbnail}
-                        alt={video?.title}
-                        className="h-full object-contain"
-                      />
+                      <Link to={`/app/dashboard/single-video/${video.owner._id}/${video?._id}`}>
+                        <img
+                          src={video?.thumbnail}
+                          alt={video?.title}
+                          className="h-full object-contain"
+                        />
 
-                      <div className="absolute bottom-2 right-2 bg-black bg-opacity-75 text-white text-xs px-1 py-0.5 rounded">
-                        {formatTime(video?.duration)}
-                      </div>
+                        <div className="absolute bottom-2 right-2 bg-black bg-opacity-75 text-white text-xs px-1 py-0.5 rounded">
+                          {formatTime(video?.duration)}
+                        </div>
+                      </Link>
                     </div>
 
                     <div className="w-full md:w-[50%]">
+                    <Link to={`/app/dashboard/single-video/${video.owner._id}/${video?._id}`}>
+
                       <h3 className="text-lg my-2 font-semibold leading-tight break-words overflow-hidden text-ellipsis line-clamp-2">
                         {video?.title}
                       </h3>
+                      </Link>
+
                       <p className="text-gray-400 text-sm mb-2">
                         {video.views} views •{" "}
                         {formatDistanceToNow(new Date(video?.createdAt), {
@@ -268,23 +270,27 @@ const SearchChannelAndVideo = () => {
                       </p>
 
                       <div className="flex items-center gap-2 mb-2">
-                        <div className="w-9 h-9 overflow-hidden rounded-full">
-                          <img
-                            className="object-cover h-full w-full"
-                            src={video?.owner?.avatar}
-                          />
-                        </div>
-                        <span className="text-gray-400">
+                        <Link
+                          to={`/app/dashboard/single-channel/${video.owner._id}`}
+                        >
+                          <div className="w-9 h-9 overflow-hidden rounded-full">
+                            <img
+                              className="object-cover h-full w-full"
+                              src={video?.owner?.avatar}
+                            />
+                          </div>
+                        </Link>
+
+                        <Link
+                          className="text-gray-400"
+                          to={`/app/dashboard/single-channel/${video.owner._id}`}
+                        >
                           {video?.owner?.name}
-                        </span>
+                        </Link>
                       </div>
                       <div className="hidden md:block">
                         <p className="my-2 leading-tight text-gray-300 break-words overflow-hidden text-ellipsis line-clamp-2">
-                          {video.description} Lorem ipsum dolor sit, amet
-                          consectetur adipisicing elit. Aspernatur minus
-                          voluptates culpa possimus odio perferendis esse itaque
-                          provident facilis sit dicta aliquam est, alias odit
-                          blanditiis nihil numquam doloremque suscipit?
+                          {video.description} 
                         </p>
                       </div>
                     </div>

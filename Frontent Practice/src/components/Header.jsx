@@ -1,25 +1,25 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { clearCurrentUser, fetchCurrentUser } from "../store/user.slice.js";
-
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import { clearCurrentUserVideos } from "../store/userVideos.slice.js";
 import { clearVideos } from "../store/videos.slice.js";
+import { clearHistory } from "../store/history.js";
 
 const Header = () => {
+
   let  currentUser  = useSelector((store) => store.currentUser);
-  
   let dispatch = useDispatch();
+  let [loader, setLoader] = useState(false);
+  let navigate = useNavigate();
+
   useEffect(() => {
     if(!currentUser?.data){
       dispatch(fetchCurrentUser());
     }
   }, []);
   
-  let [loader, setLoader] = useState(false);
-  let navigate = useNavigate();
-
   let handleLogout = async () => {
     setLoader(true);
     try {
@@ -35,10 +35,10 @@ const Header = () => {
         dispatch(clearCurrentUser());
         dispatch(clearCurrentUserVideos());
         dispatch(clearVideos());
+        dispatch(clearHistory())
         navigate("/");
       }
     } catch (error) {
-      console.log(error);
       setLoader(false);
     }
   };

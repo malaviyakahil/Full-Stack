@@ -2,7 +2,9 @@ import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import axios from "axios";
 import {useNavigate} from "react-router-dom"
+
 const RegisterForm = () => {
+
   let { register, handleSubmit } = useForm();
   let [error, setError] = useState(false);
   let [loader, setLoader] = useState(false);
@@ -39,7 +41,6 @@ const RegisterForm = () => {
 
   return (
     <>
-
       <div className="flex justify-center items-center min-h-screen">
         <div className="w-full max-w-md justify-end p-5">
           <h1 className="text-center text-[40px] mb-5">Register Here</h1>
@@ -198,13 +199,18 @@ const RegisterForm = () => {
             </fieldset>
             {error && <p className="text-red-500 text-center my-2">{error}</p>}
 
-            <button className="btn btn-primary w-full my-2" type="submit">
-              {loader ? (
-                <span className="loading loading-dots loading-lg"></span>
-              ) : (
-                "Register"
-              )}
+            {loader ? (
+                   <div className="relative w-full h-[40px] rounded-lg overflow-hidden border border-gray-600 my-2">
+                   <div className="absolute top-[0px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-5" />
+                   <div className="absolute top-[9px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-3" />
+                   <div className="absolute top-[17px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-4" />
+                   <div className="absolute top-[22px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-6" />
+                 </div>
+          ) : (
+            <button className="btn bg-gray-600 w-full my-2" type="submit">
+              Register
             </button>
+          )}
           </form>
         </div>
       </div>

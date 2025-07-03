@@ -21,8 +21,8 @@ let currentUserSlice = createSlice({
       state.loading = false;
       state.error = null;
     },
-    updateCurrentUser: (state, action) => {    
-      state.data = action.payload?.data?.data;
+    updateCurrentUser: (state, action) => {
+      state.data = { ...state.data, ...action.payload?.data?.data };
     },
   },
   extraReducers: (builder) => {
@@ -39,6 +39,11 @@ let currentUserSlice = createSlice({
   },
 });
 
-let { clearCurrentUser,updateCurrentUser } = currentUserSlice.actions;
+let { clearCurrentUser, updateCurrentUser } = currentUserSlice.actions;
 
-export { currentUserSlice, fetchCurrentUser,clearCurrentUser ,updateCurrentUser};
+export {
+  currentUserSlice,
+  fetchCurrentUser,
+  clearCurrentUser,
+  updateCurrentUser,
+};

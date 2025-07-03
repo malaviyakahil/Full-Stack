@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import axios from "axios";
 import { IoMdPlay, IoMdPause } from "react-icons/io";
 import { MdVolumeOff, MdVolumeUp, MdFullscreen } from "react-icons/md";
@@ -7,10 +7,13 @@ import { BiLike, BiDislike, BiSolidDislike, BiSolidLike } from "react-icons/bi";
 import { IoShareSocialOutline } from "react-icons/io5";
 import { PiDownloadSimpleBold } from "react-icons/pi";
 import CommentSection from "../components/CommentSection";
-import { formatDistanceToNow } from 'date-fns';
-import { useSelector } from "react-redux";
+import { formatDistanceToNow } from "date-fns";
+import { useDispatch, useSelector } from "react-redux";
+import { addToHistory } from "../store/history.js";
+import { addToLikedVideos, deleteFromLikedVideos } from "../store/likedVideos.js";
 
 const SingleVideo = () => {
+  
   const { ownerId, videoId } = useParams();
   const [video, setVideo] = useState({});
   const videoRef = useRef(null);
@@ -33,9 +36,10 @@ const SingleVideo = () => {
     dislike: { count: 0, status: false },
   });
   const [isExpanded, setIsExpanded] = useState(false);
-  let  currentUser  = useSelector((store) => store.currentUser);
+  let currentUser = useSelector((store) => store.currentUser);
   const toggleExpanded = () => setIsExpanded(!isExpanded);
-  
+  let dispatch = useDispatch();
+
   useEffect(() => {
     (async () => {
       try {
@@ -78,6 +82,18 @@ const SingleVideo = () => {
           },
         });
         setChannelDetails(detailsRes.data?.data);
+
+        if (videoRes.data.data.history._id) {
+          dispatch(
+            addToHistory({
+              _id: videoRes.data?.data.history._id,
+              video: {
+                ...videoRes.data?.data,
+                owner: { ...detailsRes.data?.data },
+              },
+            }),
+          );
+        }
       } catch (error) {
         console.error(error);
       } finally {
@@ -166,7 +182,7 @@ const SingleVideo = () => {
   };
 
   const handleMouseDown = () => setIsDragging(true);
-  
+
   const handleMouseUp = (e) => {
     setIsDragging(false);
     handleSeek(e);
@@ -218,10 +234,20 @@ const SingleVideo = () => {
           count: reviewCount.like.count - 1,
         },
       });
+      dispatch(deleteFromLikedVideos(video._id));
       axios.post(`http://localhost:8000/video/delete-review/${videoId}`, [], {
         withCredentials: true,
       });
     } else {
+      dispatch(
+            addToLikedVideos({
+              _id: video._id,
+              video: {
+                ...video,
+                owner: { ...channelDetails},
+              },
+            }),
+          );
       if (reviewCount.dislike.status) {
         setReviewCount({
           like: {
@@ -261,6 +287,7 @@ const SingleVideo = () => {
         withCredentials: true,
       });
     } else {
+      dispatch(deleteFromLikedVideos(video._id));
       if (reviewCount.like.status) {
         setReviewCount({
           dislike: {
@@ -414,33 +441,41 @@ const SingleVideo = () => {
         <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-6 mt-4">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 overflow-hidden rounded-full">
-              <img
-                src={channelDetails?.avatar}
-                alt="Avatar"
-                className="object-cover h-full w-full"
-              />
+              <Link to={`/app/dashboard/single-channel/${channelDetails?._id}`}>
+                <img
+                  src={channelDetails?.avatar}
+                  alt="Avatar"
+                  className="object-cover h-full w-full"
+                />
+              </Link>
             </div>
             <div>
-              <p className="font-semibold">{channelDetails?.name}</p>
+              <Link to={`/app/dashboard/single-channel/${channelDetails?._id}`}>
+                <p className="font-semibold">{channelDetails?.name}</p>
+              </Link>
               <p className="text-sm text-gray-400">
                 {subCount?.count} subscribers
               </p>
             </div>
           </div>
 
-         {channelDetails?._id == currentUser.data?._id ?"":<div className="flex space-x-3">
-            <button
-              disabled={subCount.disabled}
-              onClick={subscribeToggle}
-              className={`text-white px-4 py-1 rounded-4xl text-md ${
-                subCount?.status
-                  ? "bg-gray-800"
-                  : "bg-gray-700 hover:bg-gray-600"
-              }`}
-            >
-              {subCount.status ? "Subscribed" : "Subscribe"}
-            </button>
-          </div>}
+          {channelDetails?._id == currentUser.data?._id ? (
+            ""
+          ) : (
+            <div className="flex space-x-3">
+              <button
+                disabled={subCount.disabled}
+                onClick={subscribeToggle}
+                className={`text-white px-4 py-1 rounded-4xl text-md ${
+                  subCount?.status
+                    ? "bg-gray-800"
+                    : "bg-gray-700 hover:bg-gray-600"
+                }`}
+              >
+                {subCount.status ? "Subscribed" : "Subscribe"}
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="flex flex-wrap gap-3 mt-4 text-sm">
@@ -472,7 +507,12 @@ const SingleVideo = () => {
               isExpanded ? "" : "line-clamp-3"
             }`}
           >
-            <div className="font-semibold mb-2.5 text-gray-100">{video?.views} views &nbsp; {formatDistanceToNow(new Date(video?.createdAt), { addSuffix: true })}</div>
+            <div className="font-semibold mb-2.5 text-gray-100">
+              {video?.views} views &nbsp;{" "}
+              {formatDistanceToNow(new Date(video?.createdAt), {
+                addSuffix: true,
+              })}
+            </div>
             {video?.description}
           </div>
           <button
@@ -483,7 +523,11 @@ const SingleVideo = () => {
           </button>
         </div>
 
-        <CommentSection channelDetails={channelDetails} videoId={videoId} ownerId={ownerId} />
+        <CommentSection
+          channelDetails={channelDetails}
+          videoId={videoId}
+          ownerId={ownerId}
+        />
       </div>
     </div>
   );

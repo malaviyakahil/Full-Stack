@@ -1,34 +1,31 @@
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import {useNavigate} from "react-router-dom"
-
-
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
+
 const LoginForm = () => {
+
   let { register, handleSubmit } = useForm();
   let [error, setError] = useState(false);
   let [loader, setLoader] = useState(false);
-  let navigate = useNavigate()
+  let navigate = useNavigate();
+  
   let submit = async (data) => {
     setLoader(true);
-    setError(false)
+    setError(false);
     let formData = new FormData();
     formData.append("name", data.name);
     formData.append("email", data.email);
     formData.append("password", data.password);
 
     try {
-      let res = await axios.post(
-        "http://localhost:8000/user/login",
-        formData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-          withCredentials:true
-        }
-      );
-      setLoader(false)
+      let res = await axios.post("http://localhost:8000/user/login", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+        withCredentials: true,
+      });
+      setLoader(false);
       if (res.data?.success) {
-        navigate("/app/dashboard/all")
+        navigate("/app/dashboard/all");
       }
     } catch (error) {
       setLoader(false);
@@ -127,9 +124,20 @@ const LoginForm = () => {
             />
           </label>
           {error && <p className="text-red-500 text-center my-2">{error}</p>}
-          <button className="btn btn-primary w-full my-2" type="submit">
-          {loader?<span className="loading loading-dots loading-lg"></span>:"Login"}
-          </button>
+
+
+          {loader ? (
+                   <div className="relative w-full h-[40px] rounded-lg overflow-hidden border border-gray-600 my-2">
+                   <div className="absolute top-[0px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-5" />
+                   <div className="absolute top-[9px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-3" />
+                   <div className="absolute top-[17px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-4" />
+                   <div className="absolute top-[22px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-6" />
+                 </div>
+          ) : (
+            <button className="btn bg-gray-600 w-full my-2" type="submit">
+              Login
+            </button>
+          )}
         </form>
       </div>
     </div>

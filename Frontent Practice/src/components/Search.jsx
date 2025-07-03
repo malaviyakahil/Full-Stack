@@ -1,10 +1,13 @@
 import axios from "axios";
 import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+
 const Search = () => {
+
   let [text, setText] = useState("");
   let [data, setData] = useState([]);
   let input = useRef()
+
   useEffect(() => {
     let timer = setTimeout(() => {
       (async () => {
@@ -21,6 +24,7 @@ const Search = () => {
       clearInterval(timer);
     };
   }, [text]);
+  
   return (
     <div className="w-full order-4 xs:order-0">
       <div className="h-[100%] md:w-[350px] w-full relative">

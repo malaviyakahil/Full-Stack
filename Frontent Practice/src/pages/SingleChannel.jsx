@@ -5,15 +5,12 @@ import { useDispatch, useSelector } from "react-redux";
 import { Link, useParams } from "react-router-dom";
 import { changePrevId, fetchCurrentChannel, subscribeToggle } from "../store/currentChannel.js";
 
-// Skeleton component
 const SingleChannelSkeleton = () => {
+
   return (
     <div className="mx-auto flex flex-col items-center text-white max-w-6xl animate-pulse">
-      {/* Banner */}
       <div className="w-full md:max-w-3xl xs:max-w-1xl lg:max-w-6xl border-gray-600 border-b-[1px]">
         <div className="w-full aspect-[4/1] bg-gray-800 rounded-lg"></div>
-
-        {/* Profile Section */}
         <div className="flex flex-col md:flex-row items-center md:items-start mt-6 px-4 w-full">
           <div className="w-24 h-24 bg-gray-800 rounded-full"></div>
           <div className="md:ml-6 text-center md:text-left mt-4 md:mt-0 space-y-3 w-full max-w-md">
@@ -25,23 +22,18 @@ const SingleChannelSkeleton = () => {
           </div>
         </div>
 
-        {/* Tabs */}
         <div className="flex space-x-4 mt-8 w-full px-4">
           <div className="h-8 w-20 bg-gray-700 rounded"></div>
         </div>
       </div>
 
-      {/* Video Grid */}
       <div className="flex flex-wrap justify-center gap-5 py-4 w-full">
         {Array.from({ length: 6 }).map((_, idx) => (
           <div
             key={idx}
             className="flex flex-col w-full sm:w-[320px] md:w-[336px] lg:w-[360px] xl:w-[370px] cursor-pointer"
           >
-            {/* Thumbnail Skeleton */}
             <div className="relative aspect-video overflow-hidden rounded-lg bg-gray-800"></div>
-
-            {/* Title + Meta */}
             <div className="flex flex-row mt-3 pl-3 gap-3">
               <div className="flex flex-col flex-1 overflow-hidden space-y-2">
                 <div className="h-4 bg-gray-700 rounded w-3/4"></div>
@@ -60,8 +52,8 @@ const SingleChannelSkeleton = () => {
 };
 
 const SingleChannel = () => {
-  let { ownerId } = useParams();
 
+  let { ownerId } = useParams();
   let currentChannel = useSelector((store) => store.currentChannel);
   let dispatch = useDispatch();
 
@@ -78,8 +70,6 @@ const SingleChannel = () => {
 
   return (
     <div className="mx-auto flex flex-col items-center text-white max-w-6xl">
-      {/* ... your existing rendering logic */}
-      {/* Banner */}
       <div className="w-full md:max-w-3xl xs:max-w-1xl lg:max-w-6xl border-gray-600 border-b-[1px]">
         <div className="w-full bg-black aspect-[4/1] overflow-hidden flex justify-center items-center rounded-lg">
           {currentChannel.data?.coverImage && (
@@ -91,7 +81,6 @@ const SingleChannel = () => {
           )}
         </div>
 
-        {/* Profile Section */}
         <div className="flex flex-col md:flex-row items-center md:items-start mt-6 px-4 w-full">
           <div className="w-24 h-24 overflow-hidden rounded-full">
             <img
@@ -129,7 +118,6 @@ const SingleChannel = () => {
           </div>
         </div>
 
-        {/* Tabs */}
         <div className="flex space-x-4 mt-8 w-full">
           <button className="pb-2 font-semibold hover:border-b-2 hover:border-white">
             Videos
@@ -137,7 +125,6 @@ const SingleChannel = () => {
         </div>
       </div>
 
-      {/* Video Grid */}
       <div className="flex flex-wrap justify-center gap-5 py-4 w-full">
         {currentChannel.data?.videos?.length > 0 ? (
           <>
@@ -161,6 +148,7 @@ const SingleChannel = () => {
 export default SingleChannel;
 
 const ChannelVideoCard = ({ video }) => {
+  
   let formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60)

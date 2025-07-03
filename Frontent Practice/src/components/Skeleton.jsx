@@ -1,9 +1,11 @@
 import React from "react";
 
 const Skeleton = () => {
+
   return (
-    <div className="flex flex-wrap justify-center gap-6 p-4">
-      {["", "", "", "", "", ""].map((e,i) => {
+
+    <div className="flex flex-wrap justify-center gap-6 py-5">
+      {[...Array(6)].map((_, i)=> {
         return (
           <div key={i} className="flex flex-col w-full sm:w-[320px] md:w-[336px] lg:w-[360px] xl:w-[380px] animate-pulse">
             <div className="relative w-full aspect-video bg-gray-300 dark:bg-gray-700 rounded-lg"></div>
@@ -18,6 +20,7 @@ const Skeleton = () => {
         );
       })}
     </div>
+    
   );
 };
 

@@ -7,6 +7,7 @@ import uploadOnCloudinary from "../utils/cloudinary.js";
 import error from "../utils/error.js";
 import response from "../utils/response.js";
 import mongoose from "mongoose";
+import { LikedVideos } from "../models/likedVideos.model.js";
 
 let uploadVideo = asyncHandler(async (req, res) => {
   let owner = req.user?._id;
@@ -144,6 +145,8 @@ let deleteVideo = asyncHandler(async (req, res) => {
     // Step 5: Delete the video itself
     await Video.findByIdAndDelete(video._id).session(session);
 
+    await History.findOneAndDelete({ video: video._id }).session(session);
+
     await session.commitTransaction();
     session.endSession();
 
@@ -236,12 +239,25 @@ let likeVideo = asyncHandler(async (req, res) => {
     throw new error(500, "Something went wrong while liking video");
   }
 
+  let likedVideo = LikedVideos.create({
+    video: video?._id,
+    user: id,
+  });
+
+  if (!likedVideo) {
+    throw new error(
+      500,
+      "Something went wrong while making history of liked video",
+    );
+  }
+
   res.status(200).json(new response(200, [], "Liked video successfully"));
 });
 
 let disLikeVideo = asyncHandler(async (req, res) => {
   let id = req.user?.id;
   let videoId = req.params?.id;
+  let user = req.user?.id;
 
   let video = await Video.findById(videoId);
 
@@ -254,6 +270,7 @@ let disLikeVideo = asyncHandler(async (req, res) => {
     user: new mongoose.Types.ObjectId(id),
   });
 
+
   let review = await Review.create({
     video: video?._id,
     user: id,
@@ -264,7 +281,18 @@ let disLikeVideo = asyncHandler(async (req, res) => {
     throw new error(500, "Something went wrong while disliking video");
   }
 
-  res.status(200).json(new response(200, [], "Disiked video successfully"));
+   
+
+  let likedDeleteSuccess = await LikedVideos.findOneAndDelete({
+    $and: [{ video }, { user }],
+  });
+
+  
+  if (!likedDeleteSuccess) {
+    throw new error(500, "Error while deleting liked video from liked videos");
+  }
+
+  res.status(200).json(new response(200, [], "Disliked video successfully"));
 });
 
 let likeComment = asyncHandler(async (req, res) => {
@@ -323,12 +351,39 @@ let disLikeComment = asyncHandler(async (req, res) => {
   res.status(200).json(new response(200, [], "Disliked comment successfully"));
 });
 
+let deleteReview = asyncHandler(async (req, res) => {
+  let user = req.user?.id;
+  let video = req.params?.id;
+
+  let deleteSuccess = await Review.findOneAndDelete({
+    $and: [{ video }, { user }],
+  });
+
+  if (!deleteSuccess) {
+    throw new error(500, "Error while deleting review");
+  }
+
+  if (deleteSuccess.review == "Like") {
+    let likedDeleteSuccess = await LikedVideos.findOneAndDelete({
+      $and: [{ video }, { user }],
+    });
+    if (!likedDeleteSuccess) {
+      throw new error(
+        500,
+        "Error while deleting liked video from liked videos",
+      );
+    }
+  }
+
+  res.status(200).json(new response(200, [], "Review deleted successfully"));
+});
+
 let giveHeart = asyncHandler(async (req, res) => {
   let commentId = req.params?.id;
 
   let hearted = await Comment.findByIdAndUpdate(commentId, {
     $set: {
-     heartByChannel:true
+      heartByChannel: true,
     },
   });
 
@@ -344,7 +399,7 @@ let takeHeart = asyncHandler(async (req, res) => {
 
   let unhearted = await Comment.findByIdAndUpdate(commentId, {
     $set: {
-     heartByChannel:false
+      heartByChannel: false,
     },
   });
 
@@ -353,21 +408,6 @@ let takeHeart = asyncHandler(async (req, res) => {
   }
 
   res.status(200).json(new response(200, [], "Unhearted comment successfully"));
-});
-
-let deleteReview = asyncHandler(async (req, res) => {
-  let user = req.user?.id;
-  let video = req.params?.id;
-  
-  let deleteSuccess = await Review.findOneAndDelete({
-    $and: [{ video }, { user }],
-  });
-  
-  if (!deleteSuccess) {
-    throw new error(500, "Error while deleting review");
-  }
-  
-  res.status(200).json(new response(200, [], "Review deleted successfully"));
 });
 
 let deleteCommentReview = asyncHandler(async (req, res) => {
@@ -423,17 +463,17 @@ let deleteComment = asyncHandler(async (req, res) => {
 });
 
 let editComment = asyncHandler(async (req, res) => {
-
   let commentId = req.params?.id;
 
   let { comment } = req.body;
 
-  if(comment.trim()==""){
+  if (comment.trim() == "") {
     throw new error(500, "Comment can not be empty");
   }
 
-  let editSuccess = await Comment.findByIdAndUpdate(commentId,{$set:{comment:comment,edited:true}});
-
+  let editSuccess = await Comment.findByIdAndUpdate(commentId, {
+    $set: { comment: comment, edited: true },
+  });
 
   if (!editSuccess) {
     throw new error(500, "Error while editing comment");
@@ -457,5 +497,5 @@ export {
   deleteCommentReview,
   addComment,
   deleteComment,
-  editComment
+  editComment,
 };

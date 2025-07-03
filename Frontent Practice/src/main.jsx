@@ -22,6 +22,8 @@ import EditProfileForm from "./pages/EditProfileForm.jsx";
 import ChangePasswordForm from "./pages/ChangePasswordForm.jsx";
 import SearchChannelAndVideo from "./pages/SearchChannelAndVideo.jsx";
 import SingleChannel from "./pages/SingleChannel.jsx";
+import History from "./pages/History.jsx";
+import LikedVideos from "./pages/LikedVideos.jsx";
 
 let router = createBrowserRouter([
   {
@@ -60,6 +62,14 @@ let router = createBrowserRouter([
             path: "single-video/:ownerId/:videoId",
             element: <SingleVideo />,
           },
+          {
+            path: "history",
+            element: <History />,
+          },
+          {
+            path: "liked-videos",
+            element: <LikedVideos />,
+          },
         ],
       },
       {
@@ -92,7 +102,7 @@ let router = createBrowserRouter([
       },
       {
         path: "settings",
-        element: <SettingDashboard/>,
+        element: <SettingDashboard />,
         children: [
           {
             path: "edit-profile",

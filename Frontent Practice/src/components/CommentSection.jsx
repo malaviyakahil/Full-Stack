@@ -10,8 +10,10 @@ import {
 import { FaHeart, FaRegHeart } from "react-icons/fa";
 import { useSelector } from "react-redux";
 import { formatDistanceToNow } from "date-fns";
+import { BsPinAngle } from "react-icons/bs";
 
 const CommentSection = ({ videoId, channelDetails, ownerId }) => {
+
   let currentUser = useSelector((store) => store.currentUser);
   const [comments, setComments] = useState([]);
   const [loader, setLoader] = useState(false);
@@ -249,6 +251,7 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
           : { ...item, showDropdown: false },
       ),
     );
+    setEdit(false);
     setCommentText("");
   };
 
@@ -286,6 +289,7 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
 
   const deleteComment = (id) => {
     setCommentText("");
+    setEdit(false);
     setComments(comments.filter((item) => item._id != id));
     axios.post(`http://localhost:8000/video/delete-comment/${id}`, [], {
       withCredentials: true,
@@ -345,12 +349,21 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
               className="mb-4 border-b pb-4 border-gray-700 flex gap-3"
               ref={(el) => (commentRefs.current[comment._id] = el)}
             >
-              <img
+              < img
                 src={comment?.user?.avatar}
                 alt={`${comment?.user?.name}'s avatar`}
-                className="w-8 h-8 rounded-full object-cover"
+                className={`w-8 h-8 rounded-full object-cover ${comment.pinByChannel ? "mt-5" : ""}`}
               />
+
               <div className="flex-1">
+                {comment.pinByChannel && (
+                  <div className="flex items-center gap-1">
+                    <BsPinAngle className="text-[13px]" />
+                    <span className="text-gray-300 text-[13px]">
+                      Pinned by @{channelDetails?.name}
+                    </span>
+                  </div>
+                )}
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-gray-200">
                     @{comment?.user?.name}{" "}
@@ -442,16 +455,18 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
                   {comment?.showDropdown && (
                     <div className="absolute right-0 w-32 mt-2 bg-gray-700 rounded-md shadow-lg overflow-hidden">
                       <ul className="text-sm text-gray-100">
-                       {currentUser?.data?._id == comment.user._id && <li>
-                          <button
-                            className="block w-full px-4 py-2 text-left hover:bg-gray-600"
-                            onClick={() => {
-                              editComment(comment?._id, comment?.comment);
-                            }}
-                          >
-                            Edit
-                          </button>
-                        </li>}
+                        {currentUser?.data?._id == comment.user._id && (
+                          <li>
+                            <button
+                              className="block w-full px-4 py-2 text-left hover:bg-gray-600"
+                              onClick={() => {
+                                editComment(comment?._id, comment?.comment);
+                              }}
+                            >
+                              Edit
+                            </button>
+                          </li>
+                        )}
                         <li>
                           <button
                             className="block w-full px-4 py-2 text-left hover:bg-gray-600"

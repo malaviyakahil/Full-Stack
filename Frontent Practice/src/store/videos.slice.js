@@ -19,10 +19,10 @@ let videosSlice = createSlice({
     },
     incrementView: (state, action) => {
       state.data = state.data?.map((video) => {
-        if(video._id == action.payload){
-            return {...video,views:video.views+1}
-        };
-        return video
+        if (video._id == action.payload) {
+          return { ...video, views: video.views + 1 };
+        }
+        return video;
       });
     },
   },
@@ -41,6 +41,6 @@ let videosSlice = createSlice({
   },
 });
 
-let { clearVideos,incrementView } = videosSlice.actions;
+let { clearVideos, incrementView } = videosSlice.actions;
 
-export { videosSlice, fetchVideos, clearVideos ,incrementView};
+export { videosSlice, fetchVideos, clearVideos, incrementView };
