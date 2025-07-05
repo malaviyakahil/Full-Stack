@@ -728,7 +728,7 @@ let getVideoQuality = asyncHandler(async (req, res) => {
     { label: "1080p", height: 1080 },
   ];
 
-    const extractPublicIdFromUrl = (videoUrl) => {
+  const extractPublicIdFromUrl = (videoUrl) => {
     const pattern = /\/upload\/(?:v\d+\/)?([^\.]+)\.(mp4|webm|mov|avi|mkv)/;
     const match = videoUrl.match(pattern);
     return match?.[1] || null;
@@ -1310,6 +1310,29 @@ let searchAll = asyncHandler(async (req, res) => {
     .json(new response(200, uniqueResults, "Data fetched successfully"));
 });
 
+const authMe = asyncHandler(async (req, res) => {
+  const token =
+    req.cookies?.refreshToken ||
+    req.header("Authorization")?.replace("Bearer ", "");
+
+  if (!token) {
+    throw new error(401, "Login required");
+  }
+
+  try {
+    jsonWebToken.verify(token, process.env.REFRESH_TOKEN_KEY); // 👈 using your .env secret
+    res.status(200).json(
+      new response(
+        200,
+      [],
+        "Authorized user",
+      ),
+    );
+  } catch (err) {
+    throw new error(401, "Invalid or expired token");
+  }
+});
+
 export {
   registerUser,
   loginUser,
@@ -1337,4 +1360,5 @@ export {
   getLikedVideos,
   deleteLikedVideos,
   getVideoQuality,
+  authMe
 };

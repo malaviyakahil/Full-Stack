@@ -24,6 +24,8 @@ import SearchChannelAndVideo from "./pages/SearchChannelAndVideo.jsx";
 import SingleChannel from "./pages/SingleChannel.jsx";
 import History from "./pages/History.jsx";
 import LikedVideos from "./pages/LikedVideos.jsx";
+import { AuthProvider } from "./components/AuthContext.jsx";
+import ProtectedRoute from "./components/ProtectedRoute.jsx";
 
 let router = createBrowserRouter([
   {
@@ -40,7 +42,9 @@ let router = createBrowserRouter([
   },
   {
     path: "/app",
-    element: <App />,
+    element: <ProtectedRoute>
+        <App />
+      </ProtectedRoute>,
     children: [
       {
         path: "dashboard",
@@ -124,6 +128,8 @@ let router = createBrowserRouter([
 
 createRoot(document.getElementById("root")).render(
   <Provider store={store}>
-    <RouterProvider router={router} />
+     <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>
   </Provider>,
 );

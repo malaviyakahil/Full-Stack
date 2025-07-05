@@ -26,7 +26,7 @@ import {
   getLikedVideos,
   deleteLikedVideos,
   getVideoQuality,
-  
+  authMe
 } from "../controllers/user.controller.js";
 import upload from "../middlewares/multer.middleware.js";
 import auth from "../middlewares/auth.middleware.js";
@@ -57,6 +57,7 @@ userRouter.get(
   getCurrentUserVideos,
 );
 userRouter.post("/renew-access-token", upload.none(), renewAccessToken);
+userRouter.get("/auth-me", upload.none(), authMe);
 
 userRouter.post("/change-password", upload.none(), auth, changePassword);
 userRouter.post("/change-full-name", upload.none(), auth, changeFullName);
