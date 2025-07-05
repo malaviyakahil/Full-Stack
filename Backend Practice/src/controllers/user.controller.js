@@ -4,7 +4,7 @@ import { Video } from "../models/video.model.js";
 import { History } from "../models/history.model.js";
 import { Review } from "../models/review.model.js";
 import { Comment } from "../models/comment.model.js";
-import uploadOnCloudinary from "../utils/cloudinary.js";
+import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import response from "../utils/response.js";
 import error from "../utils/error.js";
 import jsonWebToken from "jsonwebtoken";
@@ -12,7 +12,7 @@ import fs from "fs";
 import mongoose from "mongoose";
 import asyncHandler from "../utils/asyncHandler.js";
 import { LikedVideos } from "../models/likedVideos.model.js";
-
+import { v2 as cloudinary } from "cloudinary";
 let generatingAccessAndRefreshToken = async function (id) {
   let user = await User.findById(id);
   let accessToken = await user.generateAccessToken();
@@ -718,6 +718,50 @@ let getVideo = asyncHandler(async (req, res) => {
     );
 });
 
+let getVideoQuality = asyncHandler(async (req, res) => {
+  const qualityOptions = [
+    { label: "144p", height: 144 },
+    { label: "240p", height: 240 },
+    { label: "360p", height: 360 },
+    { label: "480p", height: 480 },
+    { label: "720p", height: 720 },
+    { label: "1080p", height: 1080 },
+  ];
+
+    const extractPublicIdFromUrl = (videoUrl) => {
+    const pattern = /\/upload\/(?:v\d+\/)?([^\.]+)\.(mp4|webm|mov|avi|mkv)/;
+    const match = videoUrl.match(pattern);
+    return match?.[1] || null;
+  };
+
+  let { url } = req.body;
+
+  if (!url) {
+    throw new error(401, "Missing Cloudinary video URL.");
+  }
+
+  const publicId = extractPublicIdFromUrl(url);
+
+  if (!publicId) {
+    throw new error(401, "Invalid Cloudinary video URL.");
+  }
+  const result = await cloudinary.api.resource(publicId, {
+    resource_type: "video",
+  });
+
+  const originalHeight = result.height;
+
+  const availableQualities = qualityOptions
+    .filter((q) => q.height <= originalHeight)
+    .map((q) => q.label);
+
+  res
+    .status(200)
+    .json(
+      new response(200, { availableQualities }, "Quality fetched successfully"),
+    );
+});
+
 let getChannel = asyncHandler(async (req, res) => {
   let userId = req.params?.id;
   let currentUserId = req.user?._id;
@@ -1292,4 +1336,5 @@ export {
   deleteHistory,
   getLikedVideos,
   deleteLikedVideos,
+  getVideoQuality,
 };

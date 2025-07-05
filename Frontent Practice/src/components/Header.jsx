@@ -5,7 +5,7 @@ import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import { clearCurrentUserVideos } from "../store/userVideos.slice.js";
 import { clearVideos } from "../store/videos.slice.js";
-import { clearHistory } from "../store/history.js";
+import { clearHistory } from "../store/history.slice.js";
 
 const Header = () => {
 

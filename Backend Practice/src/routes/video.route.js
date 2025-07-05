@@ -14,7 +14,9 @@ import {
   disLikeComment,
   editComment,
   giveHeart,
-  takeHeart
+  takeHeart,
+  pin,
+  unPin
 } from "../controllers/video.controller.js";
 import upload from "../middlewares/multer.middleware.js";
 import auth from "../middlewares/auth.middleware.js";
@@ -50,6 +52,8 @@ videoRouter.post("/like-comment/:id", upload.none(), auth, likeComment);
 videoRouter.post("/dislike-comment/:id", upload.none(), auth, disLikeComment);
 videoRouter.post("/give-heart/:id", upload.none(), auth, giveHeart);
 videoRouter.post("/take-heart/:id", upload.none(), auth, takeHeart);
+videoRouter.post("/pin/:id", upload.none(), auth, pin);
+videoRouter.post("/un-pin/:id", upload.none(), auth, unPin);
 videoRouter.get("/get-all-videos", upload.none(), auth, getAllVideo);
 videoRouter.post("/delete-review/:id", upload.none(), auth, deleteReview);
 videoRouter.post("/delete-comment-review/:id", upload.none(), auth, deleteCommentReview);

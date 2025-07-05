@@ -1,9 +1,8 @@
-import axios from "axios";
 import { formatDistanceToNow } from "date-fns";
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useParams } from "react-router-dom";
-import { changePrevId, fetchCurrentChannel, subscribeToggle } from "../store/currentChannel.js";
+import { changePrevId, fetchCurrentChannel, subscribeToggle } from "../store/currentChannel.slice.js";
 
 const SingleChannelSkeleton = () => {
 

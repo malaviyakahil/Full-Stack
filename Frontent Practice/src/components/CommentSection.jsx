@@ -13,7 +13,7 @@ import { formatDistanceToNow } from "date-fns";
 import { BsPinAngle } from "react-icons/bs";
 
 const CommentSection = ({ videoId, channelDetails, ownerId }) => {
-
+  
   let currentUser = useSelector((store) => store.currentUser);
   const [comments, setComments] = useState([]);
   const [loader, setLoader] = useState(false);
@@ -265,8 +265,6 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
 
   const toggleHeart = (heart, id) => {
     if (heart) {
-      console.log("reach");
-
       setComments((prevData) =>
         prevData.map((item) =>
           item._id === id ? { ...item, heartByChannel: false } : item,
@@ -284,6 +282,39 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
       axios.post(`http://localhost:8000/video/give-heart/${id}`, [], {
         withCredentials: true,
       });
+    }
+  };
+
+  const countPinnedComments = () => {
+    return comments.filter((comment) => comment.pinByChannel === true).length;
+  };
+
+  const togglePin = (pin, id) => {
+    setComments((prevData) =>
+      prevData.map((item) => {
+        return { ...item, showDropdown: false };
+      }),
+    );
+    if (pin) {
+      setComments((prevData) =>
+        prevData.map((item) =>
+          item._id === id ? { ...item, pinByChannel: false } : item,
+        ),
+      );
+      axios.post(`http://localhost:8000/video/un-pin/${id}`, [], {
+        withCredentials: true,
+      });
+    } else {
+      if (countPinnedComments() < 1) {
+        setComments((prevData) =>
+          prevData.map((item) =>
+            item._id === id ? { ...item, pinByChannel: true } : item,
+          ),
+        );
+        axios.post(`http://localhost:8000/video/pin/${id}`, [], {
+          withCredentials: true,
+        });
+      }
     }
   };
 
@@ -330,7 +361,7 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
               />
             </div>
             <button
-              className="bg-gray-700 hover:bg-gray-600 text-white min-w-[7rem] px-6 py-2 rounded text-center"
+              className="bg-gray-700 hover:bg-gray-600 text-white min-w-[7rem] px-6 py-2 rounded-lg text-center"
               onClick={handlePostComment}
             >
               {edit ? "Save" : "Comment"}
@@ -349,7 +380,7 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
               className="mb-4 border-b pb-4 border-gray-700 flex gap-3"
               ref={(el) => (commentRefs.current[comment._id] = el)}
             >
-              < img
+              <img
                 src={comment?.user?.avatar}
                 alt={`${comment?.user?.name}'s avatar`}
                 className={`w-8 h-8 rounded-full object-cover ${comment.pinByChannel ? "mt-5" : ""}`}
@@ -453,7 +484,7 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
                     <BiDotsVertical size={20} />
                   </button>
                   {comment?.showDropdown && (
-                    <div className="absolute right-0 w-32 mt-2 bg-gray-700 rounded-md shadow-lg overflow-hidden">
+                    <div className="absolute right-0 w-32 mt-2 bg-gray-700 rounded-md shadow-lg overflow-hidden z-50">
                       <ul className="text-sm text-gray-100">
                         {currentUser?.data?._id == comment.user._id && (
                           <li>
@@ -477,6 +508,34 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
                             Delete
                           </button>
                         </li>
+                        {countPinnedComments() < 1 ? (
+                          <li>
+                            <button
+                              className="block w-full px-4 py-2 text-left hover:bg-gray-600"
+                              onClick={() => {
+                                togglePin(comment?.pinByChannel, comment?._id);
+                              }}
+                            >
+                              Pin
+                            </button>
+                          </li>
+                        ) : (
+                          comment?.pinByChannel && (
+                            <li>
+                              <button
+                                className="block w-full px-4 py-2 text-left hover:bg-gray-600"
+                                onClick={() => {
+                                  togglePin(
+                                    comment?.pinByChannel,
+                                    comment?._id,
+                                  );
+                                }}
+                              >
+                                Unpin
+                              </button>
+                            </li>
+                          )
+                        )}
                       </ul>
                     </div>
                   )}

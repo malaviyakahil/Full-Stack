@@ -3,52 +3,55 @@ import { Video } from "../models/video.model.js";
 import { Comment } from "../models/comment.model.js";
 import { CommentReview } from "../models/commentReview.model.js";
 import asyncHandler from "../utils/asyncHandler.js";
-import uploadOnCloudinary from "../utils/cloudinary.js";
+import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import error from "../utils/error.js";
 import response from "../utils/response.js";
 import mongoose from "mongoose";
 import { LikedVideos } from "../models/likedVideos.model.js";
+import { History } from "../models/history.model.js";
 
 let uploadVideo = asyncHandler(async (req, res) => {
   let owner = req.user?._id;
-
   let { title, description } = req.body;
 
   if ([title, description].some((e) => e.trim() == "")) {
-    throw new error(400, "title and description must required");
+    throw new error(400, "Title and description are required.");
   }
 
   let videoLocalPath = req.files.video ? req.files.video[0]?.path : null;
-
-  if (!videoLocalPath) {
-    throw new error(401, "Invalid video path");
-  }
+  if (!videoLocalPath) throw new error(401, "Invalid video path");
 
   let thumbnailLocalPath = req.files.thumbnail
     ? req.files.thumbnail[0]?.path
     : null;
-
-  if (!thumbnailLocalPath) {
-    throw new error(401, "Invalid thumbnail path");
-  }
+  if (!thumbnailLocalPath) throw new error(401, "Invalid thumbnail path");
 
   let videoRes = await uploadOnCloudinary(videoLocalPath);
-
   if (!videoRes) {
-    throw new error(
-      401,
-      "Something went wrong while uploading video on cloudinary",
-    );
+    throw new error(401, "Video upload to Cloudinary failed");
   }
 
   let thumbnailRes = await uploadOnCloudinary(thumbnailLocalPath);
-
   if (!thumbnailRes) {
-    throw new error(
-      401,
-      "Something went wrong while uploading thumbnail on cloudinary",
-    );
+    throw new error(401, "Thumbnail upload to Cloudinary failed");
   }
+
+  const videoHeight = videoRes?.height;
+
+  const qualityOptions = [
+    { label: "144p", height: 144 },
+    { label: "240p", height: 240 },
+    { label: "360p", height: 360 },
+    { label: "480p", height: 480 },
+    { label: "720p", height: 720 },
+    { label: "1080p", height: 1080 },
+  ];
+
+  const availableQualities = qualityOptions
+    .filter((q) => videoHeight >= q.height)
+    .map((q) => q.label);
+
+  const originalQuality = availableQualities.at(-1);
 
   let videoUploaded = await Video.create({
     video: videoRes?.url,
@@ -57,10 +60,14 @@ let uploadVideo = asyncHandler(async (req, res) => {
     description,
     owner,
     duration: videoRes?.duration,
+    width: videoRes?.width,
+    height: videoRes?.height,
+    availableQualities,
+    originalQuality,
   });
 
   if (!videoUploaded) {
-    throw new error(500, "Video uploading failed");
+    throw new error(500, "Video upload failed");
   }
 
   res
@@ -122,30 +129,41 @@ let deleteVideo = asyncHandler(async (req, res) => {
   if (!owner.equals(video.owner)) {
     throw new error(400, "This video does not belong to you");
   }
+  console.log("ok");
 
   const session = await Video.startSession();
   session.startTransaction();
+  console.log("yes");
 
   try {
     // Step 1: Find comments related to the video
     const comments = await Comment.find({ video: video._id }).session(session);
     const commentIds = comments.map((comment) => comment._id);
+    console.log(1);
 
     // Step 2: Delete comment reviews associated with the comments
     await CommentReview.deleteMany({ comment: { $in: commentIds } }).session(
       session,
     );
+    console.log(2);
 
     // Step 3: Delete comments related to the video
     await Comment.deleteMany({ video: video._id }).session(session);
+    console.log(3);
 
     // Step 4: Delete reviews related to the video
     await Review.deleteMany({ video: video._id }).session(session);
+    console.log(4);
 
     // Step 5: Delete the video itself
     await Video.findByIdAndDelete(video._id).session(session);
+    console.log(5);
 
-    await History.findOneAndDelete({ video: video._id }).session(session);
+    await History.deleteMany({ video: video._id }).session(session);
+    console.log(6);
+
+    await LikedVideos.deleteMany({ video: video._id }).session(session);
+    console.log(7);
 
     await session.commitTransaction();
     session.endSession();
@@ -270,7 +288,6 @@ let disLikeVideo = asyncHandler(async (req, res) => {
     user: new mongoose.Types.ObjectId(id),
   });
 
-
   let review = await Review.create({
     video: video?._id,
     user: id,
@@ -281,13 +298,10 @@ let disLikeVideo = asyncHandler(async (req, res) => {
     throw new error(500, "Something went wrong while disliking video");
   }
 
-   
-
   let likedDeleteSuccess = await LikedVideos.findOneAndDelete({
     $and: [{ video }, { user }],
   });
 
-  
   if (!likedDeleteSuccess) {
     throw new error(500, "Error while deleting liked video from liked videos");
   }
@@ -410,6 +424,38 @@ let takeHeart = asyncHandler(async (req, res) => {
   res.status(200).json(new response(200, [], "Unhearted comment successfully"));
 });
 
+let pin = asyncHandler(async (req, res) => {
+  let commentId = req.params?.id;
+
+  let pinned = await Comment.findByIdAndUpdate(commentId, {
+    $set: {
+      pinByChannel: true,
+    },
+  });
+
+  if (!pinned) {
+    throw new error(500, "Something went wrong while pinning comment");
+  }
+
+  res.status(200).json(new response(200, [], "Pinned comment successfully"));
+});
+
+let unPin = asyncHandler(async (req, res) => {
+  let commentId = req.params?.id;
+
+  let unPinned = await Comment.findByIdAndUpdate(commentId, {
+    $set: {
+      pinByChannel: false,
+    },
+  });
+
+  if (!unPinned) {
+    throw new error(500, "Something went wrong while un-pinning comment");
+  }
+
+  res.status(200).json(new response(200, [], "Un-pinned comment successfully"));
+});
+
 let deleteCommentReview = asyncHandler(async (req, res) => {
   let user = req.user?.id;
   let comment = req.params?.id;
@@ -498,4 +544,6 @@ export {
   addComment,
   deleteComment,
   editComment,
+  pin,
+  unPin,
 };

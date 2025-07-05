@@ -1,29 +1,52 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
+import { formatDistanceToNow } from "date-fns";
+import { SlVolume2, SlVolumeOff } from "react-icons/sl";
+import { IoSettingsOutline } from "react-icons/io5";
+import { RiPictureInPictureLine } from "react-icons/ri";
+import { PiPause, PiPlay } from "react-icons/pi";
+import { BiExitFullscreen, BiFullscreen } from "react-icons/bi";
+import { TbRewindBackward10, TbRewindForward10 } from "react-icons/tb";
 import { Link, useParams } from "react-router-dom";
 import axios from "axios";
-import { IoMdPlay, IoMdPause } from "react-icons/io";
-import { MdVolumeOff, MdVolumeUp, MdFullscreen } from "react-icons/md";
 import { BiLike, BiDislike, BiSolidDislike, BiSolidLike } from "react-icons/bi";
 import { IoShareSocialOutline } from "react-icons/io5";
 import { PiDownloadSimpleBold } from "react-icons/pi";
 import CommentSection from "../components/CommentSection";
-import { formatDistanceToNow } from "date-fns";
 import { useDispatch, useSelector } from "react-redux";
-import { addToHistory } from "../store/history.js";
-import { addToLikedVideos, deleteFromLikedVideos } from "../store/likedVideos.js";
+import { addToHistory } from "../store/history.slice.js";
+import {
+  addToLikedVideos,
+  deleteFromLikedVideos,
+} from "../store/likedVideos.slice.js";
+
+const formatTime = (time) => {
+  const minutes = Math.floor(time / 60)
+    .toString()
+    .padStart(2, "0");
+  const seconds = Math.floor(time % 60)
+    .toString()
+    .padStart(2, "0");
+  return `${minutes}:${seconds}`;
+};
 
 const SingleVideo = () => {
-  
   const { ownerId, videoId } = useParams();
   const [video, setVideo] = useState({});
   const videoRef = useRef(null);
-  const progressBarRef = useRef(null);
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [isMuted, setIsMuted] = useState(false);
+  const containerRef = useRef(null);
+  const [playing, setPlaying] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const [volume, setVolume] = useState(1);
+  const [fullscreen, setFullscreen] = useState(false);
+  const [theaterMode, setTheaterMode] = useState(false);
+  const [speed, setSpeed] = useState(1);
+  const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
-  const [isHovering, setIsHovering] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
+  const [showControls, setShowControls] = useState(true);
+  const [showSettings, setShowSettings] = useState(false);
+  const timeoutRef = useRef(null);
+
   const [loading, setLoading] = useState(true);
   let [subCount, setSubCount] = useState({
     count: 0,
@@ -39,6 +62,9 @@ const SingleVideo = () => {
   let currentUser = useSelector((store) => store.currentUser);
   const toggleExpanded = () => setIsExpanded(!isExpanded);
   let dispatch = useDispatch();
+  const [selectedQuality, setSelectedQuality] = useState("");
+  const [availableQualities, setAvailableQualities] = useState([]);
+  const [videoSrc, setVideoSrc] = useState("");
 
   useEffect(() => {
     (async () => {
@@ -71,6 +97,9 @@ const SingleVideo = () => {
           count: detailsRes.data?.data.subs,
         });
         setVideo(videoRes.data?.data);
+
+        setAvailableQualities(videoRes.data?.data?.availableQualities);
+        setSelectedQuality(videoRes.data?.data?.originalQuality);
         setReviewCount({
           like: {
             count: videoRes?.data?.data?.reviews?.Like,
@@ -103,104 +132,209 @@ const SingleVideo = () => {
   }, []);
 
   useEffect(() => {
-    if (loading || !videoRef.current) return;
+    if (!video.video || !selectedQuality) return;
 
-    const video = videoRef.current;
-
-    const handleMetadata = () => {
-      setDuration(video.duration);
-      setIsMuted(video.muted);
+    const transformMap = {
+      "144p": "w_256,h_144,c_scale",
+      "240p": "w_426,h_240,c_scale",
+      "360p": "w_640,h_360,c_scale",
+      "480p": "w_854,h_480,c_scale",
+      "720p": "w_1280,h_720,c_scale",
+      "1080p": "w_1920,h_1080,c_scale",
     };
 
+    const videoElement = videoRef.current;
+    if (!videoElement) return;
+
+    const currentTime = videoElement.currentTime;
+    const wasPlaying = !videoElement.paused;
+
+    const [, base] = video.video.split("/upload/");
+    const transform = transformMap[selectedQuality];
+    const newUrl =
+      selectedQuality === video.originalQuality
+        ? video.video
+        : `https://res.cloudinary.com/malaviyakahil/video/upload/${transform}/${base}`;
+
+    const restorePosition = () => {
+      videoElement.currentTime = currentTime;
+      videoElement.playbackRate = speed;
+      if (wasPlaying) {
+        videoElement.play().catch((err) => {
+          console.warn("Resume failed after quality switch:", err);
+        });
+      }
+      videoElement.removeEventListener("loadedmetadata", restorePosition);
+    };
+
+    videoElement.addEventListener("loadedmetadata", restorePosition);
+    setVideoSrc(newUrl);
+  }, [selectedQuality, video, speed]);
+
+  useEffect(() => {
+    if (loading) return;
+    const video = videoRef.current;
+
     const handleTimeUpdate = () => {
-      if (!isDragging) {
-        setCurrentTime(video.currentTime);
+      setCurrentTime(video.currentTime);
+      setProgress((video.currentTime / video.duration) * 100);
+    };
+
+    const handleLoadedMetadata = () => {
+      setDuration(video.duration);
+    };
+
+    const handleEnded = () => {
+      setPlaying(false);
+    };
+
+    video.addEventListener("timeupdate", handleTimeUpdate);
+    video.addEventListener("loadedmetadata", handleLoadedMetadata);
+    video.addEventListener("ended", handleEnded);
+
+    return () => {
+      video.removeEventListener("timeupdate", handleTimeUpdate);
+      video.removeEventListener("loadedmetadata", handleLoadedMetadata);
+      video.removeEventListener("ended", handleEnded);
+    };
+  }, [loading]);
+
+  useEffect(() => {
+    if (loading) return;
+    const handleFullscreenChange = () => {
+      setFullscreen(document.fullscreenElement === containerRef.current);
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    };
+  }, [loading]);
+
+  useEffect(() => {
+    if (loading) return;
+    const resetControlsTimer = () => {
+      clearTimeout(timeoutRef.current);
+      setShowControls(true);
+      if (!showSettings) {
+        timeoutRef.current = setTimeout(() => {
+          setShowControls(false);
+        }, 1000);
       }
     };
 
-    const handlePlay = () => setIsPlaying(true);
-    const handlePause = () => setIsPlaying(false);
-    const handleVolumeChange = () => setIsMuted(video.muted);
+    const container = containerRef.current;
+    container.addEventListener("mousemove", resetControlsTimer);
+    container.addEventListener("click", resetControlsTimer);
+    container.addEventListener("touchstart", resetControlsTimer);
 
-    video.addEventListener("loadedmetadata", handleMetadata);
-    video.addEventListener("timeupdate", handleTimeUpdate);
-    video.addEventListener("play", handlePlay);
-    video.addEventListener("pause", handlePause);
-    video.addEventListener("volumechange", handleVolumeChange);
-
-    if (video.readyState >= 1) {
-      handleMetadata();
-    }
+    resetControlsTimer();
 
     return () => {
-      video.removeEventListener("loadedmetadata", handleMetadata);
-      video.removeEventListener("timeupdate", handleTimeUpdate);
-      video.removeEventListener("play", handlePlay);
-      video.removeEventListener("pause", handlePause);
-      video.removeEventListener("volumechange", handleVolumeChange);
+      container.removeEventListener("mousemove", resetControlsTimer);
+      container.removeEventListener("click", resetControlsTimer);
+      container.removeEventListener("touchstart", resetControlsTimer);
     };
-  }, [loading, isDragging]);
+  }, [loading, showSettings]);
 
-  const syncVideoState = () => {
+  const handleSeek = (e) => {
     const video = videoRef.current;
-    if (video) {
-      setIsPlaying(!video.paused);
-      setIsMuted(video.muted);
+    const wasPlaying = !video.paused;
+
+    if (wasPlaying) video.pause();
+
+    const seekTarget = (parseFloat(e.target.value) / 100) * duration;
+    video.currentTime = seekTarget;
+    setProgress(parseFloat(e.target.value));
+
+    if (wasPlaying) {
+      setTimeout(() => {
+        video.play().catch((err) => console.warn("Resume failed:", err));
+      }, 60);
     }
   };
 
   const togglePlay = () => {
     const video = videoRef.current;
-    if (!video) return;
-
     if (video.paused) {
       video.play();
+      setPlaying(true);
     } else {
       video.pause();
+      setPlaying(false);
     }
-
-    setTimeout(syncVideoState, 0);
   };
 
   const toggleMute = () => {
     const video = videoRef.current;
-    if (!video) return;
-
     video.muted = !video.muted;
-    setTimeout(syncVideoState, 0);
+    setMuted(video.muted);
   };
 
-  const handleSeek = (e) => {
-    const bar = progressBarRef.current;
-    const rect = bar.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const percent = clickX / rect.width;
-    const newTime = percent * duration;
-
-    videoRef.current.currentTime = newTime;
-    setCurrentTime(newTime);
+  const handleVolumeChange = (e) => {
+    const vol = parseFloat(e.target.value);
+    videoRef.current.volume = vol;
+    setVolume(vol);
+    setMuted(vol === 0);
   };
 
-  const handleMouseDown = () => setIsDragging(true);
+  const toggleFullscreen = async () => {
+    const container = containerRef.current;
+    const isMobile = window.innerWidth < 768;
 
-  const handleMouseUp = (e) => {
-    setIsDragging(false);
-    handleSeek(e);
-  };
-  const handleMouseMove = (e) => {
-    if (isDragging) {
-      handleSeek(e);
+    try {
+      if (!document.fullscreenElement) {
+        if (container.requestFullscreen) {
+          await container.requestFullscreen();
+        }
+        if (isMobile && screen.orientation?.lock) {
+          await screen.orientation.lock("landscape");
+        }
+      } else {
+        if (document.exitFullscreen) {
+          await document.exitFullscreen();
+        }
+        if (isMobile && screen.orientation?.unlock) {
+          await screen.orientation.unlock();
+        }
+      }
+    } catch (err) {
+      console.warn("Fullscreen or orientation lock failed:", err);
     }
   };
 
-  const formatTime = (time) => {
-    const minutes = Math.floor(time / 60)
-      .toString()
-      .padStart(2, "0");
-    const seconds = Math.floor(time % 60)
-      .toString()
-      .padStart(2, "0");
-    return `${minutes}:${seconds}`;
+  const togglePiP = async () => {
+    if (document.pictureInPictureElement) {
+      document.exitPictureInPicture();
+    } else {
+      if (videoRef.current !== document.pictureInPictureElement) {
+        await videoRef.current.requestPictureInPicture();
+      }
+    }
+  };
+
+  const changeSpeed = (e) => {
+    const newSpeed = parseFloat(e.target.value);
+    videoRef.current.playbackRate = newSpeed;
+    setSpeed(newSpeed);
+  };
+
+  const changeQuality = (e) => {
+    const newQuality = e.target.value;
+    setSelectedQuality(newQuality);
+  };
+
+  const skipBackward = () => {
+    videoRef.current.currentTime = Math.max(
+      0,
+      videoRef.current.currentTime - 10,
+    );
+  };
+
+  const skipForward = () => {
+    videoRef.current.currentTime = Math.min(
+      duration,
+      videoRef.current.currentTime + 10,
+    );
   };
 
   const subscribeToggle = () => {
@@ -240,14 +374,14 @@ const SingleVideo = () => {
       });
     } else {
       dispatch(
-            addToLikedVideos({
-              _id: video._id,
-              video: {
-                ...video,
-                owner: { ...channelDetails},
-              },
-            }),
-          );
+        addToLikedVideos({
+          _id: video._id,
+          video: {
+            ...video,
+            owner: { ...channelDetails },
+          },
+        }),
+      );
       if (reviewCount.dislike.status) {
         setReviewCount({
           like: {
@@ -317,48 +451,57 @@ const SingleVideo = () => {
   if (loading) {
     return (
       <div className="bg-transparent text-white max-w-6xl mx-auto py-5 animate-pulse">
-        {/* Video Placeholder */}
-        <div className="relative aspect-video bg-gray-800 rounded overflow-hidden">
-          <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-            <div className="w-14 h-14 bg-gray-700 rounded-full" />
-          </div>
+        <div className="relative aspect-video bg-gray-800 rounded-xl overflow-hidden">
+          <div className="absolute bottom-0 left-0 right-0 px-4 py-2 bg-gradient-to-t from-black/70 to-transparent text-white text-sm">
+            <div className="h-2 bg-gray-600 rounded-full w-full mb-3" />
 
-          <div className="absolute bottom-0 left-0 right-0 bg-black/70 px-4 py-2 flex justify-between items-center text-sm">
-            <div className="flex items-center space-x-4">
-              <div className="w-4 h-4 bg-gray-600 rounded" />
-              <div className="w-24 h-3 bg-gray-600 rounded" />
-            </div>
-            <div className="flex space-x-3 text-lg">
-              <div className="w-5 h-5 bg-gray-600 rounded" />
-              <div className="w-6 h-6 bg-gray-600 rounded" />
+            <div className="flex justify-between items-center gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-5 h-5 bg-gray-600 rounded" />
+                <div className="w-20 h-2 bg-gray-600 rounded hidden md:block" />
+                <div className="w-24 h-3 bg-gray-600 rounded" />
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="w-6 h-6 bg-gray-600 rounded-full" />
+                <div className="w-6 h-6 bg-gray-600 rounded-full" />
+                <div className="w-6 h-6 bg-gray-600 rounded-full" />
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-4 bg-gray-600 rounded hidden md:inline" />
+                <div className="w-5 h-5 bg-gray-600 rounded" />
+                <div className="w-5 h-5 bg-gray-600 rounded" />
+                <div className="w-5 h-5 bg-gray-600 rounded" />
+              </div>
             </div>
           </div>
         </div>
+        <div className="mt-6 w-3/5 h-5 bg-gray-700 rounded" />
 
-        {/* Video Info Skeleton */}
-        <div className="mt-6">
-          <div className="w-1/2 h-6 bg-gray-700 rounded mb-4" />
-
-          <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4 mt-3">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gray-700 rounded-full" />
-              <div>
-                <div className="w-24 h-4 bg-gray-600 rounded mb-1" />
-                <div className="w-20 h-3 bg-gray-600 rounded" />
-              </div>
-            </div>
-            <div className="flex space-x-3">
-              <div className="w-24 h-8 bg-gray-700 rounded-4xl" />
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 mt-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gray-700 rounded-full" />
+            <div>
+              <div className="w-24 h-4 bg-gray-600 rounded mb-1" />
+              <div className="w-20 h-3 bg-gray-600 rounded" />
             </div>
           </div>
+          <div className="w-24 h-8 bg-gray-700 rounded-4xl" />
+        </div>
 
-          {/* Interaction Buttons Skeleton */}
-          <div className="flex flex-wrap gap-3 mt-4 text-sm">
-            <div className="w-20 h-8 bg-gray-700 rounded-4xl" />
-            <div className="w-24 h-8 bg-gray-700 rounded-4xl" />
-            <div className="w-20 h-8 bg-gray-700 rounded-4xl" />
-            <div className="w-24 h-8 bg-gray-700 rounded-4xl" />
-          </div>
+        <div className="flex flex-wrap gap-3 mt-4 text-sm">
+          <div className="w-20 h-8 bg-gray-700 rounded-4xl" />
+          <div className="w-24 h-8 bg-gray-700 rounded-4xl" />
+          <div className="w-20 h-8 bg-gray-700 rounded-4xl" />
+          <div className="w-24 h-8 bg-gray-700 rounded-4xl" />
+        </div>
+
+        <div className="mt-5 w-full bg-gray-700 p-4 rounded-xl space-y-3">
+          <div className="w-40 h-4 bg-gray-600 rounded" />
+          <div className="w-full h-3 bg-gray-600 rounded" />
+          <div className="w-full h-3 bg-gray-600 rounded" />
+          <div className="w-1/2 h-3 bg-gray-600 rounded" />
         </div>
       </div>
     );
@@ -367,67 +510,124 @@ const SingleVideo = () => {
   return (
     <div className="bg-transparent text-white max-w-6xl mx-auto py-5">
       <div
-        className="relative aspect-video bg-black rounded overflow-hidden group"
-        onMouseEnter={() => setIsHovering(true)}
-        onMouseLeave={() => setIsHovering(false)}
+        ref={containerRef}
+        className={`relative w-full bg-black aspect-video max-w-screen-xl rounded-lg mx-auto mt-4 overflow-hidden ${
+          theaterMode ? "xl:h-[80vh]" : ""
+        }`}
       >
         <video
           ref={videoRef}
-          className="w-full h-full object-contain"
-          src={video?.video}
-          autoPlay
-        />
-        <button
+          className="w-full h-full transition-all"
+          src={videoSrc}
           onClick={togglePlay}
-          className={`absolute inset-0 flex items-center justify-center bg-black/30 transition ${
-            isHovering ? "opacity-100" : "opacity-0"
-          }`}
+        />
+
+        <div
+          className={`absolute bottom-0 w-full transition-opacity duration-300 ${
+            showControls || showSettings
+              ? "opacity-100"
+              : "opacity-0 pointer-events-none"
+          } bg-gradient-to-t from-black/80 to-transparent p-3 text-white flex flex-col gap-2`}
         >
-          {isPlaying ? (
-            <IoMdPause className="text-[50px]" />
-          ) : (
-            <IoMdPlay className="text-[50px]" />
-          )}
-        </button>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            step="0.1"
+            value={progress}
+            onChange={handleSeek}
+            className="w-full"
+          />
 
-        <div className="absolute bottom-0 left-0 right-0 bg-black/70 px-4 py-2 text-sm">
-          <div
-            ref={progressBarRef}
-            className="w-full h-1 bg-gray-600 relative cursor-pointer mb-2"
-            onMouseDown={handleMouseDown}
-            onMouseUp={handleMouseUp}
-            onMouseMove={handleMouseMove}
-          >
-            <div
-              className="h-full bg-white"
-              style={{ width: `${(currentTime / duration) * 100 || 0}%` }}
-            />
-          </div>
-
-          <div className="flex flex-wrap justify-between items-center text-xs sm:text-sm">
-            <div className="flex items-center space-x-4">
-              <button onClick={togglePlay}>
-                {isPlaying ? (
-                  <IoMdPause className="size-4.5" />
+          <div className="flex items-center justify-between gap-3 text-sm flex-wrap">
+            <div className="flex items-center gap-3">
+              <button onClick={toggleMute}>
+                {muted || volume === 0 ? (
+                  <SlVolumeOff size={20} />
                 ) : (
-                  <IoMdPlay className="size-4.5" />
+                  <SlVolume2 size={20} />
                 )}
               </button>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.01"
+                value={volume}
+                onChange={handleVolumeChange}
+                className="w-20 hidden md:block"
+              />
               <span>
                 {formatTime(currentTime)} / {formatTime(duration)}
               </span>
             </div>
-            <div className="flex space-x-3 text-lg">
-              <button onClick={toggleMute}>
-                {isMuted ? (
-                  <MdVolumeOff className="size-5" />
+
+            <div className="flex items-center gap-3">
+              <button onClick={skipBackward}>
+                <TbRewindBackward10 size={20} />
+              </button>
+              <button onClick={togglePlay}>
+                {playing ? <PiPause size={20} /> : <PiPlay size={20} />}
+              </button>
+              <button onClick={skipForward}>
+                <TbRewindForward10 size={20} />
+              </button>
+            </div>
+
+            <div className="flex items-center gap-3 relative">
+              <button
+                onClick={() => setTheaterMode((prev) => !prev)}
+                className="hidden md:inline"
+              >
+                <span className="text-sm">Theater</span>
+              </button>
+              <button onClick={togglePiP}>
+                <RiPictureInPictureLine size={20} />
+              </button>
+              <button onClick={toggleFullscreen}>
+                {fullscreen ? (
+                  <BiExitFullscreen size={20} />
                 ) : (
-                  <MdVolumeUp className="size-5" />
+                  <BiFullscreen size={20} />
                 )}
               </button>
-              <button onClick={() => videoRef.current.requestFullscreen()}>
-                <MdFullscreen className="size-6" />
-              </button>
+              <div className="relative flex align-middle">
+                <button onClick={() => setShowSettings((prev) => !prev)}>
+                  <IoSettingsOutline size={20} />
+                </button>
+                {showSettings && (
+                  <div className="absolute p-1 right-0 bottom-full mb-2 bg-base-100 text-white text-sm rounded-xl shadow-md w-40 z-10 max-h-48 overflow-y-auto">
+                    <div className="p-2 border-b border-gray-700">
+                      <label className="block mb-1">Speed</label>
+                      <select
+                        value={speed}
+                        onChange={changeSpeed}
+                        className="w-full p-1 bg-gray-700 text-white rounded outline-none"
+                      >
+                        {[0.25, 0.5, 1, 1.25, 1.5, 2].map((s) => (
+                          <option key={s} value={s}>
+                            {s}x
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="p-2 border-b border-gray-700">
+                      <label className="block mb-1">Quality</label>
+                      <select
+                        value={selectedQuality}
+                        onChange={changeQuality}
+                        className="w-full bg-gray-700 text-white rounded outline-none p-1"
+                      >
+                        {availableQualities?.map((s, i) => (
+                          <option key={i} value={s}>
+                            {s}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -509,9 +709,10 @@ const SingleVideo = () => {
           >
             <div className="font-semibold mb-2.5 text-gray-100">
               {video?.views} views &nbsp;{" "}
-              {formatDistanceToNow(new Date(video?.createdAt), {
-                addSuffix: true,
-              })}
+              {video?.createdAt &&
+                formatDistanceToNow(new Date(video.createdAt), {
+                  addSuffix: true,
+                })}
             </div>
             {video?.description}
           </div>

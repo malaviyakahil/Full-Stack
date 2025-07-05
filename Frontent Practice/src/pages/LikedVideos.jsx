@@ -2,8 +2,7 @@ import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { formatDistanceToNow } from "date-fns";
 import { Link } from "react-router-dom";
-import axios from "axios";
-import { deleteFromLikedVideos, fetchLikedVideos } from "../store/likedVideos.js";
+import { fetchLikedVideos } from "../store/likedVideos.slice.js";
 
 const LikedVideos = () => {
 

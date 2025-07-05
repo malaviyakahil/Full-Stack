@@ -37,6 +37,15 @@ const videoSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
+    availableQualities:{
+      type:[String],
+      enum: ["144p", "240p", "360p", "480p", "720p", "1080p"],
+      reqired: true
+    },
+    originalQuality:{
+      type:String,
+      reqired: true
+    }
   },
   { timestamps: true },
 );

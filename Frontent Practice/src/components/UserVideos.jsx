@@ -101,8 +101,8 @@ const UserVideos = () => {
           + Upload video
         </button>
         <button className=" bg-gray-700 hover:bg-gray-600 rounded-lg p-2 px-4">
-          {currentUser.data.subs} subscribers • {" "}
-          {currentUser.data.totalViews} Total views
+          {currentUser?.data?.subs} subscribers • {" "}
+          {currentUser?.data?.totalViews} Total views
         </button>
       </div>
       {currentUserVideos.loading ? (

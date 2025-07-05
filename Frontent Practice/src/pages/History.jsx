@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { deleteFromHsitory, fetchHistory } from "../store/history.js";
+import { deleteFromHsitory, fetchHistory } from "../store/history.slice.js";
 import { formatDistanceToNow } from "date-fns";
 import { Link } from "react-router-dom";
 import { RxCross2 } from "react-icons/rx";

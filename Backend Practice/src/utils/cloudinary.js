@@ -26,4 +26,4 @@ let uploadOnCloudinary = async (localPath) => {
   }
 };
 
-export default uploadOnCloudinary
+export  {cloudinary ,uploadOnCloudinary}

@@ -25,6 +25,7 @@ import {
   getChannel,
   getLikedVideos,
   deleteLikedVideos,
+  getVideoQuality
 } from "../controllers/user.controller.js";
 import upload from "../middlewares/multer.middleware.js";
 import auth from "../middlewares/auth.middleware.js";
@@ -95,6 +96,7 @@ userRouter.get(
 );
 userRouter.get("/get-channel-details/:id", upload.none(), getChannelDetails);
 userRouter.post("/get-video/:id", upload.none(), auth, getVideo);
+userRouter.post("/get-video-quality", upload.none(), auth, getVideoQuality);
 userRouter.get("/get-channel/:id", upload.none(), auth, getChannel);
 userRouter.get("/get-comments/:id", upload.none(), auth, getComments);
 userRouter.get("/search-all", upload.none(), auth, searchAll);
