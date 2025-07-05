@@ -113,10 +113,10 @@ const UserVideos = () => {
             <div className="flex flex-wrap justify-center gap-6 py-4">
               {currentUserVideos.data?.map((video) => (
                 <Link
-                  key={video._id}
-                  to={`/app/dashboard/single-video/${currentUser.data._id}/${video._id}`}
+                  key={video?._id}
+                  to={`/app/dashboard/single-video/${currentUser.data?._id}/${video?._id}`}
                   onClick={() => {
-                    dispatch(incrementView(video._id));
+                    dispatch(incrementView(video?._id));
                   }}
                 >
                   <UserVideoCard video={video} />

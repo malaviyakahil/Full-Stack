@@ -20,6 +20,10 @@ const EditVideoForm = () => {
   const handleChangeClick = () => setShowFileInput(!showFileInput);
 
   let submit = async (data) => {
+    if (data.thumbnail?.[0]?.size > 5 * 1024 * 1024) {
+      setError("Too big file for Thumbnail");
+      return;
+    }
     setLoader(true);
     setError(false);
     let formData = new FormData();
@@ -101,7 +105,7 @@ const EditVideoForm = () => {
                 {...register("thumbnail")}
                 className="file-input w-full"
               />
-              <label className="fieldset-label">Max size 2MB</label>
+              <label className="fieldset-label">Max size 5MB</label>
             </fieldset>
           )}
 

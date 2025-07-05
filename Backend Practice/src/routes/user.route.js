@@ -25,7 +25,8 @@ import {
   getChannel,
   getLikedVideos,
   deleteLikedVideos,
-  getVideoQuality
+  getVideoQuality,
+  
 } from "../controllers/user.controller.js";
 import upload from "../middlewares/multer.middleware.js";
 import auth from "../middlewares/auth.middleware.js";
@@ -56,6 +57,7 @@ userRouter.get(
   getCurrentUserVideos,
 );
 userRouter.post("/renew-access-token", upload.none(), renewAccessToken);
+
 userRouter.post("/change-password", upload.none(), auth, changePassword);
 userRouter.post("/change-full-name", upload.none(), auth, changeFullName);
 userRouter.post("/change-avatar", upload.single("avatar"), auth, changeAvatar);

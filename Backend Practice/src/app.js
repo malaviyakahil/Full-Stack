@@ -21,20 +21,20 @@ app.use(express.urlencoded({ extended: true }));
 (async () => {
   try {
     await mongoose.connect(`${process.env.MONGODBL_URL}/${dbName}`);
-   const result = await cloudinary.api.resources({ resource_type:"video",max_results: 20 ,direction: 'desc' });
-    console.log('📦 Cloudinary Uploaded Assets:');
-    result.resources.forEach(resource => {
-      console.log('-----------------------------');
-      console.log('Public ID:', resource.public_id);
-      console.log('Type:', resource.resource_type);
-      console.log('Format:', resource.format);
-      console.log('URL:', resource.secure_url);
-    });
+  //  const result = await cloudinary.api.resources({ resource_type:"video",max_results: 20 ,direction: 'desc' });
+  //   console.log('📦 Cloudinary Uploaded Assets:');
+  //   result.resources.forEach(resource => {
+  //     console.log('-----------------------------');
+  //     console.log('Public ID:', resource.public_id);
+  //     console.log('Type:', resource.resource_type);
+  //     console.log('Format:', resource.format);
+  //     console.log('URL:', resource.secure_url);
+  //   });
     app.listen(process.env.PORT, () => {
       console.log("====================================");
       console.log(`http://localhost:${process.env.PORT}`);
       console.log("====================================");
-      console.log(result);
+      
       
     });
   } catch (error) {
@@ -43,10 +43,6 @@ app.use(express.urlencoded({ extended: true }));
     console.log("Cannot connect to mongoDB atlas");
   }
 })();
-
-app.get("/", (req, res) => {
-  res.send("hello");
-});
 
 app.use('/user',userRouter)
 app.use('/video',videoRouter)

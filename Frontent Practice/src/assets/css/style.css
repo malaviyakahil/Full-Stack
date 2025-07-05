@@ -14,7 +14,7 @@
     left: 0%;
   }
   50% {
-    left: calc(100% - 20px);
+    left: calc(100% - 16px);
   }
   100% {
     left: 0%;

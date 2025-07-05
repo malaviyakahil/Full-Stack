@@ -14,6 +14,19 @@ const UploadVideoForm = () => {
   let navigate = useNavigate();
 
   let submit = async (data) => {
+    if (data.video?.[0]?.size > 100 * 1024 * 1024 && data.thumbnail?.[0]?.size > 5 * 1024 * 1024) {
+      setError("Too big file for Thumbnail and Video");
+      return;
+    }
+    if (data.thumbnail?.[0]?.size > 5 * 1024 * 1024) {
+      setError("Too big file for Thumbnail");
+      return;
+    }
+    if (data.video?.[0]?.size > 100 * 1024 * 1024) {
+      setError("Too big file for Video");
+      return;
+    }
+    setError("");
     setLoader(true);
     setError(false);
     let formData = new FormData();
@@ -81,7 +94,7 @@ const UploadVideoForm = () => {
               {...register("thumbnail")}
               className="file-input w-full"
             />
-            <label className="fieldset-label">Max size 2MB</label>
+            <label className="fieldset-label">Max size 5MB</label>
           </fieldset>
 
           <fieldset className="fieldset mb-3">
@@ -96,7 +109,7 @@ const UploadVideoForm = () => {
               {...register("video")}
               className="file-input w-full"
             />
-            <label className="fieldset-label">Max size 5MB</label>
+            <label className="fieldset-label">Max size 10MB</label>
           </fieldset>
 
           {error && <p className="text-red-500 text-center mb-3.5">{error}</p>}
