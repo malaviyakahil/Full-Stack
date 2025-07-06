@@ -1314,7 +1314,7 @@ let searchAll = asyncHandler(async (req, res) => {
 
 const authMe = asyncHandler(async (req, res) => {
   const token =
-    req.cookies?.refreshToken ||
+    req.cookies?.accessToken ||
     req.header("Authorization")?.replace("Bearer ", "");
 
   if (!token) {
@@ -1322,7 +1322,7 @@ const authMe = asyncHandler(async (req, res) => {
   }
 
   try {
-    jsonWebToken.verify(token, process.env.REFRESH_TOKEN_KEY); // 👈 using your .env secret
+    jsonWebToken.verify(token, process.env.ACCESS_TOKEN_KEY); 
     res.status(200).json(
       new response(
         200,
