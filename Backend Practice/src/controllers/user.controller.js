@@ -696,8 +696,9 @@ let getVideo = asyncHandler(async (req, res) => {
   let prevVideo = await History.findOne({ user: userId }).sort({
     createdAt: -1,
   });
+
   let history;
-  if (!prevVideo.video.equals(videoId)) {
+  if (!prevVideo?.video?.equals(videoId)) {
     history = await History.create({
       user: userId,
       video: video?._id,
@@ -706,6 +707,7 @@ let getVideo = asyncHandler(async (req, res) => {
       throw new error(500, "Something went wrong while managing history");
     }
   }
+
 
   res
     .status(200)

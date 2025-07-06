@@ -97,7 +97,6 @@ const SingleVideo = () => {
           count: detailsRes.data?.data.subs,
         });
         setVideo(videoRes.data?.data);
-
         setAvailableQualities(videoRes.data?.data?.availableQualities);
         setSelectedQuality(videoRes.data?.data?.originalQuality);
         setReviewCount({

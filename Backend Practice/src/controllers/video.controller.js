@@ -26,12 +26,16 @@ let uploadVideo = asyncHandler(async (req, res) => {
     : null;
   if (!thumbnailLocalPath) throw new error(401, "Invalid thumbnail path");
 
-  let videoRes = await uploadOnCloudinary(videoLocalPath);
+  let videoRes = await uploadOnCloudinary(videoLocalPath, "video", "videos");
   if (!videoRes) {
     throw new error(401, "Video upload to Cloudinary failed");
   }
 
-  let thumbnailRes = await uploadOnCloudinary(thumbnailLocalPath);
+  let thumbnailRes = await uploadOnCloudinary(
+    thumbnailLocalPath,
+    "image",
+    "thumbnails",
+  );
   if (!thumbnailRes) {
     throw new error(401, "Thumbnail upload to Cloudinary failed");
   }
@@ -54,8 +58,10 @@ let uploadVideo = asyncHandler(async (req, res) => {
   const originalQuality = availableQualities.at(-1);
 
   let videoUploaded = await Video.create({
-    video: videoRes?.url,
-    thumbnail: thumbnailRes?.url,
+    video: videoRes?.secure_url,
+    videoPublicId: videoRes?.public_id,
+    thumbnail: thumbnailRes?.secure_url,
+    thumbnailPublicId: thumbnailRes?.public_id,
     title,
     description,
     owner,
@@ -136,34 +142,30 @@ let deleteVideo = asyncHandler(async (req, res) => {
   console.log("yes");
 
   try {
-    // Step 1: Find comments related to the video
     const comments = await Comment.find({ video: video._id }).session(session);
     const commentIds = comments.map((comment) => comment._id);
-    console.log(1);
+    
 
-    // Step 2: Delete comment reviews associated with the comments
     await CommentReview.deleteMany({ comment: { $in: commentIds } }).session(
       session,
     );
-    console.log(2);
 
-    // Step 3: Delete comments related to the video
     await Comment.deleteMany({ video: video._id }).session(session);
-    console.log(3);
 
-    // Step 4: Delete reviews related to the video
     await Review.deleteMany({ video: video._id }).session(session);
-    console.log(4);
 
-    // Step 5: Delete the video itself
     await Video.findByIdAndDelete(video._id).session(session);
-    console.log(5);
 
     await History.deleteMany({ video: video._id }).session(session);
-    console.log(6);
 
     await LikedVideos.deleteMany({ video: video._id }).session(session);
-    console.log(7);
+
+    await cloudinary.uploader.destroy(video.videoPublicId, {
+      resource_type: "video",
+    });
+    await cloudinary.uploader.destroy(video.thumbnailPublicId, {
+      resource_type: "image",
+    });
 
     await session.commitTransaction();
     session.endSession();
@@ -180,14 +182,17 @@ let deleteVideo = asyncHandler(async (req, res) => {
     .json(new response(200, [], "Video and related data deleted successfully"));
 });
 
-let getAllVideo = asyncHandler(async (req, res) => {
-  let id = req.user._id;
-  let video = await Video.aggregate([
+const getAllVideo = asyncHandler(async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 6;
+  const skip = (page - 1) * limit;
+
+  const userId = new mongoose.Types.ObjectId(req.user._id);
+
+  const pipeline = [
     {
       $match: {
-        owner: {
-          $ne: new mongoose.Types.ObjectId(id),
-        },
+        owner: { $ne: userId },
       },
     },
     {
@@ -200,9 +205,7 @@ let getAllVideo = asyncHandler(async (req, res) => {
     },
     {
       $addFields: {
-        owner: {
-          $first: "$result",
-        },
+        owner: { $first: "$result" },
       },
     },
     {
@@ -218,19 +221,26 @@ let getAllVideo = asyncHandler(async (req, res) => {
         createdAt: 1,
       },
     },
-    {
-      $sort: {
-        createdAt: -1,
-      },
-    },
-  ]);
+    { $sort: { createdAt: -1 } },
+    { $skip: skip },
+    { $limit: limit },
+  ];
 
-  if (!video) {
-    throw new error(500, "Something went wrong while getting videos");
-  }
+  const video = await Video.aggregate(pipeline);
 
-  res.status(200).json(new response(200, video, "Fetched videos successfully"));
+  const total = await Video.countDocuments({ owner: { $ne: userId } });
+console.log('gone');
+
+  res.status(200).json(
+    new response(200, {
+      videos: video,
+      total,
+      page,
+      pages: Math.ceil(total / limit),
+    }, "Fetched videos successfully")
+  );
 });
+
 
 let likeVideo = asyncHandler(async (req, res) => {
   let id = req.user?.id;

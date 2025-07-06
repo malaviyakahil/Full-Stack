@@ -90,7 +90,7 @@ const UserVideos = () => {
   let navigate = useNavigate();
   
   return (
-    <>
+    <div className="h-full py-3">
       <div className="mx-auto max-w-6xl flex w-full items-center justify-center flex-wrap gap-5">
         <button
           className=" bg-gray-700 hover:bg-gray-600 rounded-lg p-2 px-4 "
@@ -130,7 +130,7 @@ const UserVideos = () => {
           )}
         </>
       )}
-    </>
+    </div>
   );
 };
 

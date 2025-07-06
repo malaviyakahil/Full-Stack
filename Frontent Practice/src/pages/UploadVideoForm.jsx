@@ -97,7 +97,7 @@ const UploadVideoForm = () => {
             <label className="fieldset-label">Max size 5MB</label>
           </fieldset>
 
-          <fieldset className="fieldset mb-3">
+          <fieldset className="fieldset">
             <legend className="fieldset-legend opacity-50">
               Pick a video for Upload
             </legend>

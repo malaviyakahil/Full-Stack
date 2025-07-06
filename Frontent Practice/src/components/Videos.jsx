@@ -1,12 +1,13 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Skeleton from "./Skeleton";
 import { Link } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
+import InfiniteScroll from "react-infinite-scroll-component";
+import { fetchVideos } from "../store/videos.slice";
 
 const VideoCard = ({ video }) => {
-
-  let formatTime = (seconds) => {
+  const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60)
       .toString()
@@ -15,14 +16,13 @@ const VideoCard = ({ video }) => {
   };
 
   return (
-    <div className="flex flex-col w-full sm:w-[320px] md:w-[336px] lg:w-[360px] xl:w-[380px] cursor-pointer ">
+    <div className="flex flex-col w-full sm:w-[320px] md:w-[336px] lg:w-[360px] xl:w-[380px] cursor-pointer">
       <div className="relative aspect-video overflow-hidden rounded-lg bg-black flex justify-center">
         <img
           src={video?.thumbnail}
           alt={video?.title}
           className="h-full object-contain"
         />
-
         <div className="absolute bottom-2 right-2 bg-black bg-opacity-75 text-white text-xs px-1 py-0.5 rounded">
           {formatTime(video?.duration)}
         </div>
@@ -41,13 +41,13 @@ const VideoCard = ({ video }) => {
             {video?.title}
           </h3>
           <Link to={`/app/dashboard/single-channel/${video.owner._id}`}>
-            <p className="text-xs text-gray-400 mt-1 whitespace-nowrap overflow-hidden text-ellipsis  hover:text-gray-100">
+            <p className="text-xs text-gray-400 mt-1 whitespace-nowrap overflow-hidden text-ellipsis hover:text-gray-100">
               {video?.owner?.name}
             </p>
           </Link>
           <div className="flex items-center gap-1">
             <p className="text-xs text-gray-400 whitespace-nowrap overflow-hidden text-ellipsis">
-              {video?.views} views • {" "}
+              {video?.views} views •{" "}
               {formatDistanceToNow(new Date(video?.createdAt), {
                 addSuffix: true,
               })}
@@ -60,26 +60,53 @@ const VideoCard = ({ video }) => {
 };
 
 const Videos = () => {
+  const dispatch = useDispatch();
+  const {
+    data: videos,
+    loading,
+    hasMore,
+  } = useSelector((store) => store.videos);
 
-  let videos = useSelector((store) => store.videos);
-  
+  useEffect(() => {
+    if (videos.length === 0) {
+      dispatch(fetchVideos());
+    }
+  }, []);
+
   return (
-    <>
-      {videos.loading ? (
-        <Skeleton />
+    <div>
+      {loading && videos.length === 0 ? (
+        <Skeleton  />
       ) : (
-        <div className="flex flex-wrap justify-center gap-6 py-4">
-          {videos.data?.map((video) => (
-            <Link
-              key={video._id}
-              to={`/app/dashboard/single-video/${video.owner._id}/${video._id}`}
-            >
-              <VideoCard key={video._id} video={video} />
-            </Link>
-          ))}
-        </div>
+        <InfiniteScroll
+          scrollableTarget="scrollableDiv"
+          dataLength={videos.length}
+          next={() => {
+            console.log("Fetching next page...");
+            if (!loading && hasMore)
+              dispatch(fetchVideos());
+          }}
+          hasMore={hasMore}
+          loader={<Skeleton />}
+          endMessage={
+            <p className="text-center text-sm py-6 text-gray-400">
+              No more videos to load.
+            </p>
+          }
+        >
+          <div className="flex flex-wrap justify-center gap-6 py-4">
+            {videos.map((video) => (
+              <Link
+                key={video._id}
+                to={`/app/dashboard/single-video/${video.owner._id}/${video._id}`}
+              >
+                <VideoCard video={video} />
+              </Link>
+            ))}
+          </div>
+        </InfiniteScroll>
       )}
-    </>
+    </div>
   );
 };
 

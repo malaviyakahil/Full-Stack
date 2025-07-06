@@ -1,19 +1,43 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 
-let fetchVideos = createAsyncThunk("fetchVideos", async () => {
-  let res = await axios.get("http://localhost:8000/video/get-all-videos", {
-    withCredentials: true,
-  });
-  return res.data;
-});
+let fetchVideos = createAsyncThunk(
+  "fetchVideos",
+  async (_, { getState, rejectWithValue }) => {
+    try {
+      const { page ,limit} = getState().videos;
+
+      const res = await axios.get(
+        `http://localhost:8000/video/get-all-videos?page=${page}&limit=${limit}`,
+        { withCredentials: true },
+      );
+
+      const { videos, total, pages } = res.data.data;
+
+      return { videos, total, pages, page, limit };
+    } catch (err) {
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to fetch videos",
+      );
+    }
+  },
+);
 
 let videosSlice = createSlice({
   name: "videos",
-  initialState: { data: null, loading: false, error: null },
+  initialState: {
+    data: [],
+    page: 1,
+    hasMore: true,
+    loading: false,
+    error: null,
+    limit:6
+  },
   reducers: {
-    clearVideos: (state, action) => {
-      state.data = null;
+    clearVideos: (state) => {
+      state.data = [];
+      state.page = 1;
+      state.hasMore = true;
       state.loading = false;
       state.error = null;
     },
@@ -25,22 +49,33 @@ let videosSlice = createSlice({
         return video;
       });
     },
+    setVideoLimit: (state, action) => {
+      state.limit = action.payload;
+    },
   },
   extraReducers: (builder) => {
-    builder.addCase(fetchVideos.pending, (state, actions) => {
-      state.loading = true;
-    });
-    builder.addCase(fetchVideos.fulfilled, (state, actions) => {
-      state.data = actions.payload.data;
-      state.loading = false;
-    });
-    builder.addCase(fetchVideos.rejected, (state, actions) => {
-      state.loading = false;
-      state.error = actions.payload.data;
-    });
+    builder
+      .addCase(fetchVideos.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchVideos.fulfilled, (state, action) => {
+        const { videos, page, pages, limit } = action.payload;
+
+        state.data = [...state.data, ...videos];
+        state.page += 1;
+        state.loading = false;
+
+        if (page >= pages || videos.length < limit) {
+          state.hasMore = false;
+        }
+      })
+      .addCase(fetchVideos.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
   },
 });
 
-let { clearVideos, incrementView } = videosSlice.actions;
+let { clearVideos, incrementView ,setVideoLimit} = videosSlice.actions;
 
-export { videosSlice, fetchVideos, clearVideos, incrementView };
+export { videosSlice, fetchVideos, clearVideos, incrementView,setVideoLimit };

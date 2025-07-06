@@ -9,10 +9,10 @@ cloudinary.config({
   api_secret:process.env.CLOUDINARY_API_SECRET
 })
 
-let uploadOnCloudinary = async (localPath) => {
+let uploadOnCloudinary = async (localPath,type = "auto",folder = "") => {
   try {
     if(!localPath) return null
-    let response = await cloudinary.uploader.upload(localPath, {resource_type: "auto",});
+    let response = await cloudinary.uploader.upload(localPath, {resource_type: type,folder: folder,});
     if(fs.existsSync(localPath)){
       fs.unlinkSync(localPath)
     }

@@ -11,6 +11,18 @@ const RegisterForm = () => {
   let navigate = useNavigate()
 
   let submit = async (data) => {
+      if (data.avatar?.[0]?.size > 5 * 1024 * 1024 && data.coverImage?.[0]?.size > 5 * 1024 * 1024) {
+      setError("Too big file for Avatar and Cover Image");
+      return;
+    }
+      if (data.avatar?.[0]?.size > 5 * 1024 * 1024) {
+      setError("Too big file for Avatar");
+      return;
+    }
+      if (data.coverImage?.[0]?.size > 5 * 1024 * 1024) {
+      setError("Too big file for Cover Image");
+      return;
+    }
     setLoader(true);
     setError(false)
     let formData = new FormData();
@@ -106,7 +118,7 @@ const RegisterForm = () => {
             </label>
 
             <label className="input validator w-full my-2">
-              <svg
+              <svg 
                 className="h-[1em]"
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
@@ -181,7 +193,7 @@ const RegisterForm = () => {
                 {...register("avatar")}
                 className="file-input w-full"
               />
-              <label className="fieldset-label">Max size 2MB</label>
+              <label className="fieldset-label">Max size 5MB</label>
             </fieldset>
 
             <fieldset className="fieldset my-2 ">
@@ -195,7 +207,7 @@ const RegisterForm = () => {
                 {...register("coverImage")}
                 className="file-input w-full"
               />
-              <label className="fieldset-label w-full">Max size 2MB</label>
+              <label className="fieldset-label w-full">Max size 5MB</label>
             </fieldset>
             {error && <p className="text-red-500 text-center my-2">{error}</p>}
 
