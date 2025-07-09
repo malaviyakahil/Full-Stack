@@ -6,14 +6,14 @@ import Panel from "../components/Panel";
 
 const Dashboard = () => {
 
-  let videos = useSelector((store) => store.videos);
+  let {fetched} = useSelector((store) => store.videos);
   let dispatch = useDispatch();
   
   useEffect(() => {
-    if (!videos?.data) {
+    if (!fetched) {
       dispatch(fetchVideos());
     }
-  }, []);
+  }, [fetched,dispatch]);
 
   return (
     <>

@@ -20,26 +20,29 @@ const EditProfileForm = () => {
     setShowCoverImageFileInput(!showCoverImageFileInput);
 
   let submit = async (data) => {
-    if (data.avatar?.[0]?.size > 5 * 1024 * 1024 && data.coverImage?.[0]?.size > 5 * 1024 * 1024) {
+
+    setError("");
+    if (data?.avatar?.[0]?.size > 5 * 1024 * 1024 && data?.coverImage?.[0]?.size > 5 * 1024 * 1024) {
       setError("Too big file for Avatar and Cover Image");
       return;
     }
-    if (data.avatar?.[0]?.size > 5 * 1024 * 1024) {
+    if (data?.avatar?.[0]?.size > 5 * 1024 * 1024) {
       setError("Too big file for Avatar");
       return;
     }
-    if (data.coverImage?.[0]?.size > 5 * 1024 * 1024) {
+    if (data?.coverImage?.[0]?.size > 5 * 1024 * 1024) {
       setError("Too big file for Cover Image");
       return;
     }
-    setError("");
+    
     setLoader(true);
+    
     let formData = new FormData();
     formData.append("fullName", data?.fullName || currentUser.data?.fullName);
-    formData.append("avatar", data.avatar?.[0] || currentUser.data?.avatar);
+    formData.append("avatar", data?.avatar?.[0] || currentUser.data?.avatar);
     formData.append(
       "coverImage",
-      data.coverImage?.[0] || currentUser.data?.coverImage,
+      data?.coverImage?.[0] || currentUser.data?.coverImage,
     );
 
     try {

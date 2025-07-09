@@ -7,6 +7,7 @@ import InfiniteScroll from "react-infinite-scroll-component";
 import { fetchVideos } from "../store/videos.slice";
 
 const VideoCard = ({ video }) => {
+  
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60)
@@ -67,12 +68,6 @@ const Videos = () => {
     hasMore,
   } = useSelector((store) => store.videos);
 
-  useEffect(() => {
-    if (videos.length === 0) {
-      dispatch(fetchVideos());
-    }
-  }, []);
-
   return (
     <div>
       {loading && videos.length === 0 ? (
@@ -80,9 +75,8 @@ const Videos = () => {
       ) : (
         <InfiniteScroll
           scrollableTarget="scrollableDiv"
-          dataLength={videos.length}
+          dataLength={videos?.length}
           next={() => {
-            console.log("Fetching next page...");
             if (!loading && hasMore)
               dispatch(fetchVideos());
           }}

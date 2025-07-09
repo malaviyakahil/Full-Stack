@@ -367,14 +367,14 @@ const SingleVideo = () => {
           count: reviewCount.like.count - 1,
         },
       });
-      dispatch(deleteFromLikedVideos(video._id));
+      dispatch(deleteFromLikedVideos(videoId));
       axios.post(`http://localhost:8000/video/delete-review/${videoId}`, [], {
         withCredentials: true,
       });
     } else {
       dispatch(
         addToLikedVideos({
-          _id: video._id,
+          _id:videoId,
           video: {
             ...video,
             owner: { ...channelDetails },

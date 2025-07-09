@@ -5,14 +5,14 @@ import { useDispatch } from "react-redux";
 
 const Refresh = () => {
   let dispatch = useDispatch();
-
+  let refresh = () => {
+    dispatch(clearVideos());
+    dispatch(fetchVideos());
+  };
   return (
     <button
       className=" bg-gray-700 hover:bg-gray-600 rounded-lg p-2 px-4 flex items-center justify-center gap-2"
-      onClick={() => {
-        dispatch(clearVideos()); 
-        dispatch(fetchVideos());
-      }}
+      onClick={refresh}
     >
       <RiRefreshLine className="text-[18px]" />
     </button>

@@ -26,7 +26,8 @@ import {
   getLikedVideos,
   deleteLikedVideos,
   getVideoQuality,
-  authMe
+  authMe,
+  deleteUser
 } from "../controllers/user.controller.js";
 import upload from "../middlewares/multer.middleware.js";
 import auth from "../middlewares/auth.middleware.js";
@@ -49,6 +50,7 @@ userRouter.post(
 );
 userRouter.post("/login", upload.none(), loginUser);
 userRouter.post("/logout", upload.none(), auth, logoutUser);
+userRouter.post("/delete-user", upload.none(), auth, deleteUser);
 userRouter.get("/get-current-user", upload.none(), auth, getCurrentUser);
 userRouter.get(
   "/get-current-user-videos",

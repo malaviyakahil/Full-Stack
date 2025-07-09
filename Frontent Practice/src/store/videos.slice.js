@@ -5,7 +5,7 @@ let fetchVideos = createAsyncThunk(
   "fetchVideos",
   async (_, { getState, rejectWithValue }) => {
     try {
-      const { page ,limit} = getState().videos;
+      const { page, limit } = getState().videos;
 
       const res = await axios.get(
         `http://localhost:8000/video/get-all-videos?page=${page}&limit=${limit}`,
@@ -31,7 +31,8 @@ let videosSlice = createSlice({
     hasMore: true,
     loading: false,
     error: null,
-    limit:6
+    limit: 6,
+    fetched: false,
   },
   reducers: {
     clearVideos: (state) => {
@@ -39,7 +40,7 @@ let videosSlice = createSlice({
       state.page = 1;
       state.hasMore = true;
       state.loading = false;
-      state.error = null;
+      state.fetched = false;
     },
     incrementView: (state, action) => {
       state.data = state.data?.map((video) => {
@@ -64,6 +65,7 @@ let videosSlice = createSlice({
         state.data = [...state.data, ...videos];
         state.page += 1;
         state.loading = false;
+        state.fetched = true;
 
         if (page >= pages || videos.length < limit) {
           state.hasMore = false;
@@ -76,6 +78,6 @@ let videosSlice = createSlice({
   },
 });
 
-let { clearVideos, incrementView ,setVideoLimit} = videosSlice.actions;
+let { clearVideos, incrementView, setVideoLimit } = videosSlice.actions;
 
-export { videosSlice, fetchVideos, clearVideos, incrementView,setVideoLimit };
+export { videosSlice, fetchVideos, clearVideos, incrementView, setVideoLimit };

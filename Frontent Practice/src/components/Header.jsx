@@ -6,6 +6,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { clearCurrentUserVideos } from "../store/userVideos.slice.js";
 import { clearVideos } from "../store/videos.slice.js";
 import { clearHistory } from "../store/history.slice.js";
+import { clearLikedVideos } from "../store/likedVideos.slice.js";
 
 const Header = () => {
 
@@ -15,10 +16,10 @@ const Header = () => {
   let navigate = useNavigate();
 
   useEffect(() => {
-    if(!currentUser?.data){
+    if(!currentUser.fetched){
       dispatch(fetchCurrentUser());
     }
-  }, []);
+  }, [currentUser.fetched,dispatch]);
   
   let handleLogout = async () => {
     setLoader(true);
@@ -36,6 +37,7 @@ const Header = () => {
         dispatch(clearCurrentUserVideos());
         dispatch(clearVideos());
         dispatch(clearHistory())
+        dispatch(clearLikedVideos())
         navigate("/");
       }
     } catch (error) {

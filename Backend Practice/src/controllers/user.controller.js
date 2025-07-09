@@ -13,6 +13,8 @@ import mongoose from "mongoose";
 import asyncHandler from "../utils/asyncHandler.js";
 import { LikedVideos } from "../models/likedVideos.model.js";
 import { v2 as cloudinary } from "cloudinary";
+import { CommentReview } from "../models/commentReview.model.js";
+
 let generatingAccessAndRefreshToken = async function (id) {
   let user = await User.findById(id);
   let accessToken = await user.generateAccessToken();
@@ -33,6 +35,8 @@ let registerUser = asyncHandler(async (req, res) => {
   }
 
   let alreadyRegistered = await User.findOne({ $or: [{ name }, { email }] });
+  
+  
   let avatarLocalPath = req.files?.avatar[0]?.path;
   let coverImageLocalPath = req.files?.coverImage
     ? req.files?.coverImage[0].path
@@ -45,7 +49,15 @@ let registerUser = asyncHandler(async (req, res) => {
     if (fs.existsSync(coverImageLocalPath)) {
       fs.unlinkSync(coverImageLocalPath);
     }
-    throw new error(401, "Name and email already registered");
+    if(alreadyRegistered?.name==name && alreadyRegistered?.email==email){
+      throw new error(401, "Name and Email already registered you can login");
+    }
+    if(alreadyRegistered?.name==name){
+      throw new error(401, "Name already taken");
+    }
+    if(alreadyRegistered?.email==email){
+      throw new error(401, "Email already registered");
+    }
   }
 
   if (!avatarLocalPath) {
@@ -190,14 +202,15 @@ let getCurrentUser = asyncHandler(async (req, res) => {
   res.status(200).json(new response(200, currentUser[0], "Current user"));
 });
 
-let getCurrentUserVideos = asyncHandler(async (req, res) => {
-  let id = req.user?._id;
+const getCurrentUserVideos = asyncHandler(async (req, res) => {
+  const id = req.user?._id;
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 6;
+  const skip = (page - 1) * limit;
 
-  let videos = await Video.aggregate([
+  const result = await Video.aggregate([
     {
-      $match: {
-        owner: new mongoose.Types.ObjectId(id),
-      },
+      $match: { owner: new mongoose.Types.ObjectId(id) },
     },
     {
       $lookup: {
@@ -214,9 +227,7 @@ let getCurrentUserVideos = asyncHandler(async (req, res) => {
             $filter: {
               input: "$result",
               as: "review",
-              cond: {
-                $eq: ["$$review.review", "Like"],
-              },
+              cond: { $eq: ["$$review.review", "Like"] },
             },
           },
         },
@@ -225,9 +236,7 @@ let getCurrentUserVideos = asyncHandler(async (req, res) => {
             $filter: {
               input: "$result",
               as: "review",
-              cond: {
-                $eq: ["$$review.review", "Dislike"],
-              },
+              cond: { $eq: ["$$review.review", "Dislike"] },
             },
           },
         },
@@ -241,24 +250,38 @@ let getCurrentUserVideos = asyncHandler(async (req, res) => {
         createdAt: 1,
         duration: 1,
         description: 1,
-        title: 1,
         likes: 1,
         dislikes: 1,
         views: 1,
       },
     },
     {
-      $sort: {
-        createdAt: -1,
+      $sort: { createdAt: -1 },
+    },
+    {
+      $facet: {
+        paginatedResults: [{ $skip: skip }, { $limit: limit }],
+        totalCount: [{ $count: "count" }],
       },
     },
   ]);
 
-  if (!videos) {
-    throw new error(500, "Something went wrong while fetching videos");
-  }
+  const videos = result[0]?.paginatedResults || [];
+  const total = result[0]?.totalCount?.[0]?.count || 0;
+  const totalPages = Math.ceil(total / limit);
 
-  res.status(200).json(new response(200, videos, "Current user"));
+  res.status(200).json(
+    new response(
+      200,
+      {
+        videos,
+        total,
+        page,
+        pages: totalPages,
+      },
+      "Current user videos fetched",
+    ),
+  );
 });
 
 let logoutUser = asyncHandler(async (req, res, next) => {
@@ -683,7 +706,7 @@ let getVideo = asyncHandler(async (req, res) => {
       $replaceRoot: {
         newRoot: {
           $mergeObjects: [
-            { Like: 0, Dislike: 0 }, // Default values
+            { Like: 0, Dislike: 0 },
             { $arrayToObject: "$data" },
           ],
         },
@@ -708,7 +731,17 @@ let getVideo = asyncHandler(async (req, res) => {
     }
   }
 
+  const count = await History.countDocuments({ user: userId });
 
+  if (count > 10) {
+    const oldest = await History.findOne({ user: userId })
+      .sort({ createdAt: 1 })
+      .limit(1);
+
+    if (oldest) {
+      await History.findByIdAndDelete(oldest._id);
+    }
+  }
   res
     .status(200)
     .json(
@@ -853,16 +886,20 @@ let getChannel = asyncHandler(async (req, res) => {
 });
 
 let getComments = asyncHandler(async (req, res) => {
-  let userId = req.user?._id;
-  let videoId = req.params?.id;
-  let currentUserId = req.user?._id;
+  const userId = req.user?._id;
+  const videoId = req.params.id;
+  const currentUserId = req.user?._id;
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 7;
+  const skip = (page - 1) * limit;
 
-  let comments = await Comment.aggregate([
-    {
-      $match: {
-        video: new mongoose.Types.ObjectId(videoId),
-      },
-    },
+  const total = await Comment.countDocuments({ video: videoId });
+
+  const comments = await Comment.aggregate([
+    { $match: { video: new mongoose.Types.ObjectId(videoId) } },
+    { $sort: { createdAt: -1 } },
+    { $skip: skip },
+    { $limit: limit },
     {
       $lookup: {
         from: "users",
@@ -955,9 +992,7 @@ let getComments = asyncHandler(async (req, res) => {
         isCurrentUser: {
           $eq: ["$user._id", new mongoose.Types.ObjectId(userId)],
         },
-        isPinned: {
-          $eq: ["$pinByChannel", true],
-        },
+        isPinned: { $eq: ["$pinByChannel", true] },
       },
     },
     {
@@ -971,26 +1006,30 @@ let getComments = asyncHandler(async (req, res) => {
         dislike: 1,
         pinByChannel: 1,
         edited: 1,
-        isCurrentUser: 1, // optional for frontend
-        isPinned: 1, // optional for frontend
+        isCurrentUser: 1,
+        isPinned: 1,
       },
     },
     {
       $sort: {
-        isPinned: -1, // Pinned comments first
-        isCurrentUser: -1, // Then current user comments
-        createdAt: -1, // Then by newest
+        isPinned: -1,
+        isCurrentUser: -1,
+        createdAt: -1,
       },
     },
   ]);
 
-  if (!comments) {
-    throw new error(500, "Something went wrong while fetching comments");
-  }
-
-  res
-    .status(200)
-    .json(new response(200, comments, "Comments fetched successfully"));
+  res.status(200).json(
+    new response(
+      200,
+      {
+        comments,
+        pages: Math.ceil(total / limit),
+        total,
+      },
+      "History fetched",
+    ),
+  );
 });
 
 let getHistory = asyncHandler(async (req, res) => {
@@ -1070,10 +1109,13 @@ let deleteHistory = asyncHandler(async (req, res) => {
   res.status(200).json(new response(200, [], "History fetched"));
 });
 
-let getLikedVideos = asyncHandler(async (req, res) => {
-  let id = req.user?.id;
+const getLikedVideos = asyncHandler(async (req, res) => {
+  const id = req.user?.id;
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 3;
+  const skip = (page - 1) * limit;
 
-  let likedVideos = await LikedVideos.aggregate([
+  const result = await LikedVideos.aggregate([
     {
       $match: {
         user: new mongoose.Types.ObjectId(id),
@@ -1085,55 +1127,93 @@ let getLikedVideos = asyncHandler(async (req, res) => {
       },
     },
     {
-      $limit: 10,
-    },
-    {
-      $lookup: {
-        from: "videos",
-        localField: "video",
-        foreignField: "_id",
-        as: "videoData",
+      $facet: {
+        metadata: [{ $count: "total" }],
+        data: [
+          { $skip: skip },
+          { $limit: limit },
+          {
+            $lookup: {
+              from: "videos",
+              localField: "video",
+              foreignField: "_id",
+              as: "videoData",
+            },
+          },
+          { $unwind: "$videoData" },
+          {
+            $lookup: {
+              from: "users",
+              localField: "videoData.owner",
+              foreignField: "_id",
+              as: "ownerData",
+            },
+          },
+          { $unwind: "$ownerData" },
+          {
+            $project: {
+              _id: 1,
+              video: {
+                _id: "$videoData._id",
+                title: "$videoData.title",
+                thumbnail: "$videoData.thumbnail",
+                duration: "$videoData.duration",
+                views: "$videoData.views",
+                createdAt: "$videoData.createdAt",
+                owner: {
+                  _id: "$ownerData._id",
+                  name: "$ownerData.name",
+                  avatar: "$ownerData.avatar",
+                },
+              },
+            },
+          },
+        ],
       },
     },
     {
-      $unwind: "$videoData",
-    },
-    {
-      $lookup: {
-        from: "users",
-        localField: "videoData.owner",
-        foreignField: "_id",
-        as: "ownerData",
-      },
-    },
-    {
-      $unwind: "$ownerData",
+      $unwind: "$metadata",
     },
     {
       $project: {
-        _id: 1,
-        video: {
-          _id: "$videoData._id",
-          title: "$videoData.title",
-          thumbnail: "$videoData.thumbnail",
-          duration: "$videoData.duration",
-          views: "$videoData.views",
-          createdAt: "$videoData.createdAt",
-          owner: {
-            _id: "$ownerData._id",
-            name: "$ownerData.name",
-            avatar: "$ownerData.avatar",
-          },
-        },
+        data: 1,
+        total: "$metadata.total",
       },
     },
   ]);
 
-  if (!likedVideos) {
-    throw new error(500, "Something went wrong while fetching liked videos");
+  if (!result || result.length === 0) {
+    return res.status(200).json(
+      new response(
+        200,
+        {
+          videos: [],
+          total: 0,
+          pages: 0,
+          page,
+          limit,
+        },
+        "Liked videos fetched",
+      ),
+    );
   }
 
-  res.status(200).json(new response(200, likedVideos, "Liked videos fetched"));
+  const { data, total } = result[0];
+  const pages = Math.ceil(total / limit);
+
+  res.status(200).json(
+    new response(
+      200,
+      {
+        videos: data,
+        total,
+        pages,
+        page,
+        limit,
+      },
+      "Liked videos fetched",
+    ),
+  );
 });
 
 let deleteLikedVideos = asyncHandler(async (req, res) => {
@@ -1322,16 +1402,78 @@ const authMe = asyncHandler(async (req, res) => {
   }
 
   try {
-    jsonWebToken.verify(token, process.env.ACCESS_TOKEN_KEY); 
-    res.status(200).json(
-      new response(
-        200,
-      [],
-        "Authorized user",
-      ),
-    );
+    jsonWebToken.verify(token, process.env.ACCESS_TOKEN_KEY);
+    res.status(200).json(new response(200, [], "Authorized user"));
   } catch (err) {
     throw new error(401, "Invalid or expired token");
+  }
+});
+
+const deleteUser = asyncHandler(async (req, res) => {
+  const userId = req?.user._id;
+
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new error(404, "User not found");
+  }
+
+  const session = await mongoose.startSession();
+
+  try {
+    await session.withTransaction(async () => {
+      // 1. Find all videos uploaded by this user
+      const videos = await Video.find({ owner: userId }).session(session);
+
+      for (const video of videos) {
+        const videoId = video._id;
+
+        // a. Find all comments on this video
+        const comments = await Comment.find({ video: videoId }).session(
+          session,
+        );
+        const commentIds = comments.map((comment) => comment._id);
+
+        // b. Delete reviews on comments of this video
+        await CommentReview.deleteMany({
+          comment: { $in: commentIds },
+        }).session(session);
+
+        // c. Delete comments on this video
+        await Comment.deleteMany({ video: videoId }).session(session);
+
+        // d. Delete reviews on the video
+        await Review.deleteMany({ video: videoId }).session(session);
+
+        // e. Delete from all users' history and liked lists
+        await History.deleteMany({ video: videoId }).session(session);
+        await LikedVideos.deleteMany({ video: videoId }).session(session);
+
+        // f. Delete the video itself
+        await Video.findByIdAndDelete(videoId).session(session);
+      }
+
+      // 2. Delete the user’s activity on other videos
+      await CommentReview.deleteMany({ user: userId }).session(session);
+      await Comment.deleteMany({ user: userId }).session(session);
+      await Review.deleteMany({ user: userId }).session(session);
+      await History.deleteMany({ user: userId }).session(session); // user's watched videos
+      await LikedVideos.deleteMany({ user: userId }).session(session); // user's liked videos
+
+      // 3. Delete the user
+      await User.findByIdAndDelete(userId).session(session);
+    });
+
+    res
+      .status(200)
+      .json(
+        new response(200, [], "User and all related data deleted successfully"),
+      );
+  } catch (err) {
+    await session.abortTransaction();
+    session.endSession();
+    throw new error(500, "Failed to delete user and related data");
+  } finally {
+    session.endSession();
   }
 });
 
@@ -1362,5 +1504,6 @@ export {
   getLikedVideos,
   deleteLikedVideos,
   getVideoQuality,
-  authMe
+  authMe,
+  deleteUser,
 };

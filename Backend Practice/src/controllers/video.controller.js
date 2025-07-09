@@ -129,57 +129,34 @@ let deleteVideo = asyncHandler(async (req, res) => {
 
   const video = await Video.findById(videoId);
   if (!video) {
-    throw new error(400, "Video does not exist");
+    throw new error(404, "Video not found");
   }
 
   if (!owner.equals(video.owner)) {
-    throw new error(400, "This video does not belong to you");
+    throw new error(403, "You are not authorized to delete this video");
   }
-  console.log("ok");
 
   const session = await Video.startSession();
-  session.startTransaction();
-  console.log("yes");
 
   try {
-    const comments = await Comment.find({ video: video._id }).session(session);
-    const commentIds = comments.map((comment) => comment._id);
-    
+    await session.withTransaction(async () => {
+      const comments = await Comment.find({ video: video._id }).session(session);
+      const commentIds = comments.map((comment) => comment._id);
 
-    await CommentReview.deleteMany({ comment: { $in: commentIds } }).session(
-      session,
-    );
-
-    await Comment.deleteMany({ video: video._id }).session(session);
-
-    await Review.deleteMany({ video: video._id }).session(session);
-
-    await Video.findByIdAndDelete(video._id).session(session);
-
-    await History.deleteMany({ video: video._id }).session(session);
-
-    await LikedVideos.deleteMany({ video: video._id }).session(session);
-
-    await cloudinary.uploader.destroy(video.videoPublicId, {
-      resource_type: "video",
-    });
-    await cloudinary.uploader.destroy(video.thumbnailPublicId, {
-      resource_type: "image",
+      await CommentReview.deleteMany({ comment: { $in: commentIds } }).session(session);
+      await Comment.deleteMany({ video: video._id }).session(session);
+      await Review.deleteMany({ video: video._id }).session(session);
+      await History.deleteMany({ video: video._id }).session(session);
+      await LikedVideos.deleteMany({ video: video._id }).session(session);
+      await Video.findByIdAndDelete(video._id).session(session);
     });
 
-    await session.commitTransaction();
-    session.endSession();
-
-    res.status(200).json(new response(200, [], "Video deleted successfully"));
+    res.status(200).json(new response(200, [], "Video and related data deleted successfully"));
   } catch (err) {
-    await session.abortTransaction();
-    session.endSession();
     throw new error(500, "Error while deleting video and associated data");
+  } finally {
+    session.endSession();
   }
-
-  res
-    .status(200)
-    .json(new response(200, [], "Video and related data deleted successfully"));
 });
 
 const getAllVideo = asyncHandler(async (req, res) => {
@@ -229,18 +206,20 @@ const getAllVideo = asyncHandler(async (req, res) => {
   const video = await Video.aggregate(pipeline);
 
   const total = await Video.countDocuments({ owner: { $ne: userId } });
-console.log('gone');
 
   res.status(200).json(
-    new response(200, {
-      videos: video,
-      total,
-      page,
-      pages: Math.ceil(total / limit),
-    }, "Fetched videos successfully")
+    new response(
+      200,
+      {
+        videos: video,
+        total,
+        page,
+        pages: Math.ceil(total / limit),
+      },
+      "Fetched videos successfully",
+    ),
   );
 });
-
 
 let likeVideo = asyncHandler(async (req, res) => {
   let id = req.user?.id;
@@ -496,6 +475,7 @@ let addComment = asyncHandler(async (req, res) => {
     video,
     user,
   });
+
 
   res
     .status(200)
