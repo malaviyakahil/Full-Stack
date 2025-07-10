@@ -29,7 +29,7 @@ const LikedVideos = () => {
     <div className="flex flex-col items-center py-5">
       {loading ? (
         <>
-          {[...Array(4)].map((_, index) => (
+          {[...Array(limit)].map((_, index) => (
             <div
               key={index}
               className="md:flex py-2.5 gap-5 w-full cursor-pointer sm:w-full md:w-[536px] lg:w-[760px] xl:w-[980px] animate-pulse"

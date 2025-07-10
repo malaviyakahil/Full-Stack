@@ -3,10 +3,9 @@ import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
 const Search = () => {
-
   let [text, setText] = useState("");
   let [data, setData] = useState([]);
-  let input = useRef()
+  let input = useRef();
 
   useEffect(() => {
     let timer = setTimeout(() => {
@@ -24,7 +23,7 @@ const Search = () => {
       clearInterval(timer);
     };
   }, [text]);
-  
+
   return (
     <div className="w-full order-4 xs:order-0">
       <div className="h-[100%] md:w-[350px] w-full relative">
@@ -63,11 +62,20 @@ const Search = () => {
         <div className="absolute z-50 top-[100%] mt-4 left-[50%] translate-x-[-50%] w-full bg-[linear-gradient(to_right,_#374151_0%,_#374151_2%,_#6B7280_2%,_#6B7280_98%,_#374151_98%,_#374151_100%)] rounded-lg overflow-hidden">
           <ul className="w-full flex flex-col gap-[1px]">
             {data.map((e) => {
-              return <Link to={`/app/dashboard/search-channel-and-video/${e?.value}`} onClick={()=>{input.current.value="";setData([])}} key={e?._id}>
-                 <li className="w-full bg-gray-700 py-2  px-4 hover:bg-gray-600" >
-                  {e?.value}
-                </li>
-              </Link>;
+              return (
+                <Link
+                  to={`/app/dashboard/search-channel-and-video/${e?.value}`}
+                  onClick={() => {
+                    input.current.value = "";
+                    setData([]);
+                  }}
+                  key={e?._id}
+                >
+                  <li className="w-full bg-gray-700 py-2  px-4 hover:bg-gray-600">
+                    {e?.value}
+                  </li>
+                </Link>
+              );
             })}
           </ul>
         </div>

@@ -9,7 +9,7 @@ import {
 } from "react-icons/bi";
 import { FaHeart, FaRegHeart } from "react-icons/fa";
 import { useSelector } from "react-redux";
-import { formatDistanceToNow, formatDistanceToNowStrict } from "date-fns";
+import { formatDistanceToNowStrict } from "date-fns";
 import { BsPinAngle } from "react-icons/bs";
 import InfiniteScroll from "react-infinite-scroll-component";
 
@@ -23,13 +23,13 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
   const commentRefs = useRef({});
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  const [limit, setLimit] = useState(7);
+  const [limit, setLimit] = useState(3);
   const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
     const updateLimit = () => {
       const width = window.innerWidth;
-      const newLimit = width >= 1200 ? 7 : 4;
+      const newLimit = width >= 1200 ? 3 : width >= 768 ? 7 : 5;
       setLimit(newLimit);
     };
     updateLimit();
@@ -51,7 +51,7 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
     const newComments = res.data.data.comments;
     const total = res.data.data.total;
 
-    setTotalCount(total); // <-- Add this line
+    setTotalCount(total); 
 
     setComments((prev) => [
       ...prev,
@@ -64,13 +64,15 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
     ]);
 
     setPage((prev) => prev + 1);
-    setHasMore(comments.length + newComments.length < total);
+    if (page >= res.data.data.pages || newComments.length < limit) {
+      setHasMore(false);
+    }
     setLoading(false);
   };
 
   useEffect(() => {
     fetchComments();
-  }, [limit]); 
+  }, [limit]);
 
   useEffect(() => {
     comments.forEach((comment) => {
@@ -434,6 +436,7 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
           )}
           <InfiniteScroll
             scrollableTarget="scrollableDiv"
+            scrollThreshold={0.9}
             dataLength={comments.length}
             next={fetchComments}
             hasMore={hasMore}
@@ -475,9 +478,12 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
                     <span className="font-semibold text-gray-200">
                       @{comment?.user?.name}{" "}
                       <span className="text-gray-400 font-normal text-[13px]">
-                        {formatDistanceToNowStrict(new Date(comment?.createdAt), {
-                          addSuffix: true,
-                        })} {" "}
+                        {formatDistanceToNowStrict(
+                          new Date(comment?.createdAt),
+                          {
+                            addSuffix: true,
+                          },
+                        )}{" "}
                         {comment?.edited && "(edited)"}
                       </span>
                     </span>

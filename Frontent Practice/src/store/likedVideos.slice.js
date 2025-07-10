@@ -49,6 +49,9 @@ let likedVideosSlice = createSlice({
     addToLikedVideos: (state, action) => {
       state.data?.unshift(action.payload);
     },
+      setLikedVideoLimit: (state, action) => {
+      state.limit = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(fetchLikedVideos.pending, (state, action) => {
@@ -71,7 +74,7 @@ let likedVideosSlice = createSlice({
   },
 });
 
-let { clearLikedVideos, deleteFromLikedVideos, addToLikedVideos } =
+let { clearLikedVideos, deleteFromLikedVideos,setLikedVideoLimit, addToLikedVideos } =
   likedVideosSlice.actions;
 
 export {
@@ -80,4 +83,6 @@ export {
   fetchLikedVideos,
   addToLikedVideos,
   deleteFromLikedVideos,
+  setLikedVideoLimit
+  
 };

@@ -4,6 +4,7 @@ import { setVideoLimit } from "./store/videos.slice";
 import Header from "./components/Header";
 import { Outlet } from "react-router-dom";
 import { setCurrentUserVideoLimit } from "./store/userVideos.slice";
+import { setLikedVideoLimit } from "./store/likedVideos.slice";
 
 const App = () => {
   const dispatch = useDispatch();

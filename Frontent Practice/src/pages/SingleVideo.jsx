@@ -64,7 +64,10 @@ const SingleVideo = () => {
   let dispatch = useDispatch();
   const [selectedQuality, setSelectedQuality] = useState("");
   const [availableQualities, setAvailableQualities] = useState([]);
-  const [videoSrc, setVideoSrc] = useState("");
+  const [switchingQuality, setSwitchingQuality] = useState(false);
+
+const qualityLoaderTimeout = useRef(null);
+const qualityLoaderMinimumTime = useRef(null);
 
   useEffect(() => {
     (async () => {
@@ -130,46 +133,70 @@ const SingleVideo = () => {
     })();
   }, []);
 
-  useEffect(() => {
-    if (!video.video || !selectedQuality) return;
+useEffect(() => {
+  if (!video.video || !selectedQuality || !videoRef.current) return;
 
-    const transformMap = {
-      "144p": "w_256,h_144,c_scale",
-      "240p": "w_426,h_240,c_scale",
-      "360p": "w_640,h_360,c_scale",
-      "480p": "w_854,h_480,c_scale",
-      "720p": "w_1280,h_720,c_scale",
-      "1080p": "w_1920,h_1080,c_scale",
-    };
+  const transformMap = {
+    "144p": "w_256,h_144,c_scale",
+    "240p": "w_426,h_240,c_scale",
+    "360p": "w_640,h_360,c_scale",
+    "480p": "w_854,h_480,c_scale",
+    "720p": "w_1280,h_720,c_scale",
+    "1080p": "w_1920,h_1080,c_scale",
+  };
 
-    const videoElement = videoRef.current;
-    if (!videoElement) return;
+  const [, base] = video.video.split("/upload/");
+  const transform = transformMap[selectedQuality];
+  const newUrl =
+    selectedQuality === video.originalQuality
+      ? video.video
+      : `https://res.cloudinary.com/malaviyakahil/video/upload/${transform}/${base}`;
 
-    const currentTime = videoElement.currentTime;
-    const wasPlaying = !videoElement.paused;
+  const videoElement = videoRef.current;
+  const savedTime = videoElement.currentTime;
+  const wasPlaying = !videoElement.paused;
 
-    const [, base] = video.video.split("/upload/");
-    const transform = transformMap[selectedQuality];
-    const newUrl =
-      selectedQuality === video.originalQuality
-        ? video.video
-        : `https://res.cloudinary.com/malaviyakahil/video/upload/${transform}/${base}`;
+  setSwitchingQuality(true);
+  qualityLoaderMinimumTime.current = Date.now();
 
-    const restorePosition = () => {
-      videoElement.currentTime = currentTime;
+  videoElement.pause();
+  videoElement.removeAttribute("src");
+  videoElement.load();
+  videoElement.src = newUrl;
+
+  const handleLoaded = () => {
+    try {
+      videoElement.currentTime = savedTime;
       videoElement.playbackRate = speed;
       if (wasPlaying) {
-        videoElement.play().catch((err) => {
-          console.warn("Resume failed after quality switch:", err);
-        });
+        videoElement.play().catch((err) =>
+          console.warn("Playback error:", err)
+        );
       }
-      videoElement.removeEventListener("loadedmetadata", restorePosition);
-    };
+    } catch (err) {
+      console.warn("Setting currentTime failed:", err);
+    }
 
-    videoElement.addEventListener("loadedmetadata", restorePosition);
-    setVideoSrc(newUrl);
-  }, [selectedQuality, video, speed]);
+    const elapsed = Date.now() - qualityLoaderMinimumTime.current;
+    const remaining = Math.max(0, 200 - elapsed);
 
+    qualityLoaderTimeout.current = setTimeout(() => {
+      setSwitchingQuality(false);
+    }, remaining);
+
+    videoElement.removeEventListener("loadeddata", handleLoaded);
+  };
+
+  videoElement.addEventListener("loadeddata", handleLoaded);
+  videoElement.load();
+
+  return () => {
+    videoElement.removeEventListener("loadeddata", handleLoaded);
+    clearTimeout(qualityLoaderTimeout.current);
+  };
+}, [selectedQuality]);
+
+ 
   useEffect(() => {
     if (loading) return;
     const video = videoRef.current;
@@ -374,7 +401,7 @@ const SingleVideo = () => {
     } else {
       dispatch(
         addToLikedVideos({
-          _id:videoId,
+          _id: videoId,
           video: {
             ...video,
             owner: { ...channelDetails },
@@ -507,7 +534,7 @@ const SingleVideo = () => {
   }
 
   return (
-    <div className="bg-transparent text-white max-w-6xl mx-auto py-5">
+    <div className="bg-transparent text-white max-w-6xl mx-auto">
       <div
         ref={containerRef}
         className={`relative w-full bg-black aspect-video max-w-screen-xl rounded-lg mx-auto mt-4 overflow-hidden ${
@@ -517,10 +544,13 @@ const SingleVideo = () => {
         <video
           ref={videoRef}
           className="w-full h-full transition-all"
-          src={videoSrc}
           onClick={togglePlay}
         />
-
+        {switchingQuality && (
+          <div className="absolute inset-0 z-50 bg-black flex items-center justify-center">
+            <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin" />
+          </div>
+        )}
         <div
           className={`absolute bottom-0 w-full transition-opacity duration-300 ${
             showControls || showSettings
@@ -613,7 +643,7 @@ const SingleVideo = () => {
                     <div className="p-2 border-b border-gray-700">
                       <label className="block mb-1">Quality</label>
                       <select
-                        value={selectedQuality}
+                        value={String(selectedQuality)}
                         onChange={changeQuality}
                         className="w-full bg-gray-700 text-white rounded outline-none p-1"
                       >

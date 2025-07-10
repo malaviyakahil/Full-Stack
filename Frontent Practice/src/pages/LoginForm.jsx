@@ -2,12 +2,14 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
-import { useAuth } from "../components/AuthContext"; // 🔑 Use AuthContext
+import { useAuth } from "../components/AuthContext";
+import { RiEyeLine, RiEyeOffLine } from "react-icons/ri";
 
 const LoginForm = () => {
   const { register, handleSubmit } = useForm();
   const [error, setError] = useState(false);
   const [loader, setLoader] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { setUser } = useAuth();
@@ -15,6 +17,7 @@ const LoginForm = () => {
   const submit = async (data) => {
     setLoader(true);
     setError(false);
+
     const formData = new FormData();
     formData.append("name", data.name);
     formData.append("email", data.email);
@@ -51,6 +54,22 @@ const LoginForm = () => {
         <form className="w-full" onSubmit={handleSubmit(submit)} autoComplete="off">
           {/* Username */}
           <label className="input validator w-full my-2">
+            <svg
+              className="h-[1em] opacity-50"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+            >
+              <g
+                strokeLinejoin="round"
+                strokeLinecap="round"
+                strokeWidth="2.5"
+                fill="none"
+                stroke="currentColor"
+              >
+                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </g>
+            </svg>
             <input
               type="text"
               autoComplete="off"
@@ -58,27 +77,61 @@ const LoginForm = () => {
               {...register("name")}
               placeholder="Username"
               pattern="[A-Za-z][A-Za-z0-9\-]*"
-              minLength="3"
-              maxLength="30"
+              minLength={3}
+              maxLength={30}
               title="Only letters, numbers or dash"
             />
           </label>
 
           {/* Email */}
           <label className="input validator w-full my-2">
+            <svg
+              className="h-[1em] opacity-50"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+            >
+              <g
+                strokeLinejoin="round"
+                strokeLinecap="round"
+                strokeWidth="2.5"
+                fill="none"
+                stroke="currentColor"
+              >
+                <rect width="20" height="16" x="2" y="4" rx="2"></rect>
+                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+              </g>
+            </svg>
             <input
               type="email"
               autoComplete="off"
               placeholder="mail@site.com"
               {...register("email")}
               required
+              pattern="^\S+@\S+\.\S+$"
+              title="Enter a valid email address"
             />
           </label>
 
           {/* Password */}
-          <label className="input validator w-full my-2">
+          <label className="input validator w-full my-2 relative">
+            <svg
+              className="h-[1em] opacity-50"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+            >
+              <g
+                strokeLinejoin="round"
+                strokeLinecap="round"
+                strokeWidth="2.5"
+                fill="none"
+                stroke="currentColor"
+              >
+                <path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"></path>
+                <circle cx="16.5" cy="7.5" r=".5" fill="currentColor"></circle>
+              </g>
+            </svg>
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               autoComplete="new-password"
               required
               {...register("password")}
@@ -86,6 +139,16 @@ const LoginForm = () => {
               pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"
               title="Must contain at least 1 number, 1 uppercase and 1 lowercase letter, and be at least 8 characters"
             />
+            <span
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-sm"
+            >
+              {showPassword ? (
+                <RiEyeLine className="text-gray-400 text-[15px]" />
+              ) : (
+                <RiEyeOffLine className="text-gray-400 text-[15px]" />
+              )}
+            </span>
           </label>
 
           {/* Error Message */}

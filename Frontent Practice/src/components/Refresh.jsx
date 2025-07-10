@@ -7,7 +7,6 @@ const Refresh = () => {
   let dispatch = useDispatch();
   let refresh = () => {
     dispatch(clearVideos());
-    dispatch(fetchVideos());
   };
   return (
     <button

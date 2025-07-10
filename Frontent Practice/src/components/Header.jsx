@@ -48,7 +48,7 @@ const Header = () => {
   return (
     <>
       {currentUser.loading ? (
-        <div className="navbar bg-base-100 shadow-sm px-6 animate-pulse">
+        <div className="navbar bg-base-100 shadow-sm px-6 animate-pulse ">
           <div className="flex-1">
             <div className="h-6 w-24 bg-gray-200 dark:bg-gray-700 rounded"></div>
           </div>
@@ -66,7 +66,7 @@ const Header = () => {
           </div>
         </div>
       ) : (
-        <div className="navbar bg-base-100 shadow-sm px-6">
+        <div className="navbar bg-base-100 shadow-sm px-6 border-b-[1px] border-gray-600">
           <div className="flex-1">
             <Link className=" text-xl p-0 font-semibold" to="/app/dashboard/all">Dashboard</Link>
           </div>
