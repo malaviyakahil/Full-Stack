@@ -460,30 +460,98 @@ let deleteCommentReview = asyncHandler(async (req, res) => {
   res.status(200).json(new response(200, [], "Review deleted successfully"));
 });
 
-let addComment = asyncHandler(async (req, res) => {
-  let user = req.user?.id;
-  let video = req.params?.id;
+const addComment = asyncHandler(async (req, res) => {
 
-  let { comment } = req.body;
+  const userId = req.user._id;
+  const videoId = req.params.id;
+  const { comment } = req.body;
 
-  if ([comment].some((e) => e.trim() == "")) {
-    throw new error(400, "Comment cannot be empty");
-  }
-
-  let commentAdded = await Comment.create({
+  // Save basic comment
+  const newComment = await Comment.create({
     comment,
-    video,
-    user,
+    video: videoId,
+    user: userId,
   });
 
+  // Aggregate it back with all enrichments
+  const enriched = await Comment.aggregate([
+    { $match: { _id: newComment._id } },
+    {
+      $lookup: {
+        from: "users",
+        localField: "user",
+        foreignField: "_id",
+        as: "user",
+      },
+    },
+    { $unwind: "$user" },
+    {
+      $lookup: {
+        from: "commentreviews",
+        localField: "_id",
+        foreignField: "comment",
+        as: "reviews",
+      },
+    },
+    {
+      $addFields: {
+        like: {
+          count: {
+            $size: {
+              $filter: {
+                input: "$reviews",
+                as: "review",
+                cond: { $eq: ["$$review.review", "Like"] },
+              },
+            },
+          },
+          status: false, // Always false for new comment
+        },
+        dislike: {
+          count: {
+            $size: {
+              $filter: {
+                input: "$reviews",
+                as: "review",
+                cond: { $eq: ["$$review.review", "Dislike"] },
+              },
+            },
+          },
+          status: false,
+        },
+        isCurrentUser: true,
+        isPinned: { $eq: ["$pinByChannel", true] },
+      },
+    },
+    {
+      $project: {
+        comment: 1,
+        video: 1,
+        user: { _id: 1, avatar: 1, name: 1 },
+        heartByChannel: 1,
+        createdAt: 1,
+        like: 1,
+        dislike: 1,
+        pinByChannel: 1,
+        edited: 1,
+        isCurrentUser: 1,
+        isPinned: 1,
+      },
+    },
+  ]);
 
-  res
-    .status(200)
-    .json(new response(200, commentAdded, "Comment added successfully"));
+  if (!enriched[0]) {
+    return res.status(500).json(new response(500, null, "Failed to enrich comment"));
+  }
+
+
+  res.status(201).json(
+    new response(201, enriched[0], "Comment created")
+  );
 });
 
 let deleteComment = asyncHandler(async (req, res) => {
-  let user = req.user?.id;
+ 
   let comment = req.params?.id;
 
   let deleteSuccess = await Comment.findByIdAndDelete(comment);
