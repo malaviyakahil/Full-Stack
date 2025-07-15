@@ -70,7 +70,7 @@ userRouter.post(
   auth,
   changeCoverImage,
 );
-userRouter.post("/remove-cover-image/:id", upload.none(), auth, removeCoverImage);
+userRouter.post("/remove-cover-image", upload.none(), auth, removeCoverImage);
 userRouter.get("/get-history", upload.none(), auth, getHistory);
 userRouter.post("/delete-history/:id", upload.none(), auth, deleteHistory);
 userRouter.get("/get-liked-videos", upload.none(), auth, getLikedVideos);

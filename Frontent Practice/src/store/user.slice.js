@@ -33,6 +33,9 @@ let currentUserSlice = createSlice({
     updateCurrentUser: (state, action) => {
       state.data = { ...state.data, ...action.payload };
     },
+    removeCoverImage: (state, action) => {
+      state.data = { ...state.data,coverImage:"" };
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(fetchCurrentUser.pending, (state, action) => {
@@ -50,11 +53,12 @@ let currentUserSlice = createSlice({
   },
 });
 
-let { clearCurrentUser, updateCurrentUser } = currentUserSlice.actions;
+let { clearCurrentUser, updateCurrentUser,removeCoverImage } = currentUserSlice.actions;
 
 export {
   currentUserSlice,
   fetchCurrentUser,
   clearCurrentUser,
   updateCurrentUser,
+  removeCoverImage
 };

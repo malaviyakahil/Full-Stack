@@ -413,99 +413,171 @@ let changePassword = asyncHandler(async (req, res) => {
     .json(new response(200, [], "Password changed successfully"));
 });
 
-let changeAvatar = asyncHandler(async (req, res) => {
-  let id = req.user?._id;
-  let publicId = req.params?.id;
-  let avatarLocalPath = req.file?.path;
+const changeAvatar = asyncHandler(async (req, res) => {
+  const userId = req.user?._id;
+  const avatarLocalPath = req.file?.path;
 
   if (!avatarLocalPath) {
-    throw new error(401, "Invalid avatar image");
+    throw new error(400, "Invalid avatar image file.");
   }
 
-  let avatarRes = await uploadOnCloudinary(avatarLocalPath);
-
+  // Upload new avatar to Cloudinary
+  const avatarRes = await uploadOnCloudinary(avatarLocalPath, "image", "user/avatar");
   if (!avatarRes) {
-    throw new error(
-      401,
-      "Something went wrong while uploading avatar on cloudinary",
-    );
+    throw new error(500, "Failed to upload new avatar to Cloudinary.");
   }
 
-  await cloudinary.uploader.destroy(publicId, {
-    resource_type: "image",
-  });
-
-  let user = await User.findByIdAndUpdate(
-    id,
-    { $set: { avatar: avatarRes?.url, avatarPublicId: avatarRes?.public_id } },
-    { new: true },
-  );
-
-  if (!user) {
-    throw new error(401, "Avatar change failed");
+  // Fetch user from DB
+  const existingUser = await User.findById(userId);
+  if (!existingUser) {
+    // Cleanup uploaded image
+    await cloudinary.uploader.destroy(avatarRes.public_id);
+    throw new error(404, "User not found.");
   }
 
-  res.status(200).json(new response(200, user, "Avatar changed successfully"));
-});
-
-let changeCoverImage = asyncHandler(async (req, res) => {
-  let id = req.user?._id;
-  let coverImageLocalPath = req.file?.path;
-
-  if (!coverImageLocalPath) {
-    throw new error(401, "Invalid cover image");
+  // Delete previous avatar from Cloudinary if it exists
+  if (existingUser.avatarPublicId) {
+    await cloudinary.uploader.destroy(existingUser.avatarPublicId);
   }
 
-  let coverImageRes = await uploadOnCloudinary(coverImageLocalPath);
-
-  if (!coverImageRes) {
-    throw new error(
-      401,
-      "Something went wrong while uploading cover image on cloudinary",
-    );
-  }
-
-  let user = await User.findByIdAndUpdate(
-    id,
+  // Update user with new avatar
+  const updatedUser = await User.findByIdAndUpdate(
+    userId,
     {
       $set: {
-        coverImage: coverImageRes?.secure_url,
-        coverImagePublicId: coverImageRes.public_id,
+        avatar: avatarRes.secure_url,
+        avatarPublicId: avatarRes.public_id,
       },
     },
-    { new: true },
+    { new: true }
   );
 
-  if (!user) {
-    throw new error(401, "Cover image change failed");
+  // Cleanup local file
+  if (fs.existsSync(avatarLocalPath)) {
+    fs.unlinkSync(avatarLocalPath);
+  }
+
+  if (!updatedUser) {
+    throw new error(500, "Failed to update avatar.");
   }
 
   res
     .status(200)
-    .json(new response(200, user, "Cover image changed successfully"));
+    .json(new response(200, updatedUser, "Avatar updated successfully."));
 });
 
-let changeFullName = asyncHandler(async (req, res) => {
-  let id = req.user?._id;
-  let { fullName } = req.body;
+const changeCoverImage = asyncHandler(async (req, res) => {
+  const userId = req.user?._id;
+  const coverImageLocalPath = req.file?.path;
 
-  if (!fullName) {
-    throw new error(400, "Full name is required");
+  if (!coverImageLocalPath) {
+    throw new error(400, "Invalid cover image file.");
   }
 
-  let user = await User.findByIdAndUpdate(
-    id,
-    { $set: { fullName } },
-    { new: true },
+  // Upload new image to Cloudinary
+  const uploadResult = await uploadOnCloudinary(coverImageLocalPath, "image", "user/coverImage");
+
+  if (!uploadResult) {
+    throw new error(500, "Failed to upload cover image to Cloudinary.");
+  }
+
+  // Fetch current user to delete old image if exists
+  const existingUser = await User.findById(userId);
+  if (!existingUser) {
+    // Cleanup new upload if user not found
+    await cloudinary.uploader.destroy(uploadResult.public_id);
+    throw new error(404, "User not found.");
+  }
+
+  // Delete previous cover image from Cloudinary if it exists
+  if (existingUser.coverImagePublicId) {
+    await cloudinary.uploader.destroy(existingUser.coverImagePublicId);
+  }
+
+  // Update user with new image details
+  const updatedUser = await User.findByIdAndUpdate(
+    userId,
+    {
+      $set: {
+        coverImage: uploadResult.secure_url,
+        coverImagePublicId: uploadResult.public_id,
+      },
+    },
+    { new: true }
   );
 
+  // Cleanup local file
+  if (fs.existsSync(coverImageLocalPath)) {
+    fs.unlinkSync(coverImageLocalPath);
+  }
+
+  if (!updatedUser) {
+    throw new error(500, "Failed to update user's cover image.");
+  }
+
+  return res
+    .status(200)
+    .json(new response(200, updatedUser, "Cover image updated successfully."));
+});
+
+const removeCoverImage = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+
+  // Get current user to access stored Cloudinary public ID
+  const user = await User.findById(userId);
   if (!user) {
-    throw new error(400, "Full name change failed");
+    throw new error(404, "User not found.");
+  }
+
+  // If a cover image exists, delete it from Cloudinary
+  if (user.coverImagePublicId) {
+    await cloudinary.uploader.destroy(user.coverImagePublicId, {
+      resource_type: "image",
+    });
+  }
+
+  // Clear the cover image fields from the user record
+  const updatedUser = await User.findByIdAndUpdate(
+    userId,
+    {
+      $set: {
+        coverImage: "",
+        coverImagePublicId: "",
+      },
+    },
+    { new: true }
+  );
+
+  if (!updatedUser) {
+    throw new error(500, "Something went wrong while removing cover image.");
+  }
+
+  res.status(200).json(new response(200, updatedUser, "Cover image removed successfully."));
+});
+
+const changeFullName = asyncHandler(async (req, res) => {
+  const userId = req.user?._id;
+  let { fullName } = req.body;
+
+  fullName = fullName?.trim();
+
+  if (!fullName) {
+    throw new error(400, "Full name is required.");
+  }
+
+  const updatedUser = await User.findByIdAndUpdate(
+    userId,
+    { $set: { fullName } },
+    { new: true }
+  );
+
+  if (!updatedUser) {
+    throw new error(500, "Failed to update full name.");
   }
 
   res
     .status(200)
-    .json(new response(200, user, "Full name changed successfully"));
+    .json(new response(200, updatedUser, "Full name changed successfully."));
 });
 
 let subscribeTo = asyncHandler(async (req, res) => {
@@ -1459,33 +1531,6 @@ let getChannelDetails = asyncHandler(async (req, res) => {
     );
 });
 
-let removeCoverImage = asyncHandler(async (req, res) => {
-  let id = req.user._id;
-  let publicId = req.params?.id;
-
-  const result = await cloudinary.uploader.destroy(publicId, {
-    resource_type: "image",
-  });
-
-  let editUser = await User.findByIdAndUpdate(
-    id,
-    {
-      $set: {
-        coverImage: "",
-        coverImagePublicId: "",
-      },
-    },
-    { new: true },
-  );
-
-  if (!editUser) {
-    throw new error(500, "Something went wrong while removing Cover Image");
-  }
-
-  res
-    .status(200)
-    .json(new response(200, editUser, "Cover image removed successfully"));
-});
 
 const searchAll = asyncHandler(async (req, res) => {
   const { query } = req.query;
