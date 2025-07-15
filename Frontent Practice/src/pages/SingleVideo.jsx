@@ -262,22 +262,44 @@ useEffect(() => {
     };
   }, [loading, showSettings]);
 
-  const handleSeek = (e) => {
-    const video = videoRef.current;
-    const wasPlaying = !video.paused;
+const handleSeek = (e) => {
+  const video = videoRef.current;
+  const wasPlaying = !video.paused;
 
-    if (wasPlaying) video.pause();
+  const inputValue = parseFloat(e.target.value);
+  const clampedValue = Math.min(Math.max(inputValue, 0), 100);
+  const seekTarget = (clampedValue / 100) * duration;
 
-    const seekTarget = (parseFloat(e.target.value) / 100) * duration;
-    video.currentTime = seekTarget;
-    setProgress(parseFloat(e.target.value));
+  setProgress(clampedValue);
+  video.currentTime = seekTarget;
 
-    if (wasPlaying) {
-      setTimeout(() => {
-        video.play().catch((err) => console.warn("Resume failed:", err));
-      }, 60);
-    }
-  };
+  if (seekTarget >= duration) {
+    video.pause();
+    setPlaying(false);
+    console.log("Paused after end");
+    return;
+  }
+
+  if (wasPlaying) {
+    setTimeout(() => {
+      video.play()
+        .then(() => {
+          if (video.currentTime < duration) {
+            setPlaying(true);
+            console.log("Play resumed");
+          } else {
+            video.pause();
+            setPlaying(false);
+            console.log("Auto-paused because seek was at end");
+          }
+        })
+        .catch((err) => {
+          console.warn("Play error:", err);
+          setPlaying(false);
+        });
+    }, 60);
+  }
+};
 
   const togglePlay = () => {
     const video = videoRef.current;
@@ -563,9 +585,11 @@ useEffect(() => {
             min="0"
             max="100"
             step="0.1"
-            value={progress}
+            // value={progress}
+            value={Number.isFinite(progress) ? progress : 0}
             onChange={handleSeek}
-            className="w-full"
+            style={{ accentColor: "#ffffff" }}
+            className="w-full text-gr"
           />
 
           <div className="flex items-center justify-between gap-3 text-sm flex-wrap">
@@ -585,6 +609,7 @@ useEffect(() => {
                 value={volume}
                 onChange={handleVolumeChange}
                 className="w-20 hidden md:block"
+                style={{ accentColor: "#ffffff" }}
               />
               <span>
                 {formatTime(currentTime)} / {formatTime(duration)}
@@ -648,7 +673,7 @@ useEffect(() => {
                         className="w-full bg-gray-700 text-white rounded outline-none p-1"
                       >
                         {availableQualities?.map((s, i) => (
-                          <option key={i} value={s}>
+                          <option key={i} value={String(s)}>
                             {s}
                           </option>
                         ))}

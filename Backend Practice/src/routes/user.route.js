@@ -28,7 +28,8 @@ import {
   getVideoQuality,
   authMe,
   deleteUser,
-  getChannelVideos
+  getChannelVideos,
+  removeCoverImage
 } from "../controllers/user.controller.js";
 import upload from "../middlewares/multer.middleware.js";
 import auth from "../middlewares/auth.middleware.js";
@@ -61,7 +62,6 @@ userRouter.get(
 );
 userRouter.post("/renew-access-token", upload.none(), renewAccessToken);
 userRouter.get("/auth-me", upload.none(), authMe);
-
 userRouter.post("/change-password", upload.none(), auth, changePassword);
 userRouter.post("/change-full-name", upload.none(), auth, changeFullName);
 userRouter.post("/change-avatar", upload.single("avatar"), auth, changeAvatar);
@@ -77,21 +77,7 @@ userRouter.get("/get-liked-videos", upload.none(), auth, getLikedVideos);
 userRouter.post("/delete-liked-videos/:id", upload.none(), auth, deleteLikedVideos);
 userRouter.post("/get-sub-status/:id", upload.none(), auth, getSubStatus);
 userRouter.post("/get-review-status/:id", upload.none(), auth, getReviewStatus);
-userRouter.post(
-  "/edit-profile",
-  upload.fields([
-    {
-      name: "avatar",
-      maxCount: 1,
-    },
-    {
-      name: "coverImage",
-      maxCount: 1,
-    },
-  ]),
-  auth,
-  editProfile,
-);
+userRouter.post("/remove-cover-image", upload.single("avatar"), auth, removeCoverImage);
 userRouter.post("/subscribe-to/:id", upload.none(), auth, subscribeTo);
 userRouter.post("/unsubscribe-to/:id", upload.none(), auth, unsubscribeTo);
 userRouter.get(

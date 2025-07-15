@@ -31,7 +31,7 @@ let currentUserSlice = createSlice({
       state.fetched = false;
     },
     updateCurrentUser: (state, action) => {
-      state.data = { ...state.data, ...action.payload?.data?.data };
+      state.data = { ...state.data, ...action.payload };
     },
   },
   extraReducers: (builder) => {

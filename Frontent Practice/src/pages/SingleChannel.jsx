@@ -92,6 +92,7 @@ const SingleChannel = () => {
     disabled: false,
   });
   let currentUser = useSelector((store) => store.currentUser);
+  
   const subscribeToggle = () => {
     if (subCount.status) {
       setSubCount({

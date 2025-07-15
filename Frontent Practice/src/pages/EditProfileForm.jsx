@@ -12,17 +12,22 @@ const EditProfileForm = () => {
   let [loader, setLoader] = useState(false);
   let [showAvatarFileInput, setShowAvatarFileInput] = useState(false);
   let [showCoverImageFileInput, setShowCoverImageFileInput] = useState(false);
+  let [coverImageRemove, setCoverImageRemove] = useState(false);
 
-  const handleAvatarChangeClick = () =>
+  const handleAvatarChangeClick = () => {
     setShowAvatarFileInput(!showAvatarFileInput);
+  };
 
   const handleCoverImageChangeClick = () =>
     setShowCoverImageFileInput(!showCoverImageFileInput);
 
   let submit = async (data) => {
-
+    let prevUserData = currentUser?.data;
     setError("");
-    if (data?.avatar?.[0]?.size > 5 * 1024 * 1024 && data?.coverImage?.[0]?.size > 5 * 1024 * 1024) {
+    if (
+      data?.avatar?.[0]?.size > 5 * 1024 * 1024 &&
+      data?.coverImage?.[0]?.size > 5 * 1024 * 1024
+    ) {
       setError("Too big file for Avatar and Cover Image");
       return;
     }
@@ -34,34 +39,75 @@ const EditProfileForm = () => {
       setError("Too big file for Cover Image");
       return;
     }
-    
+
     setLoader(true);
-    
-    let formData = new FormData();
-    formData.append("fullName", data?.fullName || currentUser.data?.fullName);
-    formData.append("avatar", data?.avatar?.[0] || currentUser.data?.avatar);
-    formData.append(
-      "coverImage",
-      data?.coverImage?.[0] || currentUser.data?.coverImage,
-    );
 
     try {
-      let res = await axios.post(
-        `http://localhost:8000/user/edit-profile`,
-        formData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-          withCredentials: true,
-        },
-      );
+      if (data.fullName.trim().length > 0) {
+        const formData = new FormData();
+        formData.append("fullName", data.fullName);
 
-      if (res.data?.success) {
-        setLoader(false);
-        dispatch(updateCurrentUser(res));
+        const res = await axios.post(
+          "http://localhost:8000/user/change-full-name",
+          formData,
+          {
+            headers: { "Content-Type": "multipart/form-data" },
+            withCredentials: true,
+          },
+        );
+        dispatch(updateCurrentUser(res?.data?.data));
+      }
+
+      if (data?.avatar?.length > 0) {
+        const formData = new FormData();
+        formData.append("avatar", data.avatar[0]);
+
+        const res = await axios.post(
+          "http://localhost:8000/user/change-avatar",
+          formData,
+          {
+            headers: { "Content-Type": "multipart/form-data" },
+            withCredentials: true,
+          },
+        );
+        dispatch(updateCurrentUser(res?.data?.data));
+      }
+
+      if (data?.coverImage?.length > 0) {
+        const formData = new FormData();
+        formData.append("coverImage", data.coverImage[0]);
+
+        const res = await axios.post(
+          "http://localhost:8000/user/change-cover-image",
+          formData,
+          {
+            headers: { "Content-Type": "multipart/form-data" },
+            withCredentials: true,
+          },
+        );
+        dispatch(updateCurrentUser(res?.data?.data));
+      }
+
+      if (coverImageRemove) {
+        const res = await axios.post(
+          "http://localhost:8000/user/remove-cover-image",
+          [],
+          {
+            withCredentials: true,
+          },
+        );
+        dispatch(updateCurrentUser(res?.data?.data));
       }
     } catch (error) {
+      setError(
+        error?.response?.data?.message || "Failed to change user details",
+      );
+      dispatch(updateCurrentUser(prevUserData));
+    } finally {
       setLoader(false);
-      setError(error?.response?.data?.message);
+      setShowAvatarFileInput(false);
+      setShowCoverImageFileInput(false);
+      setCoverImageRemove(false);
     }
   };
 
@@ -84,12 +130,13 @@ const EditProfileForm = () => {
 
           <p className="text-md font-semibold my-2">Avatar</p>
 
-          <div className="relative aspect-video overflow-hidden rounded-lg bg-black flex justify-center ">
+          <div className="relative aspect-video overflow-hidden rounded-lg bg-black flex justify-center items-center">
             <img
               src={currentUser.data?.avatar}
               alt="img"
               className="h-full object-contain"
             />
+
             <button
               type="button"
               onClick={handleAvatarChangeClick}
@@ -115,19 +162,48 @@ const EditProfileForm = () => {
           )}
           <p className="text-md font-semibold my-2">Cover Image</p>
 
-          <div className="relative aspect-video overflow-hidden rounded-lg bg-black flex justify-center">
-            <img
-              src={currentUser.data?.coverImage}
-              alt="img"
-              className="h-full object-contain"
-            />
-            <button
-              type="button"
-              onClick={handleCoverImageChangeClick}
-              className="absolute bottom-2 left-2 bg-gray-700 hover:bg-gray-600 px-4 py-0.5 rounded-md text-[14px] text-white"
-            >
-              {showCoverImageFileInput ? "Cancel" : "Change"}
-            </button>
+          <div className="relative aspect-video overflow-hidden rounded-lg bg-black flex justify-center items-center">
+            {currentUser.data?.coverImage ? (
+              <>
+                {!coverImageRemove ? (
+                  <img
+                    src={currentUser.data?.coverImage}
+                    alt="img"
+                    className="h-full object-contain"
+                  />
+                ) : (
+                  <p>User has no cover image</p>
+                )}
+                {!coverImageRemove && (
+                  <button
+                    type="button"
+                    onClick={handleCoverImageChangeClick}
+                    className="absolute bottom-2 left-2 bg-gray-700 hover:bg-gray-600 px-4 py-0.5 rounded-md text-[14px] text-white"
+                  >
+                    {showCoverImageFileInput ? "Cancel" : "Change"}
+                  </button>
+                )}
+                {!showCoverImageFileInput && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCoverImageRemove(!coverImageRemove);
+                    }}
+                    className="absolute bottom-2 right-2 bg-gray-700 hover:bg-gray-600 px-4 py-0.5 rounded-md text-[14px] text-white"
+                  >
+                    {coverImageRemove ? "Cancel" : "Remove"}
+                  </button>
+                )}
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={handleCoverImageChangeClick}
+                className="absolute bottom-2 left-2 bg-gray-700 hover:bg-gray-600 px-4 py-0.5 rounded-md text-[14px] text-white"
+              >
+                {showCoverImageFileInput ? "Cancel" : "Add"}
+              </button>
+            )}
           </div>
 
           {showCoverImageFileInput && (

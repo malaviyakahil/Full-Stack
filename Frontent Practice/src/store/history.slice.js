@@ -26,7 +26,7 @@ let historySlice = createSlice({
     },
     addToHistory: (state, action) => {
       state.data?.unshift(action.payload);
-      if (state.data.length > 10) {
+      if (state.data?.length > 10) {
     state.data = state.data.slice(0, 10);
   }
     },

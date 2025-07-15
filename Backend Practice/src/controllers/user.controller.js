@@ -401,7 +401,7 @@ let changeAvatar = asyncHandler(async (req, res) => {
     throw new error(401, "Avatar change failed");
   }
 
-  res.status(200).json(new response(200, [], "Avatar changed successfully"));
+  res.status(200).json(new response(200, user, "Avatar changed successfully"));
 });
 
 let changeCoverImage = asyncHandler(async (req, res) => {
@@ -433,7 +433,7 @@ let changeCoverImage = asyncHandler(async (req, res) => {
 
   res
     .status(200)
-    .json(new response(200, [], "Cover image changed successfully"));
+    .json(new response(200, user, "Cover image changed successfully"));
 });
 
 let changeFullName = asyncHandler(async (req, res) => {
@@ -454,7 +454,7 @@ let changeFullName = asyncHandler(async (req, res) => {
     throw new error(400, "Full name change failed");
   }
 
-  res.status(200).json(new response(200, [], "Full name changed successfully"));
+  res.status(200).json(new response(200, user, "Full name changed successfully"));
 });
 
 let subscribeTo = asyncHandler(async (req, res) => {
@@ -916,125 +916,122 @@ const getChannelVideos = asyncHandler(async (req, res) => {
     );
 });
 
-
 const getComments = asyncHandler(async (req, res) => {
   const videoId = new mongoose.Types.ObjectId(req.params.id);
-  const userId = req.user?._id;
-  const currentUserId = req.user?._id;
+  const userId = req.user._id;
+  const currentUserId = req.user._id;
+
   const limit = parseInt(req.query.limit) || 5;
   const sortBy = req.query.sortBy || "newest";
-  const cursorId = req.query.id ? new mongoose.Types.ObjectId(req.query.id) : null;
+
+  const cursorId = req.query.id
+    ? new mongoose.Types.ObjectId(req.query.id)
+    : null;
   const cursorDate = req.query.cursor ? new Date(req.query.cursor) : null;
-  const cursorLikeCount = req.query.likeCount ? parseInt(req.query.likeCount) : null;
+  const cursorLikeCount = req.query.likeCount
+    ? parseInt(req.query.likeCount)
+    : null;
 
-  // === Helper: Shared Lookup and AddFields Pipeline ===
-  function lookupAndEnrichPipeline(currentUserId, userId) {
-    return [
-      {
-        $lookup: {
-          from: "users",
-          localField: "user",
-          foreignField: "_id",
-          as: "user",
-        },
-      },
-      { $unwind: "$user" },
-      {
-        $lookup: {
-          from: "commentreviews",
-          localField: "_id",
-          foreignField: "comment",
-          as: "reviews",
-        },
-      },
-      {
-        $addFields: {
-          like: {
-            count: {
-              $size: {
-                $filter: {
-                  input: "$reviews",
-                  as: "review",
-                  cond: { $eq: ["$$review.review", "Like"] },
-                },
-              },
-            },
-            status: {
-              $gt: [
-                {
-                  $size: {
-                    $filter: {
-                      input: "$reviews",
-                      as: "review",
-                      cond: {
-                        $and: [
-                          { $eq: ["$$review.review", "Like"] },
-                          { $eq: ["$$review.user", currentUserId] },
-                        ],
-                      },
-                    },
-                  },
-                },
-                0,
-              ],
-            },
-          },
-          dislike: {
-            count: {
-              $size: {
-                $filter: {
-                  input: "$reviews",
-                  as: "review",
-                  cond: { $eq: ["$$review.review", "Dislike"] },
-                },
-              },
-            },
-            status: {
-              $gt: [
-                {
-                  $size: {
-                    $filter: {
-                      input: "$reviews",
-                      as: "review",
-                      cond: {
-                        $and: [
-                          { $eq: ["$$review.review", "Dislike"] },
-                          { $eq: ["$$review.user", currentUserId] },
-                        ],
-                      },
-                    },
-                  },
-                },
-                0,
-              ],
-            },
-          },
-          isCurrentUser: {
-            $eq: ["$user._id", userId],
-          },
-          isPinned: { $eq: ["$pinByChannel", true] },
-        },
-      },
-      {
-        $project: {
-          comment: 1,
-          video: 1,
-          user: { _id: 1, avatar: 1, name: 1 },
-          heartByChannel: 1,
-          createdAt: 1,
-          like: 1,
-          dislike: 1,
-          pinByChannel: 1,
-          edited: 1,
-          isCurrentUser: 1,
-          isPinned: 1,
-        },
-      },
-    ];
-  }
-
-  // === STEP 1: Fetch pinned comments on first page only ===
   const isFirstPage = !cursorId && !cursorDate && !cursorLikeCount;
+
+  const enrichmentPipeline = [
+    {
+      $lookup: {
+        from: "users",
+        localField: "user",
+        foreignField: "_id",
+        as: "user",
+      },
+    },
+    { $unwind: "$user" },
+    {
+      $lookup: {
+        from: "commentreviews",
+        localField: "_id",
+        foreignField: "comment",
+        as: "reviews",
+      },
+    },
+    {
+      $addFields: {
+        like: {
+          count: {
+            $size: {
+              $filter: {
+                input: "$reviews",
+                as: "review",
+                cond: { $eq: ["$$review.review", "Like"] },
+              },
+            },
+          },
+          status: {
+            $gt: [
+              {
+                $size: {
+                  $filter: {
+                    input: "$reviews",
+                    as: "review",
+                    cond: {
+                      $and: [
+                        { $eq: ["$$review.review", "Like"] },
+                        { $eq: ["$$review.user", currentUserId] },
+                      ],
+                    },
+                  },
+                },
+              },
+              0,
+            ],
+          },
+        },
+        dislike: {
+          count: {
+            $size: {
+              $filter: {
+                input: "$reviews",
+                as: "review",
+                cond: { $eq: ["$$review.review", "Dislike"] },
+              },
+            },
+          },
+          status: {
+            $gt: [
+              {
+                $size: {
+                  $filter: {
+                    input: "$reviews",
+                    as: "review",
+                    cond: {
+                      $and: [
+                        { $eq: ["$$review.review", "Dislike"] },
+                        { $eq: ["$$review.user", currentUserId] },
+                      ],
+                    },
+                  },
+                },
+              },
+              0,
+            ],
+          },
+        },
+      },
+    },
+    {
+      $project: {
+        comment: 1,
+        video: 1,
+        user: { _id: 1, avatar: 1, name: 1 },
+        heartByChannel: 1,
+        createdAt: 1,
+        like: 1,
+        dislike: 1,
+        pinByChannel: 1,
+        edited: 1,
+      },
+    },
+  ];
+
+  // === Step 1: Pinned Comments ===
   let pinnedComments = [];
   if (isFirstPage) {
     pinnedComments = await Comment.aggregate([
@@ -1045,109 +1042,101 @@ const getComments = asyncHandler(async (req, res) => {
         },
       },
       { $sort: { createdAt: -1, _id: -1 } },
-      ...lookupAndEnrichPipeline(currentUserId, userId),
+      ...enrichmentPipeline,
     ]);
   }
 
-  // === STEP 2: Build match condition for paginated (non-pinned) comments ===
-  const baseMatch = {
+  // === Step 2: Current User Comments ===
+  let currentUserComments = [];
+  if (isFirstPage) {
+    currentUserComments = await Comment.aggregate([
+      {
+        $match: {
+          video: videoId,
+          pinByChannel: { $ne: true },
+          user: currentUserId,
+        },
+      },
+      {
+        $sort:
+          sortBy === "top"
+            ? { "like.count": -1, _id: -1 }
+            : { createdAt: -1, _id: -1 },
+      },
+      ...enrichmentPipeline,
+    ]);
+  }
+
+  // === Step 3: Paginate Other Comments ===
+  const otherMatch = {
     video: videoId,
     pinByChannel: { $ne: true },
+    user: { $ne: currentUserId },
   };
 
-  let sortStage = {};
-  let matchStage = {};
-
+  let matchCursorStage = {};
   if (sortBy === "top") {
-    sortStage = { "like.count": -1, _id: -1 };
-
-    // Apply cursor-based pagination for top sort
     if (cursorLikeCount !== null && cursorId) {
-      matchStage = {
+      matchCursorStage = {
         $or: [
           { "like.count": { $lt: cursorLikeCount } },
-          {
-            "like.count": cursorLikeCount,
-            _id: { $lt: cursorId },
-          },
+          { "like.count": cursorLikeCount, _id: { $lt: cursorId } },
         ],
       };
     }
-
-    // Use full pipeline with like.count before match
-    const paginatedComments = await Comment.aggregate([
-      { $match: baseMatch },
-      ...lookupAndEnrichPipeline(currentUserId, userId),
-      ...(cursorLikeCount !== null ? [{ $match: matchStage }] : []),
-      { $sort: sortStage },
-      { $limit: limit },
-    ]);
-
-    const hasMore = paginatedComments.length === limit;
-    const last = hasMore ? paginatedComments[paginatedComments.length - 1] : null;
-
-    const nextCursor = last
-      ? { likeCount: last.like.count, id: last._id }
-      : null;
-
-    const total = await Comment.countDocuments({ video: videoId });
-
-    return res.status(200).json(
-      new response(
-        200,
-        {
-          comments: [...pinnedComments, ...paginatedComments],
-          hasMore,
-          nextCursor,
-          total,
-        },
-        "Top comments fetched"
-      )
-    );
+  } else {
+    if (cursorDate && cursorId) {
+      matchCursorStage = {
+        $or: [
+          { createdAt: { $lt: cursorDate } },
+          { createdAt: cursorDate, _id: { $lt: cursorId } },
+        ],
+      };
+    }
   }
 
-  // === STEP 3: Default to "newest" sort ===
-  sortStage = { createdAt: -1, _id: -1 };
-
-  if (cursorDate && cursorId) {
-    matchStage = {
-      $or: [
-        { createdAt: { $lt: cursorDate } },
-        { createdAt: cursorDate, _id: { $lt: cursorId } },
-      ],
-    };
-  }
-
-  const paginatedComments = await Comment.aggregate([
-    { $match: baseMatch },
-    ...(cursorDate ? [{ $match: matchStage }] : []),
-    { $sort: sortStage },
+  const otherComments = await Comment.aggregate([
+    { $match: otherMatch },
+    ...enrichmentPipeline,
+    ...(Object.keys(matchCursorStage).length
+      ? [{ $match: matchCursorStage }]
+      : []),
+    {
+      $sort:
+        sortBy === "top"
+          ? { "like.count": -1, _id: -1 }
+          : { createdAt: -1, _id: -1 },
+    },
     { $limit: limit },
-    ...lookupAndEnrichPipeline(currentUserId, userId),
   ]);
 
-  const hasMore = paginatedComments.length === limit;
-  const last = hasMore ? paginatedComments[paginatedComments.length - 1] : null;
-  const nextCursor = last ? { createdAt: last.createdAt, id: last._id } : null;
-  const total = await Comment.countDocuments({ video: videoId });
-console.log([...pinnedComments, ...paginatedComments]);
+  const hasMore = otherComments.length === limit;
+  const last = hasMore ? otherComments[otherComments.length - 1] : null;
 
-  res.status(200).json(
+  const nextCursor =
+    sortBy === "top"
+      ? last
+        ? { likeCount: last.like.count, id: last._id }
+        : null
+      : last
+        ? { createdAt: last.createdAt, id: last._id }
+        : null;
+
+  const total = await Comment.countDocuments({ video: videoId });
+
+  return res.status(200).json(
     new response(
       200,
       {
-        comments: [...pinnedComments, ...paginatedComments],
+        comments: [...pinnedComments, ...currentUserComments, ...otherComments],
         hasMore,
         nextCursor,
         total,
       },
-      "Comments fetched"
-    )
+      "Comments fetched",
+    ),
   );
 });
-
-
-
 
 let getHistory = asyncHandler(async (req, res) => {
   let id = req.user?.id;
@@ -1419,53 +1408,27 @@ let getChannelDetails = asyncHandler(async (req, res) => {
     );
 });
 
-let editProfile = asyncHandler(async (req, res) => {
+
+let removeCoverImage = asyncHandler(async (req, res) => {
   let id = req.user._id;
-  let { fullName } = req.body;
-
-  let avatarRes;
-  if (!req.body.avatar) {
-    let avatarLocalPath = req.files?.avatar[0]?.path;
-    avatarRes = await uploadOnCloudinary(avatarLocalPath);
-    if (!avatarRes) {
-      throw new error(
-        401,
-        "Something went wrong while uploading avatar on cloudinary",
-      );
-    }
-  }
-
-  let coverImageRes;
-  if (!req.body.coverImage) {
-    let coverImageLocalPath = req.files?.coverImage[0]?.path;
-    coverImageRes = await uploadOnCloudinary(coverImageLocalPath);
-    if (!coverImageRes) {
-      throw new error(
-        401,
-        "Something went wrong while uploading coverImage on cloudinary",
-      );
-    }
-  }
-
+  
   let editUser = await User.findByIdAndUpdate(
     id,
     {
       $set: {
-        fullName,
-        avatar: avatarRes?.url || req.body.avatar,
-        coverImage: coverImageRes?.url || req.body.coverImage,
+        coverImage: "",
       },
     },
     { new: true },
   );
 
   if (!editUser) {
-    throw new error(500, "Something went wrong while editing user");
+    throw new error(500, "Something went wrong while removing Cover Image");
   }
 
   res
     .status(200)
-    .json(new response(200, editUser, "Profile edited successfully"));
+    .json(new response(200, editUser, "Cover image removed successfully"));
 });
 
 const searchAll = asyncHandler(async (req, res) => {
@@ -1622,7 +1585,7 @@ export {
   getHistory,
   getSubStatus,
   getReviewStatus,
-  editProfile,
+  removeCoverImage,
   searchAll,
   deleteHistory,
   getLikedVideos,

@@ -111,7 +111,7 @@ const UserVideos = () => {
         </button>
         <button className="bg-gray-700 hover:bg-gray-600 rounded-lg p-2 px-4">
           {currentUser?.data?.subs} subscribers •{" "}
-          {currentUser?.data?.totalViews} Total views
+          {videos.reduce((acc, video) => acc + video.views, 0)} Total views
         </button>
       </div>
 

@@ -13,6 +13,7 @@ import { formatDistanceToNowStrict } from "date-fns";
 import { BsPinAngle } from "react-icons/bs";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { MdOutlineSort } from "react-icons/md";
+import TextareaAutosize from "react-textarea-autosize";
 
 const CommentSection = ({ videoId, channelDetails, ownerId }) => {
   const currentUser = useSelector((store) => store.currentUser);
@@ -20,18 +21,16 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
   const [loader, setLoader] = useState(false);
   const [loading, setLoading] = useState(false);
   const [commentText, setCommentText] = useState("");
-  const [edit, setEdit] = useState("");
+  const [editCommentText, setEditCommentText] = useState("");
   const [hasMore, setHasMore] = useState(true);
-  const [limit, setLimit] = useState(3);
+  const limit = 5;
   const [totalCount, setTotalCount] = useState(0);
   const [lastCursor, setLastCursor] = useState(null);
   const [sortBy, setSortBy] = useState("newest"); // <-- Add this
   const commentRefs = useRef({});
-
   const [showSortMenu, setShowSortMenu] = useState(false);
   const sortRef = useRef(null);
 
-  // Optional: close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (sortRef.current && !sortRef.current.contains(e.target)) {
@@ -45,135 +44,117 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
   }, []);
 
   useEffect(() => {
-    const updateLimit = () => {
-      const width = window.innerWidth;
-      const newLimit = width >= 1200 ? 3 : width >= 768 ? 7 : 5;
-      setLimit(newLimit);
-    };
-    updateLimit();
-    window.addEventListener("resize", updateLimit);
-    return () => window.removeEventListener("resize", updateLimit);
-  }, []);
-
-  useEffect(() => {
     resetAndFetch();
-  }, [limit, videoId, sortBy]);
+  }, [videoId, sortBy]);
 
-const resetAndFetch = async () => {
-  setComments([]);
-  setLastCursor(null);
-  setHasMore(true);
-  await fetchComments(true); // force isFirstPage
-};
+  const resetAndFetch = async () => {
+    setComments([]);
+    setLastCursor(null);
+    setHasMore(true);
+    await fetchComments(true); // force isFirstPage
+  };
 
-const fetchComments = async (isFirstPage = false) => {
-  if (!hasMore && !isFirstPage) return;
-  if (loading) return;
+  const fetchComments = async (isFirstPage = false) => {
+    if (!hasMore && !isFirstPage) return;
+    if (loading) return;
 
-  setLoading(true);
+    setLoading(true);
 
-  const params = { limit, sortBy };
+    const params = { limit, sortBy };
 
-  if (!isFirstPage && lastCursor) {
-    if (sortBy === "top") {
-      params.likeCount = lastCursor.likeCount;
-      params.id = lastCursor.id;
-    } else {
-      params.cursor = lastCursor.createdAt;
-      params.id = lastCursor.id;
-    }
-  }
-
-  try {
-    const res = await axios.get(
-      `http://localhost:8000/user/get-comments/${videoId}`,
-      { params, withCredentials: true }
-    );
-
-    const newComments = res.data.data.comments;
-    const nextCursor = res.data.data.nextCursor;
-    const hasMoreRes = res.data.data.hasMore;
-    const total = res.data.data.total || 0;
-
-    setTotalCount(total);
-    setComments((prev) => [
-      ...prev,
-      ...newComments.map((c) => ({
-        ...c,
-        showDropdown: false,
-        readMore: false,
-        hasOverflow: false,
-      })),
-    ]);
-    setLastCursor(nextCursor);
-    setHasMore(hasMoreRes);
-  } catch (err) {
-    console.error("Failed to fetch comments", err);
-  } finally {
-    setLoading(false);
-  }
-};
-
-
-  const handlePostComment = async () => {
-    if (!commentText.trim()) return;
-    const formData = new FormData();
-    formData.append("comment", commentText);
-
-    if (edit) {
-      const prevComments = [...comments];
-      const prevEdit = edit;
-      setComments((prev) =>
-        prev.map((item) =>
-          item._id === edit
-            ? {
-                ...item,
-                comment: commentText,
-                showDropdown: false,
-                edited: true,
-              }
-            : item,
-        ),
-      );
-      setEdit("");
-      try {
-        await axios.post(
-          `http://localhost:8000/video/edit-comment/${edit}`,
-          formData,
-          {
-            headers: { "Content-Type": "multipart/form-data" },
-            withCredentials: true,
-          },
-        );
-      } catch (error) {
-        setComments(prevComments);
-        setEdit(prevEdit);
+    if (!isFirstPage && lastCursor) {
+      if (sortBy === "top") {
+        params.likeCount = lastCursor.likeCount;
+        params.id = lastCursor.id;
+      } else {
+        params.cursor = lastCursor.createdAt;
+        params.id = lastCursor.id;
       }
-    } else {
-      try {
-        setLoader(true);
-        const res = await axios.post(
-          `http://localhost:8000/video/add-comment/${videoId}`,
-          formData,
-          {
-            headers: { "Content-Type": "multipart/form-data" },
-            withCredentials: true,
-          },
-        );
-        const newComment = {
-          ...res.data.data,
+    }
+
+    try {
+      const res = await axios.get(
+        `http://localhost:8000/user/get-comments/${videoId}`,
+        { params, withCredentials: true },
+      );
+
+      const newComments = res.data.data.comments;
+      const nextCursor = res.data.data.nextCursor;
+      const hasMoreRes = res.data.data.hasMore;
+      const total = res.data.data.total || 0;
+
+      setTotalCount(total);
+      setComments((prev) => [
+        ...prev,
+        ...newComments.map((c) => ({
+          ...c,
           showDropdown: false,
           readMore: false,
           hasOverflow: false,
-        };
-        setComments((prev) => [newComment, ...prev]);
-        setTotalCount((prev) => prev + 1);
-      } catch (error) {
-        console.error("Failed to post comment:", error);
-      } finally {
-        setLoader(false);
-      }
+          editing: false,
+        })),
+      ]);
+
+      setLastCursor(nextCursor);
+      setHasMore(hasMoreRes);
+    } catch (err) {
+      console.error("Failed to fetch comments", err);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    const updateOverflowFlags = () => {
+      setComments((prevComments) =>
+        prevComments.map((comment) => {
+          const el = commentRefs.current[comment._id];
+          if (!el) return comment;
+
+          const textElement = el.querySelector(".comment-text p");
+          if (!textElement) return comment;
+
+          const isOverflowing =
+            textElement.scrollHeight > textElement.clientHeight;
+          return { ...comment, hasOverflow: isOverflowing };
+        }),
+      );
+    };
+
+    // Delay to ensure DOM has rendered
+    setTimeout(updateOverflowFlags, 0);
+  }, [comments]);
+
+  const handlePostComment = async () => {
+    if (!commentText.trim()) return;
+
+    const formData = new FormData();
+    formData.append("comment", commentText);
+
+    try {
+      setLoader(true);
+      const res = await axios.post(
+        `http://localhost:8000/video/add-comment/${videoId}`,
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+          withCredentials: true,
+        },
+      );
+      const newComment = {
+        ...res.data.data,
+        showDropdown: false,
+        readMore: false,
+        hasOverflow: false,
+      };
+      setComments((prev) => [newComment, ...prev]);
+      setTotalCount((prev) => prev + 1);
+    } catch (error) {
+      console.error("Failed to post comment:", error);
+    } finally {
+      setLoader(false);
+    }
+
     setCommentText("");
   };
 
@@ -309,11 +290,10 @@ const fetchComments = async (isFirstPage = false) => {
     setComments((prevData) =>
       prevData.map((item) =>
         item._id === id
-          ? { ...item, showDropdown: !item.showDropdown }
-          : { ...item, showDropdown: false },
+          ? { ...item, showDropdown: !item.showDropdown, editing: false }
+          : { ...item, showDropdown: false, editing: false },
       ),
     );
-    setEdit(false);
     setCommentText("");
   };
 
@@ -383,8 +363,14 @@ const fetchComments = async (isFirstPage = false) => {
   const deleteComment = async (id) => {
     let prevData = [...comments];
     let prevTotalCount = totalCount;
-    setCommentText("");
-    setEdit(false);
+    setComments((prev) =>
+      prev.map((c) => ({
+        ...c,
+        showDropdown: false,
+        editing: false,
+      })),
+    );
+    setEditCommentText("");
     setComments(comments.filter((item) => item._id != id));
     setTotalCount((prev) => prev - 1);
     try {
@@ -397,9 +383,57 @@ const fetchComments = async (isFirstPage = false) => {
     }
   };
 
-  const editComment = (id, text) => {
-    setCommentText(text);
-    setEdit(id);
+  const editComment = async (id) => {
+    if (!editCommentText.trim()) return;
+    const formData = new FormData();
+    formData.append("comment", editCommentText);
+    const prevComments = [...comments];
+    setComments((prev) =>
+      prev.map((item) =>
+        item._id === id
+          ? {
+              ...item,
+              comment: editCommentText,
+              showDropdown: false,
+              edited: true,
+              editing: false,
+            }
+          : item,
+      ),
+    );
+    try {
+      await axios.post(
+        `http://localhost:8000/video/edit-comment/${id}`,
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+          withCredentials: true,
+        },
+      );
+    } catch (error) {
+      setComments(prevComments);
+    }
+    setEditCommentText("");
+  };
+
+  const cancelEdit = (id) => {
+    setComments((prevData) =>
+      prevData.map((item) =>
+        item._id === id ? { ...item, editing: false } : { ...item },
+      ),
+    );
+    setEditCommentText("");
+  };
+
+  const toggleEditing = (id, text) => {
+    setEditCommentText(text != null ? String(text) : "");
+    setComments((prevData) =>
+      prevData.map((item) =>
+        item._id === id
+          ? { ...item, editing: true, showDropdown: false }
+          : { ...item, editing: false, showDropdown: false },
+      ),
+    );
   };
 
   return (
@@ -446,7 +480,20 @@ const fetchComments = async (isFirstPage = false) => {
             type="text"
             className="rounded px-3 py-2 w-full outline-none"
             placeholder="Add a public comment..."
-            value={commentText}
+            value={
+              typeof commentText === "string"
+                ? commentText
+                : String(commentText ?? "")
+            }
+            onFocus={() => {
+              setComments((prev) =>
+                prev.map((c) => ({
+                  ...c,
+                  showDropdown: false,
+                  editing: false,
+                })),
+              );
+            }}
             onChange={(e) => setCommentText(e.target.value)}
           />
         </div>
@@ -454,7 +501,7 @@ const fetchComments = async (isFirstPage = false) => {
           className="bg-gray-700 hover:bg-gray-600 text-white min-w-[7rem] px-6 py-2 rounded-lg text-center"
           onClick={handlePostComment}
         >
-          {edit ? "Save" : "Comment"}
+          Comment
         </button>
       </div>
       {loader && (
@@ -514,48 +561,83 @@ const fetchComments = async (isFirstPage = false) => {
                 </span>
               </div>
               <div
-                className={`comment-text text-sm text-gray-100 whitespace-pre-line transition-all duration-300 break-all ${
-                  comment.readMore ? "" : "line-clamp-3"
-                }`}
+                className={`comment-text text-sm text-gray-100 whitespace-pre-line transition-all duration-300 break-words`}
               >
-                {comment?.comment}
+                {comment?.editing ? (
+                  <TextareaAutosize
+                    // value={editCommentText}
+
+                    value={
+                      typeof editCommentText === "string"
+                        ? editCommentText
+                        : String(editCommentText ?? "")
+                    }
+                    onChange={(e) => setEditCommentText(e.target.value)}
+                    minRows={1}
+                    maxRows={10}
+                    autoFocus
+                    className="w-full p-1 mb-0 resize-none outline-1 outline-gray-700 text-white text-sm rounded-lg"
+                  />
+                ) : (
+                  <p
+                    className={`p-1 mb-[13px] text-sm ${comment.readMore ? "" : "line-clamp-3"}`}
+                    ref={(el) => (commentRefs.current[comment._id] = el)}
+                  >
+                    {comment.comment}
+                  </p>
+                )}
               </div>
-              {comment?.hasOverflow && (
+              {comment?.hasOverflow && !comment.editing && (
                 <button
-                  onClick={() => toggleReadMore(comment?._id)}
-                  className="mt-2 text-white text-sm font-medium"
+                  onClick={() => toggleReadMore(comment._id)}
+                  className="text-white text-sm font-medium"
                 >
                   {comment.readMore ? "Show less" : "Show more"}
                 </button>
               )}
-              <div className="flex gap-4 mt-2 text-sm text-gray-300 items-center">
-                <button
-                  className="flex items-center gap-1"
-                  onClick={() => toggleLike(comment?._id)}
-                >
-                  {comment?.like?.status ? <BiSolidLike /> : <BiLike />}{" "}
-                  {comment?.like?.count}
-                </button>
-                <button
-                  className="flex items-center gap-1"
-                  onClick={() => toggleDislike(comment?._id)}
-                >
-                  {comment?.dislike?.status ? (
-                    <BiSolidDislike />
-                  ) : (
-                    <BiDislike />
-                  )}{" "}
-                  {comment?.dislike?.count}
-                </button>
-
-                {ownerId == currentUser.data._id ? (
+              <div className="flex mt-2 justify-between">
+                <div className="flex gap-4 text-sm text-gray-300 items-center">
                   <button
-                    onClick={() => {
-                      toggleHeart(comment?.heartByChannel, comment?._id);
-                    }}
+                    className="flex items-center gap-1"
+                    onClick={() => toggleLike(comment?._id)}
                   >
-                    {comment?.heartByChannel ? (
-                      <div className="w-4 h-4 rounded-full relative">
+                    {comment?.like?.status ? <BiSolidLike /> : <BiLike />}{" "}
+                    {comment?.like?.count}
+                  </button>
+                  <button
+                    className="flex items-center gap-1"
+                    onClick={() => toggleDislike(comment?._id)}
+                  >
+                    {comment?.dislike?.status ? (
+                      <BiSolidDislike />
+                    ) : (
+                      <BiDislike />
+                    )}{" "}
+                    {comment?.dislike?.count}
+                  </button>
+
+                  {ownerId == currentUser.data._id ? (
+                    <button
+                      onClick={() => {
+                        toggleHeart(comment?.heartByChannel, comment?._id);
+                      }}
+                    >
+                      {comment?.heartByChannel ? (
+                        <div className="w-4 h-4 rounded-full relative">
+                          <img
+                            src={channelDetails?.avatar}
+                            alt="Avatar"
+                            className="object-cover h-full w-full rounded-full"
+                          />
+                          <FaHeart className="absolute top-[60%] left-[60%] text-red-700 text-[10px]" />
+                        </div>
+                      ) : (
+                        <FaRegHeart className="text-[15px]" />
+                      )}
+                    </button>
+                  ) : (
+                    comment?.heartByChannel && (
+                      <div className="w-4 h-4 rounded-full  relative">
                         <img
                           src={channelDetails?.avatar}
                           alt="Avatar"
@@ -563,21 +645,30 @@ const fetchComments = async (isFirstPage = false) => {
                         />
                         <FaHeart className="absolute top-[60%] left-[60%] text-red-700 text-[10px]" />
                       </div>
-                    ) : (
-                      <FaRegHeart className="text-[15px]" />
-                    )}
-                  </button>
-                ) : (
-                  comment?.heartByChannel && (
-                    <div className="w-4 h-4 rounded-full  relative">
-                      <img
-                        src={channelDetails?.avatar}
-                        alt="Avatar"
-                        className="object-cover h-full w-full rounded-full"
-                      />
-                      <FaHeart className="absolute top-[60%] left-[60%] text-red-700 text-[10px]" />
-                    </div>
-                  )
+                    )
+                  )}
+                </div>
+                {comment?.editing && (
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => {
+                        cancelEdit(comment?._id);
+                      }}
+                      className={`text-white px-2 py-0.25 rounded-lg text-[13px] bg-gray-700 hover:bg-gray-600
+                    `}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => {
+                        editComment(comment?._id);
+                      }}
+                      className={`text-white px-2 py-0.25 rounded-lg text-[13px] bg-gray-700 hover:bg-gray-600
+                    `}
+                    >
+                      Save
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
@@ -598,7 +689,7 @@ const fetchComments = async (isFirstPage = false) => {
                           <button
                             className="block w-full px-4 py-2 text-left hover:bg-gray-600"
                             onClick={() => {
-                              editComment(comment?._id, comment?.comment);
+                              toggleEditing(comment?._id, comment?.comment);
                             }}
                           >
                             Edit
@@ -659,7 +750,7 @@ const fetchComments = async (isFirstPage = false) => {
                         <button
                           className="block w-full px-4 py-2 text-left hover:bg-gray-600"
                           onClick={() => {
-                            editComment(comment?._id, comment?.comment);
+                            toggleEditing(comment?._id, comment?.comment);
                           }}
                         >
                           Edit
