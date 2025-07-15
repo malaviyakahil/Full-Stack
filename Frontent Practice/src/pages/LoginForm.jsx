@@ -7,7 +7,7 @@ import { RiEyeLine, RiEyeOffLine } from "react-icons/ri";
 
 const LoginForm = () => {
   const { register, handleSubmit } = useForm();
-  const [error, setError] = useState(false);
+  const [error, setError] = useState("");
   const [loader, setLoader] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
@@ -15,29 +15,37 @@ const LoginForm = () => {
   const { setUser } = useAuth();
 
   const submit = async (data) => {
+    if (loader) return;
+
     setLoader(true);
-    setError(false);
+    setError("");
 
     const formData = new FormData();
-    formData.append("name", data.name);
-    formData.append("email", data.email);
-    formData.append("password", data.password);
+    formData.append("name", data.name.trim());
+    formData.append("email", data.email.trim());
+    formData.append("password", data.password.trim());
 
     try {
-      const res = await axios.post("http://localhost:8000/user/login", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-        withCredentials: true,
-      });
+      const res = await axios.post(
+        `${import.meta.env.VITE_API_URL}/user/login`,
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+          withCredentials: true,
+        },
+      );
 
       if (res.data?.success) {
-        const userRes = await axios.get("http://localhost:8000/user/auth-me", {
-          withCredentials: true,
-        });
+        const userRes = await axios.get(
+          `${import.meta.env.VITE_API_URL}/user/auth-me`,
+          { withCredentials: true },
+        );
 
         setUser(userRes.data.data || { authenticated: true });
 
         const redirect =
-          new URLSearchParams(location.search).get("redirect") || "/app/dashboard/all";
+          new URLSearchParams(location.search).get("redirect") ||
+          "/app/dashboard/all";
         navigate(redirect);
       }
     } catch (error) {
@@ -51,7 +59,11 @@ const LoginForm = () => {
     <div className="flex justify-center items-center min-h-screen">
       <div className="w-full max-w-md justify-end p-5">
         <h1 className="text-center text-[40px] mb-5">Login Here</h1>
-        <form className="w-full" onSubmit={handleSubmit(submit)} autoComplete="off">
+        <form
+          className="w-full"
+          onSubmit={handleSubmit(submit)}
+          autoComplete="off"
+        >
           {/* Username */}
           <label className="input validator w-full my-2">
             <svg

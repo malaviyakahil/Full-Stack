@@ -27,88 +27,15 @@ let generatingAccessAndRefreshToken = async function (id) {
   return { accessToken, refreshToken, loginedUser };
 };
 
-// let registerUser = asyncHandler(async (req, res) => {
-//   let { name, email, fullName, password } = req.body;
-
-//   if ([name, email, fullName, password].some((e) => e?.trim == "")) {
-//     throw new error(401, "Credentials cannot be empty");
-//   }
-
-//   let alreadyRegistered = await User.findOne({ $or: [{ name }, { email }] });
-
-//   let avatarLocalPath = req.files?.avatar[0]?.path;
-//   let coverImageLocalPath = req.files?.coverImage
-//     ? req.files?.coverImage[0].path
-//     : "";
-
-//   if (alreadyRegistered) {
-//     if (fs.existsSync(avatarLocalPath)) {
-//       fs.unlinkSync(avatarLocalPath);
-//     }
-//     if (fs.existsSync(coverImageLocalPath)) {
-//       fs.unlinkSync(coverImageLocalPath);
-//     }
-//     if (alreadyRegistered?.name == name && alreadyRegistered?.email == email) {
-//       throw new error(401, "Name and Email already registered you can login");
-//     }
-//     if (alreadyRegistered?.name == name) {
-//       throw new error(401, "Name already taken");
-//     }
-//     if (alreadyRegistered?.email == email) {
-//       throw new error(401, "Email already registered");
-//     }
-//   }
-
-//   if (!avatarLocalPath) {
-//     throw new error(401, "Invalid avatar image");
-//   }
-
-//   let avatarRes = await uploadOnCloudinary(avatarLocalPath, "image", "user/avtar");
-//   let coverImageRes = await uploadOnCloudinary(
-//     coverImageLocalPath,
-//     "image",
-//     "user/coverimage",
-//   );
-
-//   if (!avatarRes) {
-//     throw new error(
-//       401,
-//       "Something went wrong while uploading avatar on cloudinary",
-//     );
-//   }
-
-//   if (coverImageLocalPath) {
-//     if (!coverImageRes) {
-//       throw new error(
-//         401,
-//         "Something went wrong while uploading cover image on cloudinary",
-//       );
-//     }
-//   }
-
-//   let user = await User.create({
-//     name,
-//     email,
-//     fullName,
-//     password,
-//     avatar: avatarRes?.secure_url,
-//     avatarPublicId: avatarRes?.public_id,
-//     coverImage: coverImageRes?.secure_url || "",
-//     coverImagePublicId: coverImageRes?.public_id || "",
-//   });
-
-//   if (!user) {
-//     throw new error(500, "Something went wrong while registring user");
-//   }
-
-//   res.status(200).json(new response(200, user, "Registered successfully"));
-// });
-
 const registerUser = asyncHandler(async (req, res) => {
   const { name, email, fullName, password } = req.body;
 
   // Validate input
-  if ([name, email, fullName, password].some(field => !field || field.trim() === "")) {
+  if (
+    [name, email, fullName, password].some(
+      (field) => !field || field.trim() === "",
+    )
+  ) {
     throw new error(400, "All fields are required.");
   }
 
@@ -129,7 +56,10 @@ const registerUser = asyncHandler(async (req, res) => {
     if (fs.existsSync(coverPath)) fs.unlinkSync(coverPath);
 
     if (existingUser.name === name && existingUser.email === email) {
-      throw new error(409, "Name and email are already registered. Please login.");
+      throw new error(
+        409,
+        "Name and email are already registered. Please login.",
+      );
     }
     if (existingUser.name === name) {
       throw new error(409, "Username is already taken.");
@@ -152,21 +82,30 @@ const registerUser = asyncHandler(async (req, res) => {
 
     // Upload cover image if exists
     if (coverPath) {
-      coverUpload = await uploadOnCloudinary(coverPath, "image", "user/coverImage");
+      coverUpload = await uploadOnCloudinary(
+        coverPath,
+        "image",
+        "user/coverImage",
+      );
       if (!coverUpload) throw new error(500, "Failed to upload cover image.");
     }
 
     // Create user
-    const [newUser] = await User.create([{
-      name,
-      email,
-      fullName,
-      password,
-      avatar: avatarUpload.secure_url,
-      avatarPublicId: avatarUpload.public_id,
-      coverImage: coverUpload?.secure_url || "",
-      coverImagePublicId: coverUpload?.public_id || "",
-    }], { session });
+    const [newUser] = await User.create(
+      [
+        {
+          name,
+          email,
+          fullName,
+          password,
+          avatar: avatarUpload.secure_url,
+          avatarPublicId: avatarUpload.public_id,
+          coverImage: coverUpload?.secure_url || "",
+          coverImagePublicId: coverUpload?.public_id || "",
+        },
+      ],
+      { session },
+    );
 
     await session.commitTransaction();
     session.endSession();
@@ -175,8 +114,9 @@ const registerUser = asyncHandler(async (req, res) => {
     if (fs.existsSync(avatarPath)) fs.unlinkSync(avatarPath);
     if (fs.existsSync(coverPath)) fs.unlinkSync(coverPath);
 
-    return res.status(201).json(new response(201, newUser, "Registered successfully."));
-
+    return res
+      .status(201)
+      .json(new response(201, newUser, "Registered successfully."));
   } catch (err) {
     await session.abortTransaction();
     session.endSession();
@@ -197,47 +137,43 @@ const registerUser = asyncHandler(async (req, res) => {
   }
 });
 
-let loginUser = asyncHandler(async (req, res) => {
-  let { name, email, password } = req.body;
+const loginUser = asyncHandler(async (req, res) => {
+  let { name = "", email = "", password = "" } = req.body;
 
   name = name.trim();
   email = email.trim();
   password = password.trim();
 
-  if ([name, email, password].some((e) => e == "")) {
-    throw new error(401, "Credentials cannot be empty");
+  if ([name, email, password].some((field) => field === "")) {
+    throw new error(400, "All credentials are required.");
   }
 
-  let isUserRegistered = await User.findOne({ $and: [{ name }, { email }] });
-
-  if (!isUserRegistered) {
-    throw new error(
-      401,
-      "You are not registered. Register you name and email first",
-    );
+  // Authentication
+  const user = await User.findOne({ name, email });
+  if (!user) {
+    throw new error(401, "Invalid credentials.");
   }
 
-  let passwordCheck = await isUserRegistered.comparePassword(password);
-
-  if (!passwordCheck) {
+  const passwordValid = await user.comparePassword(password);
+  if (!passwordValid) {
     throw new error(401, "Wrong password");
   }
 
-  let { accessToken, refreshToken } = await generatingAccessAndRefreshToken(
-    isUserRegistered._id,
+  const { accessToken, refreshToken } = await generatingAccessAndRefreshToken(
+    user._id,
   );
 
-  let options = {
+  const cookieOptions = {
     httpOnly: true,
     sameSite: "Lax",
-    secure: false,
+    secure: process.env.NODE_ENV === "production",
   };
 
   res
     .status(200)
-    .cookie("accessToken", accessToken, options)
-    .cookie("refreshToken", refreshToken, options)
-    .json(new response(200, [], "logged in successfully"));
+    .cookie("accessToken", accessToken, cookieOptions)
+    .cookie("refreshToken", refreshToken, cookieOptions)
+    .json(new response(200, user, "Logged in successfully"));
 });
 
 let getCurrentUser = asyncHandler(async (req, res) => {
