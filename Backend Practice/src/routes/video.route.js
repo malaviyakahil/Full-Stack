@@ -16,7 +16,10 @@ import {
   giveHeart,
   takeHeart,
   pin,
-  unPin
+  unPin,
+  changeVideoTitle,
+  changeVideoDescription,
+  changeVideoThumbnail
 } from "../controllers/video.controller.js";
 import upload from "../middlewares/multer.middleware.js";
 import auth from "../middlewares/auth.middleware.js";
@@ -38,14 +41,10 @@ videoRouter.post(
   auth,
   uploadVideo,
 );
-
+videoRouter.post("/change-video-title/:id", upload.none(), auth, changeVideoTitle);
+videoRouter.post("/change-video-description/:id", upload.none(), auth, changeVideoDescription);
+videoRouter.post("/change-video-thumbnail/:id", upload.single("thumbnail"), auth, changeVideoThumbnail);
 videoRouter.post("/delete-video/:id", upload.none(), auth, deleteVideo);
-videoRouter.post(
-  "/edit-video/:id",
-  upload.single("thumbnail"),
-  auth,
-  editVideo,
-);
 videoRouter.post("/like-video/:id", upload.none(), auth, likeVideo);
 videoRouter.post("/dislike-video/:id", upload.none(), auth, disLikeVideo);
 videoRouter.post("/like-comment/:id", upload.none(), auth, likeComment);

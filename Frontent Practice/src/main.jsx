@@ -26,6 +26,7 @@ import History from "./pages/History.jsx";
 import LikedVideos from "./pages/LikedVideos.jsx";
 import { AuthProvider } from "./components/AuthContext.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import DeleteUser from "./pages/DeleteUser.jsx";
 
 let router = createBrowserRouter([
   {
@@ -115,6 +116,10 @@ let router = createBrowserRouter([
           {
             path: "change-password",
             element: <ChangePasswordForm />,
+          },
+          {
+            path: "delete-user",
+            element: <DeleteUser />,
           },
         ],
       },

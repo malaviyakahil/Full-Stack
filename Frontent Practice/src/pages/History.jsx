@@ -7,10 +7,9 @@ import { RxCross2 } from "react-icons/rx";
 import axios from "axios";
 
 const History = () => {
-
   let history = useSelector((store) => store.history);
   let dispatch = useDispatch();
-  
+
   useEffect(() => {
     if (!history.data) {
       dispatch(fetchHistory());
@@ -33,8 +32,8 @@ const History = () => {
   };
 
   return (
-    <div className="flex flex-col items-center pt-5">
-      <div className="flex flex-col gap-5 py-5">
+    <div className="flex flex-col items-center py-5">
+    
         {history.loading ? (
           <>
             {[...Array(4)].map((_, index) => (
@@ -146,13 +145,16 @@ const History = () => {
                 ))}
               </>
             ) : (
-              <div className="pt-70">
-                <h2 className="text-center">No history to show</h2>
+              <div className="flex flex-col items-center justify-center h-[80vh]">
+                <h2 className="text-xl md:text-2xl font-semibold ">
+                  No history to show
+                </h2>
+                <p className="text-sm text-gray-500 mt-2">Start watching videos to build your watch history.</p>
               </div>
             )}
           </>
         )}
-      </div>
+      
     </div>
   );
 };

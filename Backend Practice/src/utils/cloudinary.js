@@ -9,7 +9,7 @@ cloudinary.config({
   api_secret:process.env.CLOUDINARY_API_SECRET
 })
 
-let uploadOnCloudinary = async (localPath,type = "auto",folder = "") => {
+let uploadOnCloudinary = async (localPath,type = "auto",folder = "others") => {
   try {
     if(!localPath) return null
     let response = await cloudinary.uploader.upload(localPath, {resource_type: type,folder: folder,});

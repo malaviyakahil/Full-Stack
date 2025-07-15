@@ -21,95 +21,115 @@ const EditProfileForm = () => {
   const handleCoverImageChangeClick = () =>
     setShowCoverImageFileInput(!showCoverImageFileInput);
 
-  let submit = async (data) => {
-    let prevUserData = currentUser?.data;
-    setError("");
-    if (
-      data?.avatar?.[0]?.size > 5 * 1024 * 1024 &&
-      data?.coverImage?.[0]?.size > 5 * 1024 * 1024
-    ) {
-      setError("Too big file for Avatar and Cover Image");
-      return;
-    }
-    if (data?.avatar?.[0]?.size > 5 * 1024 * 1024) {
-      setError("Too big file for Avatar");
-      return;
-    }
-    if (data?.coverImage?.[0]?.size > 5 * 1024 * 1024) {
-      setError("Too big file for Cover Image");
-      return;
-    }
+let submit = async (data) => {
+  const prevUserData = currentUser?.data;
+  setError("");
 
-    setLoader(true);
+  const avatarFile = data?.avatar?.[0];
+  const coverImageFile = data?.coverImage?.[0];
 
-    try {
-      if (data.fullName.trim().length > 0) {
-        const formData = new FormData();
-        formData.append("fullName", data.fullName);
+  const isJpg = (file) =>
+    file &&
+    file.type === "image/jpeg" &&
+    /\.(jpe?g)$/i.test(file.name);
 
-        const res = await axios.post(
-          "http://localhost:8000/user/change-full-name",
-          formData,
-          {
-            headers: { "Content-Type": "multipart/form-data" },
-            withCredentials: true,
-          },
-        );
-        dispatch(updateCurrentUser(res?.data?.data));
-      }
+  // Validate file sizes
+  if (avatarFile?.size > 5 * 1024 * 1024 && coverImageFile?.size > 5 * 1024 * 1024) {
+    setError("Too big file for Avatar and Cover Image");
+    return;
+  }
+  if (avatarFile?.size > 5 * 1024 * 1024) {
+    setError("Too big file for Avatar");
+    return;
+  }
+  if (coverImageFile?.size > 5 * 1024 * 1024) {
+    setError("Too big file for Cover Image");
+    return;
+  }
 
-      if (data?.avatar?.length > 0) {
-        const formData = new FormData();
-        formData.append("avatar", data.avatar[0]);
+  // ✅ Validate file types
+  if (avatarFile && !isJpg(avatarFile)) {
+    setError("Only .jpg images are allowed for Avatar.");
+    return;
+  }
+  if (coverImageFile && !isJpg(coverImageFile)) {
+    setError("Only .jpg images are allowed for Cover Image.");
+    return;
+  }
 
-        const res = await axios.post(
-          "http://localhost:8000/user/change-avatar",
-          formData,
-          {
-            headers: { "Content-Type": "multipart/form-data" },
-            withCredentials: true,
-          },
-        );
-        dispatch(updateCurrentUser(res?.data?.data));
-      }
+  setLoader(true);
 
-      if (data?.coverImage?.length > 0) {
-        const formData = new FormData();
-        formData.append("coverImage", data.coverImage[0]);
+  try {
+    if (data.fullName.trim().length > 0) {
+      const formData = new FormData();
+      formData.append("fullName", data.fullName);
 
-        const res = await axios.post(
-          "http://localhost:8000/user/change-cover-image",
-          formData,
-          {
-            headers: { "Content-Type": "multipart/form-data" },
-            withCredentials: true,
-          },
-        );
-        dispatch(updateCurrentUser(res?.data?.data));
-      }
-
-      if (coverImageRemove) {
-        const res = await axios.post(
-          "http://localhost:8000/user/remove-cover-image",
-          [],
-          {
-            withCredentials: true,
-          },
-        );
-        dispatch(updateCurrentUser(res?.data?.data));
-      }
-    } catch (error) {
-      setError(
-        error?.response?.data?.message || "Failed to change user details",
+      const res = await axios.post(
+        "http://localhost:8000/user/change-full-name",
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+          withCredentials: true,
+        }
       );
-      dispatch(updateCurrentUser(prevUserData));
-    } finally {
-      setLoader(false);
-      setShowAvatarFileInput(false);
-      setShowCoverImageFileInput(false);
-      setCoverImageRemove(false);
+      dispatch(updateCurrentUser(res?.data?.data));
     }
-  };
+
+    if (avatarFile) {
+      const formData = new FormData();
+      formData.append("avatar", avatarFile);
+
+      const res = await axios.post(
+        "http://localhost:8000/user/change-avatar",
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+          withCredentials: true,
+        }
+      );
+      dispatch(updateCurrentUser(res?.data?.data));
+    }
+
+    if (coverImageFile) {
+      const formData = new FormData();
+      formData.append("coverImage", coverImageFile);
+
+      const res = await axios.post(
+        "http://localhost:8000/user/change-cover-image",
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+          withCredentials: true,
+        }
+      );
+      dispatch(updateCurrentUser(res?.data?.data));
+    }
+
+    if (coverImageRemove) {
+      
+      const res = await axios.post(
+        `http://localhost:8000/user/remove-cover-image/${currentUser.data.coverImagePublicId}`,
+        [],
+        {
+          withCredentials: true,
+        }
+      );
+      dispatch(updateCurrentUser(res?.data?.data));
+    }
+  } catch (error) {
+    setError(
+      error?.response?.data?.message || "Failed to change user details"
+    );
+    dispatch(updateCurrentUser(prevUserData));
+  } finally {
+    setLoader(false);
+    setError("")
+    setShowAvatarFileInput(false);
+    setShowCoverImageFileInput(false);
+    setCoverImageRemove(false);
+  }
+};
+
 
   return (
     <div className="flex justify-center">

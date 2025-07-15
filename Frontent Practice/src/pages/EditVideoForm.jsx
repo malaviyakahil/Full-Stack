@@ -6,9 +6,9 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { clearCurrentUserVideos } from "../store/userVideos.slice";
 
 const EditVideoForm = () => {
-  
   const location = useLocation();
-  const { title, description, thumbnail } = location.state || {};
+  const { title, description, thumbnail, thumbnailPublicId } =
+    location.state || {};
   let { id } = useParams();
   let { register, handleSubmit } = useForm();
   let dispatch = useDispatch();
@@ -20,36 +20,88 @@ const EditVideoForm = () => {
   const handleChangeClick = () => setShowFileInput(!showFileInput);
 
   let submit = async (data) => {
-    if (data.thumbnail?.[0]?.size > 5 * 1024 * 1024) {
+    setError("");
+
+    const thumbnailFile = data?.thumbnail?.[0];
+
+    const isJpg = (file) =>
+      file && file.type === "image/jpeg" && /\.(jpe?g)$/i.test(file.name);
+
+    if (thumbnailFile?.size > 5 * 1024 * 1024) {
       setError("Too big file for Thumbnail");
       return;
     }
+
+    if (thumbnailFile && !isJpg(thumbnailFile)) {
+      setError("Only .jpg images are allowed for Thumbnail.");
+      return;
+    }
+
     setLoader(true);
-    setError(false);
-    let formData = new FormData();
-    formData.append("title", data.title);
-    formData.append("description", data.description);
-    formData.append("thumbnail", data.thumbnail?.[0] || thumbnail);
 
     try {
-      let res = await axios.post(
-        `http://localhost:8000/video/edit-video/${id}`,
-        formData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-          withCredentials: true,
-        },
-      );
+      if (data.title.trim().length > 0) {
+        const formData = new FormData();
+        formData.append("title", data.title);
 
-      setLoader(false);
+        const res = await axios.post(
+          `http://localhost:8000/video/change-video-title/${id}`,
+          formData,
+          {
+            headers: { "Content-Type": "multipart/form-data" },
+            withCredentials: true,
+          },
+        );
+        if (data.description.trim().length > 0) {
+          const formData = new FormData();
+          formData.append("description", data.description);
 
-      if (res.data?.success) {
-        dispatch(clearCurrentUserVideos());
-        navigate("/app/my-videos/uploaded-videos");
+          const res = await axios.post(
+            `http://localhost:8000/video/change-video-description/${id}`,
+            formData,
+            {
+              headers: { "Content-Type": "multipart/form-data" },
+              withCredentials: true,
+            },
+          );
+        }
+        if (data.description.trim().length > 0) {
+          const formData = new FormData();
+          formData.append("description", data.description);
+
+          const res = await axios.post(
+            `http://localhost:8000/video/change-video-description/${id}`,
+            formData,
+            {
+              headers: { "Content-Type": "multipart/form-data" },
+              withCredentials: true,
+            },
+          );
+        }
+        if (thumbnailFile) {
+          const formData = new FormData();
+          formData.append("thumbnail", thumbnailFile);
+          formData.append("thumbnailPublicId", thumbnailPublicId);
+          const res = await axios.post(
+            `http://localhost:8000/video/change-video-thumbnail/${id}`,
+            formData,
+            {
+              headers: { "Content-Type": "multipart/form-data" },
+              withCredentials: true,
+            },
+          );
+        }
       }
     } catch (error) {
+      setError(
+        error?.response?.data?.message || "Failed to change user details",
+      );      
+    } finally {
+      setShowFileInput(false);
       setLoader(false);
-      setError(error?.response?.data?.message);
+      setError("");
+      dispatch(clearCurrentUserVideos());
+      navigate("/app/my-videos/uploaded-videos");
     }
   };
 
@@ -111,12 +163,12 @@ const EditVideoForm = () => {
 
           {error && <p className="text-red-500 text-center mb-3.5">{error}</p>}
           {loader ? (
-                   <div className="relative w-full h-[40px] rounded-lg overflow-hidden border border-gray-600 my-2">
-                   <div className="absolute top-[0px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-5" />
-                   <div className="absolute top-[9px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-3" />
-                   <div className="absolute top-[17px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-4" />
-                   <div className="absolute top-[22px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-6" />
-                 </div>
+            <div className="relative w-full h-[40px] rounded-lg overflow-hidden border border-gray-600 my-2">
+              <div className="absolute top-[0px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-5" />
+              <div className="absolute top-[9px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-3" />
+              <div className="absolute top-[17px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-4" />
+              <div className="absolute top-[22px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-6" />
+            </div>
           ) : (
             <button className="btn bg-gray-600 w-full my-2" type="submit">
               Save

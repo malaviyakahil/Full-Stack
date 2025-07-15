@@ -1,45 +1,43 @@
 import axios from "axios";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { clearCurrentUserVideos } from "../store/userVideos.slice";
-import { clearCurrentUser } from "../store/user.slice";
-import { clearVideos } from "../store/videos.slice";
 import { RiEyeLine, RiEyeOffLine } from "react-icons/ri";
-import { clearLikedVideos } from "../store/likedVideos.slice";
+import { clearCurrentUser } from "../store/user.slice.js";
+import { clearCurrentUserVideos } from "../store/userVideos.slice.js";
+import { clearVideos } from "../store/videos.slice.js";
+import { clearHistory } from "../store/history.slice.js";
+import { clearLikedVideos } from "../store/likedVideos.slice.js";
+import { useDispatch } from "react-redux";
 
-const ChangePasswordForm = () => {
+const DeleteUser = () => {
   let { register, handleSubmit } = useForm();
-  let dispatch = useDispatch();
-  let [error, setError] = useState(false);
+  let [error, setError] = useState("");
   let [loader, setLoader] = useState(false);
   let navigate = useNavigate();
-  let [showOldPassword, setShowOldPassword] = useState(false);
-  let [showNewPassword, setShowNewPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  let dispatch = useDispatch();
   let submit = async (data) => {
     setLoader(true);
-    setError(false);
+    setError("");
     let formData = new FormData();
-    formData.append("oldPassword", data.oldPassword);
-    formData.append("newPassword", data.newPassword);
+    formData.append("password", data.password);
 
     try {
       let res = await axios.post(
-        `http://localhost:8000/user/change-password`,
+        `http://localhost:8000/user/delete-user`,
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },
           withCredentials: true,
         },
       );
-
-      navigate("/login");
-      dispatch(clearCurrentUser());
-      dispatch(clearCurrentUserVideos());
-      dispatch(clearVideos());
-      dispatch(clearHistory());
-      dispatch(clearLikedVideos());
+        dispatch(clearCurrentUser());
+        dispatch(clearCurrentUserVideos());
+        dispatch(clearVideos());
+        dispatch(clearHistory());
+        dispatch(clearLikedVideos());
+        navigate("/");
     } catch (error) {
       setError(error?.response?.data?.message);
     } finally {
@@ -50,7 +48,7 @@ const ChangePasswordForm = () => {
   return (
     <div className="flex justify-center items-center h-full">
       <div className="w-full max-w-md justify-end p-5">
-        <h1 className="text-center text-[40px] mb-5">Change password</h1>
+        <h1 className="text-center text-[40px] mb-5">Delete account</h1>
         <form className="w-full" onSubmit={handleSubmit(submit)}>
           <label className="input validator w-full my-2 relative">
             <svg
@@ -70,61 +68,19 @@ const ChangePasswordForm = () => {
               </g>
             </svg>
             <input
-              type={showOldPassword ? "text" : "password"}
-              autoComplete="old-password"
-              required
-              key={"oldpassword"}
-              name="oldPassword"
-              {...register("oldPassword")}
-              placeholder="Old password"
-              pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"
-              title="Must contain at least 1 number, 1 uppercase and 1 lowercase letter, and be at least 8 characters"
-            />
-            <span
-              onClick={() => setShowOldPassword(!showOldPassword)}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-sm"
-            >
-              {showOldPassword ? (
-                <RiEyeLine className="text-gray-400 text-[15px]" />
-              ) : (
-                <RiEyeOffLine className="text-gray-400 text-[15px]" />
-              )}
-            </span>
-          </label>
-
-          <label className="input validator w-full my-2 relative">
-            <svg
-              className="h-[1em] opacity-50"
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-            >
-              <g
-                strokeLinejoin="round"
-                strokeLinecap="round"
-                strokeWidth="2.5"
-                fill="none"
-                stroke="currentColor"
-              >
-                <path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"></path>
-                <circle cx="16.5" cy="7.5" r=".5" fill="currentColor"></circle>
-              </g>
-            </svg>
-            <input
-              type={showNewPassword ? "text" : "password"}
+              type={showPassword ? "text" : "password"}
               autoComplete="new-password"
               required
-              key={"newpassword"}
-              name="newPassword"
-              {...register("newPassword")}
-              placeholder="New password"
+              {...register("password")}
+              placeholder="Password"
               pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"
               title="Must contain at least 1 number, 1 uppercase and 1 lowercase letter, and be at least 8 characters"
             />
             <span
-              onClick={() => setShowNewPassword(!showNewPassword)}
+              onClick={() => setShowPassword(!showPassword)}
               className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-sm"
             >
-              {showNewPassword ? (
+              {showPassword ? (
                 <RiEyeLine className="text-gray-400 text-[15px]" />
               ) : (
                 <RiEyeOffLine className="text-gray-400 text-[15px]" />
@@ -142,7 +98,7 @@ const ChangePasswordForm = () => {
             </div>
           ) : (
             <button className="btn bg-gray-600 w-full my-2" type="submit">
-              Change
+              Delete account
             </button>
           )}
         </form>
@@ -151,4 +107,4 @@ const ChangePasswordForm = () => {
   );
 };
 
-export default ChangePasswordForm;
+export default DeleteUser;

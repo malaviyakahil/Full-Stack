@@ -12,53 +12,106 @@ const RegisterForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
-  const submit = async (data) => {
-    setErrorMessage("");
-    setSuccessMessage("");
+  // const submit = async (data) => {
+  //   setErrorMessage("");
+  //   setSuccessMessage("");
 
-    const maxSize = 5 * 1024 * 1024;
-    const avatarSize = data.avatar?.[0]?.size || 0;
-    const coverSize = data.coverImage?.[0]?.size || 0;
+  //   const maxSize = 5 * 1024 * 1024;
+  //   const avatarSize = data.avatar?.[0]?.size || 0;
+  //   const coverSize = data.coverImage?.[0]?.size || 0;
 
-    if (avatarSize > maxSize && coverSize > maxSize) {
-      setErrorMessage("Both Avatar and Cover Image exceed 5MB limit.");
-      return;
-    }
-    if (avatarSize > maxSize) {
-      setErrorMessage("Avatar exceeds 5MB limit.");
-      return;
-    }
-    if (coverSize > maxSize) {
-      setErrorMessage("Cover Image exceeds 5MB limit.");
-      return;
-    }
+  //   if (avatarSize > maxSize && coverSize > maxSize) {
+  //     setErrorMessage("Both Avatar and Cover Image exceed 5MB limit.");
+  //     return;
+  //   }
+  //   if (avatarSize > maxSize) {
+  //     setErrorMessage("Avatar exceeds 5MB limit.");
+  //     return;
+  //   }
+  //   if (coverSize > maxSize) {
+  //     setErrorMessage("Cover Image exceeds 5MB limit.");
+  //     return;
+  //   }
 
-    const formData = new FormData();
-    formData.append("fullName", data.fullName);
-    formData.append("name", data.name);
-    formData.append("email", data.email);
-    formData.append("password", data.password);
-    formData.append("avatar", data.avatar[0]);
-    if (data.coverImage?.[0]) {
-      formData.append("coverImage", data.coverImage[0]);
-    }
+  //   const formData = new FormData();
+  //   formData.append("fullName", data.fullName);
+  //   formData.append("name", data.name);
+  //   formData.append("email", data.email);
+  //   formData.append("password", data.password);
+  //   formData.append("avatar", data.avatar[0]);
+  //   if (data.coverImage?.[0]) {
+  //     formData.append("coverImage", data.coverImage[0]);
+  //   }
 
-    try {
-      setLoader(true);
-      const res = await axios.post("http://localhost:8000/user/register", formData, {
+  //   try {
+  //     setLoader(true);
+  //     const res = await axios.post("http://localhost:8000/user/register", formData, {
+  //       headers: { "Content-Type": "multipart/form-data" },
+  //     });
+
+  //     if (res.data?.success) {
+  //       setSuccessMessage("Registration successful! Redirecting...");
+  //       setTimeout(() => navigate("/login"), 1500);
+  //     }
+  //   } catch (error) {
+  //     setErrorMessage(error?.response?.data?.message || "Registration failed.");
+  //   } finally {
+  //     setLoader(false);
+  //   }
+  // };
+const submit = async (data) => {
+  if (loader) return;
+
+  setErrorMessage("");
+  setSuccessMessage("");
+
+  const maxSize = 5 * 1024 * 1024;
+  const avatarSize = data.avatar?.[0]?.size || 0;
+  const coverSize = data.coverImage?.[0]?.size || 0;
+
+  if (avatarSize > maxSize && coverSize > maxSize) {
+    setErrorMessage("Both Avatar and Cover Image exceed 5MB limit.");
+    return;
+  }
+  if (avatarSize > maxSize) {
+    setErrorMessage("Avatar exceeds 5MB limit.");
+    return;
+  }
+  if (coverSize > maxSize) {
+    setErrorMessage("Cover Image exceeds 5MB limit.");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("fullName", data.fullName.trim());
+  formData.append("name", data.name.trim());
+  formData.append("email", data.email.trim());
+  formData.append("password", data.password);
+  formData.append("avatar", data.avatar[0]);
+  if (data.coverImage?.[0]) {
+    formData.append("coverImage", data.coverImage[0]);
+  }
+
+  try {
+    setLoader(true);
+    const res = await axios.post(
+      `${import.meta.env.VITE_API_URL}/user/register`,
+      formData,
+      {
         headers: { "Content-Type": "multipart/form-data" },
-      });
-
-      if (res.data?.success) {
-        setSuccessMessage("Registration successful! Redirecting...");
-        setTimeout(() => navigate("/login"), 1500);
       }
-    } catch (error) {
-      setErrorMessage(error?.response?.data?.message || "Registration failed.");
-    } finally {
-      setLoader(false);
+    );
+
+    if (res.data?.success) {
+      setSuccessMessage("Registration successful! Redirecting...");
+      setTimeout(() => navigate("/login"), 1500);
     }
-  };
+  } catch (error) {
+    setErrorMessage(error?.response?.data?.message || "Registration failed.");
+  } finally {
+    setLoader(false);
+  }
+};
 
   return (
     <div className="flex justify-center items-center min-h-screen">

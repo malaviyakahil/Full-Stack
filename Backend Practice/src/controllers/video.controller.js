@@ -9,6 +9,7 @@ import response from "../utils/response.js";
 import mongoose from "mongoose";
 import { LikedVideos } from "../models/likedVideos.model.js";
 import { History } from "../models/history.model.js";
+import { v2 as cloudinary } from "cloudinary";
 
 let uploadVideo = asyncHandler(async (req, res) => {
   let owner = req.user?._id;
@@ -123,6 +124,104 @@ let editVideo = asyncHandler(async (req, res) => {
   res.status(200).json(new response(200, [], "Video edited successfully"));
 });
 
+let changeVideoTitle = asyncHandler(async (req, res) => {
+  let videoId = req.params?.id;
+
+  let { title } = req.body;
+
+  if (title.trim() == "") {
+    throw new error(400, "Title must required");
+  }
+
+  let editVideoSuccess = await Video.findByIdAndUpdate(videoId, {
+    $set: {
+      title,
+    },
+  });
+
+  if (!editVideoSuccess) {
+    throw new error(500, "Error while changing title");
+  }
+
+  res
+    .status(200)
+    .json(new response(200, editVideoSuccess, "Title edited successfully"));
+});
+
+let changeVideoDescription = asyncHandler(async (req, res) => {
+  let videoId = req.params?.id;
+
+  let { description } = req.body;
+
+  if (description.trim() == "") {
+    throw new error(400, "Description must required");
+  }
+
+  let editVideoSuccess = await Video.findByIdAndUpdate(videoId, {
+    $set: {
+      description,
+    },
+  });
+
+  if (!editVideoSuccess) {
+    throw new error(500, "Error while changing description");
+  }
+
+  res
+    .status(200)
+    .json(
+      new response(200, editVideoSuccess, "Description edited successfully"),
+    );
+});
+
+let changeVideoThumbnail = asyncHandler(async (req, res) => {
+  let id = req.params?.id;
+  let thumbnailLocalPath = req.file?.path;
+  let { thumbnailPublicId } = req.body;
+
+console.log(thumbnailPublicId);
+
+  if (!thumbnailLocalPath) {
+    throw new error(401, "Invalid thumbnail");
+  }
+
+  let thumbnailRes = await uploadOnCloudinary(
+    thumbnailLocalPath,
+    "image",
+    "thumbnails",
+  );
+
+  if (!thumbnailRes) {
+    throw new error(
+      401,
+      "Something went wrong while uploading thumbnail on cloudinary",
+    );
+  }
+
+  await cloudinary.uploader.destroy(thumbnailPublicId, {
+    resource_type: "image",
+  });
+
+  let video = await Video.findByIdAndUpdate(
+    id,
+    {
+      $set: {
+        thumbnail: thumbnailRes?.secure_url,
+        thumbnailPublicId: thumbnailRes?.public_id,
+      },
+    },
+    { new: true },
+  );
+
+  if (!video) {
+    throw new error(401, "Thumbnail change failed");
+  }
+
+  res
+    .status(200)
+    .json(new response(200, video, "Thumbnail changed successfully"));
+});
+
 let deleteVideo = asyncHandler(async (req, res) => {
   const owner = req.user?._id;
   const videoId = req.params?.id;
@@ -140,10 +239,14 @@ let deleteVideo = asyncHandler(async (req, res) => {
 
   try {
     await session.withTransaction(async () => {
-      const comments = await Comment.find({ video: video._id }).session(session);
+      const comments = await Comment.find({ video: video._id }).session(
+        session,
+      );
       const commentIds = comments.map((comment) => comment._id);
 
-      await CommentReview.deleteMany({ comment: { $in: commentIds } }).session(session);
+      await CommentReview.deleteMany({ comment: { $in: commentIds } }).session(
+        session,
+      );
       await Comment.deleteMany({ video: video._id }).session(session);
       await Review.deleteMany({ video: video._id }).session(session);
       await History.deleteMany({ video: video._id }).session(session);
@@ -151,7 +254,11 @@ let deleteVideo = asyncHandler(async (req, res) => {
       await Video.findByIdAndDelete(video._id).session(session);
     });
 
-    res.status(200).json(new response(200, [], "Video and related data deleted successfully"));
+    res
+      .status(200)
+      .json(
+        new response(200, [], "Video and related data deleted successfully"),
+      );
   } catch (err) {
     throw new error(500, "Error while deleting video and associated data");
   } finally {
@@ -461,7 +568,6 @@ let deleteCommentReview = asyncHandler(async (req, res) => {
 });
 
 const addComment = asyncHandler(async (req, res) => {
-
   const userId = req.user._id;
   const videoId = req.params.id;
   const { comment } = req.body;
@@ -541,17 +647,15 @@ const addComment = asyncHandler(async (req, res) => {
   ]);
 
   if (!enriched[0]) {
-    return res.status(500).json(new response(500, null, "Failed to enrich comment"));
+    return res
+      .status(500)
+      .json(new response(500, null, "Failed to enrich comment"));
   }
 
-
-  res.status(201).json(
-    new response(201, enriched[0], "Comment created")
-  );
+  res.status(201).json(new response(201, enriched[0], "Comment created"));
 });
 
 let deleteComment = asyncHandler(async (req, res) => {
- 
   let comment = req.params?.id;
 
   let deleteSuccess = await Comment.findByIdAndDelete(comment);
@@ -589,6 +693,9 @@ let editComment = asyncHandler(async (req, res) => {
 export {
   uploadVideo,
   editVideo,
+  changeVideoTitle,
+  changeVideoDescription,
+  changeVideoThumbnail,
   deleteVideo,
   getAllVideo,
   likeVideo,

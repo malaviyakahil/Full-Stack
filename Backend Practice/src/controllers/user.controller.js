@@ -27,75 +27,174 @@ let generatingAccessAndRefreshToken = async function (id) {
   return { accessToken, refreshToken, loginedUser };
 };
 
-let registerUser = asyncHandler(async (req, res) => {
-  let { name, email, fullName, password } = req.body;
+// let registerUser = asyncHandler(async (req, res) => {
+//   let { name, email, fullName, password } = req.body;
 
-  if ([name, email, fullName, password].some((e) => e?.trim == "")) {
-    throw new error(401, "Credentials cannot be empty");
+//   if ([name, email, fullName, password].some((e) => e?.trim == "")) {
+//     throw new error(401, "Credentials cannot be empty");
+//   }
+
+//   let alreadyRegistered = await User.findOne({ $or: [{ name }, { email }] });
+
+//   let avatarLocalPath = req.files?.avatar[0]?.path;
+//   let coverImageLocalPath = req.files?.coverImage
+//     ? req.files?.coverImage[0].path
+//     : "";
+
+//   if (alreadyRegistered) {
+//     if (fs.existsSync(avatarLocalPath)) {
+//       fs.unlinkSync(avatarLocalPath);
+//     }
+//     if (fs.existsSync(coverImageLocalPath)) {
+//       fs.unlinkSync(coverImageLocalPath);
+//     }
+//     if (alreadyRegistered?.name == name && alreadyRegistered?.email == email) {
+//       throw new error(401, "Name and Email already registered you can login");
+//     }
+//     if (alreadyRegistered?.name == name) {
+//       throw new error(401, "Name already taken");
+//     }
+//     if (alreadyRegistered?.email == email) {
+//       throw new error(401, "Email already registered");
+//     }
+//   }
+
+//   if (!avatarLocalPath) {
+//     throw new error(401, "Invalid avatar image");
+//   }
+
+//   let avatarRes = await uploadOnCloudinary(avatarLocalPath, "image", "user/avtar");
+//   let coverImageRes = await uploadOnCloudinary(
+//     coverImageLocalPath,
+//     "image",
+//     "user/coverimage",
+//   );
+
+//   if (!avatarRes) {
+//     throw new error(
+//       401,
+//       "Something went wrong while uploading avatar on cloudinary",
+//     );
+//   }
+
+//   if (coverImageLocalPath) {
+//     if (!coverImageRes) {
+//       throw new error(
+//         401,
+//         "Something went wrong while uploading cover image on cloudinary",
+//       );
+//     }
+//   }
+
+//   let user = await User.create({
+//     name,
+//     email,
+//     fullName,
+//     password,
+//     avatar: avatarRes?.secure_url,
+//     avatarPublicId: avatarRes?.public_id,
+//     coverImage: coverImageRes?.secure_url || "",
+//     coverImagePublicId: coverImageRes?.public_id || "",
+//   });
+
+//   if (!user) {
+//     throw new error(500, "Something went wrong while registring user");
+//   }
+
+//   res.status(200).json(new response(200, user, "Registered successfully"));
+// });
+
+const registerUser = asyncHandler(async (req, res) => {
+  const { name, email, fullName, password } = req.body;
+
+  // Validate input
+  if ([name, email, fullName, password].some(field => !field || field.trim() === "")) {
+    throw new error(400, "All fields are required.");
   }
 
-  let alreadyRegistered = await User.findOne({ $or: [{ name }, { email }] });
+  // File paths
+  const avatarPath = req.files?.avatar?.[0]?.path;
+  const coverPath = req.files?.coverImage?.[0]?.path;
 
-  let avatarLocalPath = req.files?.avatar[0]?.path;
-  let coverImageLocalPath = req.files?.coverImage
-    ? req.files?.coverImage[0].path
-    : "";
+  if (!avatarPath) {
+    throw new error(400, "Avatar image is required.");
+  }
 
-  if (alreadyRegistered) {
-    if (fs.existsSync(avatarLocalPath)) {
-      fs.unlinkSync(avatarLocalPath);
+  // Check for existing user
+  const existingUser = await User.findOne({ $or: [{ name }, { email }] });
+
+  if (existingUser) {
+    // Cleanup local files
+    if (fs.existsSync(avatarPath)) fs.unlinkSync(avatarPath);
+    if (fs.existsSync(coverPath)) fs.unlinkSync(coverPath);
+
+    if (existingUser.name === name && existingUser.email === email) {
+      throw new error(409, "Name and email are already registered. Please login.");
     }
-    if (fs.existsSync(coverImageLocalPath)) {
-      fs.unlinkSync(coverImageLocalPath);
+    if (existingUser.name === name) {
+      throw new error(409, "Username is already taken.");
     }
-    if (alreadyRegistered?.name == name && alreadyRegistered?.email == email) {
-      throw new error(401, "Name and Email already registered you can login");
-    }
-    if (alreadyRegistered?.name == name) {
-      throw new error(401, "Name already taken");
-    }
-    if (alreadyRegistered?.email == email) {
-      throw new error(401, "Email already registered");
+    if (existingUser.email === email) {
+      throw new error(409, "Email is already registered.");
     }
   }
 
-  if (!avatarLocalPath) {
-    throw new error(401, "Invalid avatar image");
-  }
+  const session = await mongoose.startSession();
+  let avatarUpload = null;
+  let coverUpload = null;
 
-  let avatarRes = await uploadOnCloudinary(avatarLocalPath);
-  let coverImageRes = await uploadOnCloudinary(coverImageLocalPath);
+  try {
+    session.startTransaction();
 
-  if (!avatarRes) {
-    throw new error(
-      401,
-      "Something went wrong while uploading avatar on cloudinary",
-    );
-  }
+    // Upload avatar
+    avatarUpload = await uploadOnCloudinary(avatarPath, "image", "user/avatar");
+    if (!avatarUpload) throw new error(500, "Failed to upload avatar.");
 
-  if (coverImageLocalPath) {
-    if (!coverImageRes) {
-      throw new error(
-        401,
-        "Something went wrong while uploading cover image on cloudinary",
-      );
+    // Upload cover image if exists
+    if (coverPath) {
+      coverUpload = await uploadOnCloudinary(coverPath, "image", "user/coverImage");
+      if (!coverUpload) throw new error(500, "Failed to upload cover image.");
     }
+
+    // Create user
+    const [newUser] = await User.create([{
+      name,
+      email,
+      fullName,
+      password,
+      avatar: avatarUpload.secure_url,
+      avatarPublicId: avatarUpload.public_id,
+      coverImage: coverUpload?.secure_url || "",
+      coverImagePublicId: coverUpload?.public_id || "",
+    }], { session });
+
+    await session.commitTransaction();
+    session.endSession();
+
+    // Clean up local files
+    if (fs.existsSync(avatarPath)) fs.unlinkSync(avatarPath);
+    if (fs.existsSync(coverPath)) fs.unlinkSync(coverPath);
+
+    return res.status(201).json(new response(201, newUser, "Registered successfully."));
+
+  } catch (err) {
+    await session.abortTransaction();
+    session.endSession();
+
+    // Cloudinary cleanup
+    if (avatarUpload?.public_id) {
+      await cloudinary.uploader.destroy(avatarUpload.public_id);
+    }
+    if (coverUpload?.public_id) {
+      await cloudinary.uploader.destroy(coverUpload.public_id);
+    }
+
+    // Local file cleanup
+    if (fs.existsSync(avatarPath)) fs.unlinkSync(avatarPath);
+    if (fs.existsSync(coverPath)) fs.unlinkSync(coverPath);
+
+    throw err;
   }
-
-  let user = await User.create({
-    name,
-    email,
-    fullName,
-    password,
-    avatar: avatarRes?.url,
-    coverImage: coverImageRes?.url || "",
-  });
-
-  if (!user) {
-    throw new error(500, "Something went wrong while registring user");
-  }
-
-  res.status(200).json(new response(200, user, "Registered successfully"));
 });
 
 let loginUser = asyncHandler(async (req, res) => {
@@ -105,7 +204,7 @@ let loginUser = asyncHandler(async (req, res) => {
   email = email.trim();
   password = password.trim();
 
-  if ([name, email, password].some((e) => e?.trim == "")) {
+  if ([name, email, password].some((e) => e == "")) {
     throw new error(401, "Credentials cannot be empty");
   }
 
@@ -187,7 +286,9 @@ let getCurrentUser = asyncHandler(async (req, res) => {
         fullName: 1,
         email: 1,
         avatar: 1,
+        avatarPublicId: 1,
         coverImage: 1,
+        coverImagePublicId: 1,
         subs: 1,
         totalViews: 1,
       },
@@ -246,6 +347,8 @@ const getCurrentUserVideos = asyncHandler(async (req, res) => {
         _id: 1,
         title: 1,
         thumbnail: 1,
+        thumbnailPublicId: 1,
+        videoPublicId: 1,
         createdAt: 1,
         duration: 1,
         description: 1,
@@ -376,6 +479,7 @@ let changePassword = asyncHandler(async (req, res) => {
 
 let changeAvatar = asyncHandler(async (req, res) => {
   let id = req.user?._id;
+  let publicId = req.params?.id;
   let avatarLocalPath = req.file?.path;
 
   if (!avatarLocalPath) {
@@ -391,9 +495,13 @@ let changeAvatar = asyncHandler(async (req, res) => {
     );
   }
 
+  await cloudinary.uploader.destroy(publicId, {
+    resource_type: "image",
+  });
+
   let user = await User.findByIdAndUpdate(
     id,
-    { $set: { avatar: avatarRes?.url } },
+    { $set: { avatar: avatarRes?.url, avatarPublicId: avatarRes?.public_id } },
     { new: true },
   );
 
@@ -423,7 +531,12 @@ let changeCoverImage = asyncHandler(async (req, res) => {
 
   let user = await User.findByIdAndUpdate(
     id,
-    { $set: { coverImage: coverImageRes?.url } },
+    {
+      $set: {
+        coverImage: coverImageRes?.secure_url,
+        coverImagePublicId: coverImageRes.public_id,
+      },
+    },
     { new: true },
   );
 
@@ -454,7 +567,9 @@ let changeFullName = asyncHandler(async (req, res) => {
     throw new error(400, "Full name change failed");
   }
 
-  res.status(200).json(new response(200, user, "Full name changed successfully"));
+  res
+    .status(200)
+    .json(new response(200, user, "Full name changed successfully"));
 });
 
 let subscribeTo = asyncHandler(async (req, res) => {
@@ -1408,15 +1523,20 @@ let getChannelDetails = asyncHandler(async (req, res) => {
     );
 });
 
-
 let removeCoverImage = asyncHandler(async (req, res) => {
   let id = req.user._id;
-  
+  let publicId = req.params?.id;
+
+  const result = await cloudinary.uploader.destroy(publicId, {
+    resource_type: "image",
+  });
+
   let editUser = await User.findByIdAndUpdate(
     id,
     {
       $set: {
         coverImage: "",
+        coverImagePublicId: "",
       },
     },
     { new: true },
@@ -1497,10 +1617,21 @@ const authMe = asyncHandler(async (req, res) => {
 
 const deleteUser = asyncHandler(async (req, res) => {
   const userId = req?.user._id;
+  let { password } = req.body;
 
   const user = await User.findById(userId);
   if (!user) {
     throw new error(404, "User not found");
+  }
+  password = password.trim();
+  if (password == "") {
+    throw new error(401, "Password cannot be empty");
+  }
+
+  let passwordCheck = await user.comparePassword(password);
+
+  if (!passwordCheck) {
+    throw new error(401, "Wrong password");
   }
 
   const session = await mongoose.startSession();
@@ -1548,9 +1679,14 @@ const deleteUser = asyncHandler(async (req, res) => {
       // 3. Delete the user
       await User.findByIdAndDelete(userId).session(session);
     });
-
+    let options = {
+      httpOnly: true,
+      secure: true,
+    };
     res
       .status(200)
+      .clearCookie("accessToken", options)
+      .clearCookie("refreshToken", options)
       .json(
         new response(200, [], "User and all related data deleted successfully"),
       );

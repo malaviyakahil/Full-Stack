@@ -6,7 +6,7 @@ import { fetchLikedVideos } from "../store/likedVideos.slice.js";
 import InfiniteScroll from "react-infinite-scroll-component";
 
 const LikedVideos = () => {
-  let { data, loading, hasMore, limit ,fetched} = useSelector(
+  let { data, loading, hasMore, limit, fetched } = useSelector(
     (store) => store.likedVideos,
   );
   let dispatch = useDispatch();
@@ -15,7 +15,7 @@ const LikedVideos = () => {
     if (!fetched) {
       dispatch(fetchLikedVideos());
     }
-  }, [fetched,dispatch]);
+  }, [fetched, dispatch]);
 
   let formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -176,8 +176,13 @@ const LikedVideos = () => {
               ))}
             </>
           ) : (
-            <div className="pt-70">
-              <h2 className="text-center">No liked videos to show</h2>
+            <div className="flex flex-col items-center justify-center h-[80vh]">
+              <h2 className="text-xl md:text-2xl font-semibold ">
+                You haven't liked any video yet
+              </h2>
+              <p className="text-sm text-gray-500 mt-2">
+                Explore and like videos to see them here.
+              </p>
             </div>
           )}
         </InfiniteScroll>

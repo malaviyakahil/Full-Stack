@@ -25,6 +25,16 @@ const SettingDashboard = () => {
         >
           Change password
         </NavLink>
+        <NavLink
+          className={({ isActive }) =>
+            `text-sm font-medium px-4 py-2 rounded-md ${
+              isActive ? "bg-gray-700 text-white" : ""
+            }`
+          }
+          to="/app/settings/delete-user"
+        >
+          Delete Account
+        </NavLink>
       </div>
 
       <div className="w-full h-full lg:w-3/4 overflow-y-scroll py-5">

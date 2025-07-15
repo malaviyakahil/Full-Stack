@@ -7,7 +7,6 @@ import InfiniteScroll from "react-infinite-scroll-component";
 import { fetchVideos } from "../store/videos.slice";
 
 const VideoCard = ({ video }) => {
-  
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60)
@@ -71,33 +70,47 @@ const Videos = () => {
   return (
     <div>
       {loading && videos.length === 0 ? (
-        <Skeleton  />
+        <Skeleton />
       ) : (
         <InfiniteScroll
           scrollableTarget="scrollableDiv"
           dataLength={videos?.length}
           next={() => {
-            if (!loading && hasMore)
-              dispatch(fetchVideos());
+            if (!loading && hasMore) dispatch(fetchVideos());
           }}
           hasMore={hasMore}
           loader={<Skeleton />}
           endMessage={
-            <p className="text-center text-sm py-6 text-gray-400">
-              No more videos to load.
-            </p>
+            <>
+              {videos.length > 0 && (
+                <p className="text-center text-sm py-6 text-gray-400">
+                  No more videos to load.
+                </p>
+              )}
+            </>
           }
         >
-          <div className="flex flex-wrap justify-center gap-6 py-4">
-            {videos.map((video) => (
-              <Link
-                key={video._id}
-                to={`/app/dashboard/single-video/${video.owner._id}/${video._id}`}
-              >
-                <VideoCard video={video} />
-              </Link>
-            ))}
-          </div>
+          {videos.length > 0 ? (
+            <div className="flex flex-wrap justify-center gap-6 py-4">
+              {videos.map((video) => (
+                <Link
+                  key={video._id}
+                  to={`/app/dashboard/single-video/${video.owner._id}/${video._id}`}
+                >
+                  <VideoCard video={video} />
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-[80vh]">
+              <h2 className="text-xl md:text-2xl font-semibold ">
+                No videos to show
+              </h2>
+              <p className="text-sm text-gray-500 mt-2">
+                Please check back later
+              </p>
+            </div>
+          )}
         </InfiniteScroll>
       )}
     </div>

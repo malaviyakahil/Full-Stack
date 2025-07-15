@@ -6,7 +6,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import userRouter  from "./routes/user.route.js";
 import videoRouter from "./routes/video.route.js";
-import { cloudinary } from "./utils/cloudinary.js";
+
 
 dotenv.config();
 
@@ -39,7 +39,6 @@ app.use(express.urlencoded({ extended: true }));
     });
   } catch (error) {
     console.log(error);
-    
     console.log("Cannot connect to mongoDB atlas");
   }
 })();
@@ -50,6 +49,6 @@ app.use('/video',videoRouter)
 app.use((err, req, res, next) => {  
   res.status(500).json({
     success: false,
-    message: err.message || "Internal kahil Error",
+    message: err.message || "Internal Server Error",
   });
 });

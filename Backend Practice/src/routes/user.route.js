@@ -19,7 +19,6 @@ import {
   getSubStatus,
   getReviewStatus,
   getChannelDetails,
-  editProfile,
   getComments,
   searchAll,
   getChannel,
@@ -71,13 +70,13 @@ userRouter.post(
   auth,
   changeCoverImage,
 );
+userRouter.post("/remove-cover-image/:id", upload.none(), auth, removeCoverImage);
 userRouter.get("/get-history", upload.none(), auth, getHistory);
 userRouter.post("/delete-history/:id", upload.none(), auth, deleteHistory);
 userRouter.get("/get-liked-videos", upload.none(), auth, getLikedVideos);
 userRouter.post("/delete-liked-videos/:id", upload.none(), auth, deleteLikedVideos);
 userRouter.post("/get-sub-status/:id", upload.none(), auth, getSubStatus);
 userRouter.post("/get-review-status/:id", upload.none(), auth, getReviewStatus);
-userRouter.post("/remove-cover-image", upload.single("avatar"), auth, removeCoverImage);
 userRouter.post("/subscribe-to/:id", upload.none(), auth, subscribeTo);
 userRouter.post("/unsubscribe-to/:id", upload.none(), auth, unsubscribeTo);
 userRouter.get(

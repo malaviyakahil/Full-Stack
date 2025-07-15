@@ -21,7 +21,9 @@ const UserVideoCard = ({ video }) => {
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60).toString().padStart(2, "0");
+    const secs = Math.floor(seconds % 60)
+      .toString()
+      .padStart(2, "0");
     return `${mins}:${secs}`;
   };
 
@@ -31,13 +33,11 @@ const UserVideoCard = ({ video }) => {
     dispatch(deletOneVideo(video?._id));
     try {
       await axios.post(
-      `http://localhost:8000/video/delete-video/${video?._id}`,
-      [],
-      { withCredentials: true }
-    );
-    } catch (error) {
-      
-    }
+        `http://localhost:8000/video/delete-video/${video?._id}`,
+        [],
+        { withCredentials: true },
+      );
+    } catch (error) {}
   };
 
   return (
@@ -69,6 +69,7 @@ const UserVideoCard = ({ video }) => {
               title: video?.title,
               description: video?.description,
               thumbnail: video?.thumbnail,
+              thumbnailPublicId: video?.thumbnailPublicId,
             }}
           >
             <button className="bg-gray-700 hover:bg-gray-600 px-4 py-0.5 rounded-md text-[14px] flex gap-2 justify-center items-center ">
@@ -99,7 +100,6 @@ const UserVideos = () => {
 
   const currentUser = useSelector((store) => store.currentUser);
 
-
   return (
     <div className="h-full py-3">
       <div className="mx-auto max-w-6xl flex w-full items-center justify-center flex-wrap gap-5">
@@ -128,7 +128,6 @@ const UserVideos = () => {
           }}
           hasMore={hasMore}
           loader={<Skeleton />}
-
         >
           {videos.length > 0 ? (
             <div className="flex flex-wrap justify-center gap-6 py-4">
@@ -143,10 +142,13 @@ const UserVideos = () => {
               ))}
             </div>
           ) : (
-            <div className="pt-50">
-              <h2 className="text-center text-gray-300">
-                You haven't uploaded any video
+            <div className="flex flex-col items-center justify-center h-[80vh]">
+              <h2 className="text-xl md:text-2xl font-semibold ">
+                You haven't uploaded any video yet
               </h2>
+              <p className="text-sm text-gray-500 mt-2">
+               Upload your first video to get started.
+              </p>
             </div>
           )}
         </InfiniteScroll>
