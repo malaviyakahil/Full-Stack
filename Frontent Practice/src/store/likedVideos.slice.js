@@ -7,7 +7,7 @@ let fetchLikedVideos = createAsyncThunk(
     try {
       let { page, limit } = getState().likedVideos;
       let res = await axios.get(
-        `http://localhost:8000/user/get-liked-videos?page=${page}&limit=${limit}`,
+        `${import.meta.env.VITE_API_URL}/user/get-liked-videos?page=${page}&limit=${limit}`,
         {
           withCredentials: true,
         },

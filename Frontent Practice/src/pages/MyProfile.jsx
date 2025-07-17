@@ -6,7 +6,7 @@ const MyProfile = () => {
   let currentUser = useSelector((store) => store.currentUser);
   
   return (
-    <div className="flex justify-center items-center h-full overflow-y-auto p-4">
+    <div className="flex justify-center items-center h-full">
       <div className="w-full max-w-md justify-center p-10">
         <div className="w-60 h-60 md:w-48 md:h-48 sm:w-36 sm:h-36 rounded-full overflow-hidden flex items-center justify-center mx-auto border-5 p-2 border-white">
           <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center">

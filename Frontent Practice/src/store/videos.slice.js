@@ -8,7 +8,7 @@ let fetchVideos = createAsyncThunk(
       const { page, limit } = getState().videos;
 
       const res = await axios.get(
-        `http://localhost:8000/video/get-all-videos?page=${page}&limit=${limit}`,
+        `${import.meta.env.VITE_API_URL}/video/get-all-videos?page=${page}&limit=${limit}`,
         { withCredentials: true },
       );
 

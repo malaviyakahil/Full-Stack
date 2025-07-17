@@ -7,7 +7,7 @@ let fetchcurrentUserVideos = createAsyncThunk(
     try {
       const { page, limit } = getState().currentUserVideos;
       let res = await axios.get(
-        `http://localhost:8000/user/get-current-user-videos?page=${page}&limit=${limit}`,
+        `${import.meta.env.VITE_API_URL}/user/get-current-user-videos?page=${page}&limit=${limit}`,
         {
           withCredentials: true,
         },
@@ -31,7 +31,7 @@ let currentUserVideosSlice = createSlice({
     loading: false,
     error: null,
     limit: 6,
-    fetched :false
+    fetched: false,
   },
   reducers: {
     clearCurrentUserVideos: (state, action) => {
@@ -44,6 +44,25 @@ let currentUserVideosSlice = createSlice({
     },
     deletOneVideo: (state, action) => {
       state.data = state.data?.filter((video) => video._id !== action.payload);
+    },
+    undoDeletOneVideo: (state, action) => {
+      const { video, index } = action.payload;
+      const alreadyExists = state.data.some((v) => v._id === video._id);
+
+      if (!alreadyExists) {
+        if (index >= 0 && index <= state.data.length) {
+          state.data.splice(index, 0, video);
+        } else {
+          state.data.unshift(video); // fallback
+        }
+      }
+    },
+    updateCurrentUserVideo: (state, action) => {
+      const updatedVideo = action.payload;
+
+      state.data = state.data.map((video) =>
+        video._id === updatedVideo._id ? updatedVideo : video,
+      );
     },
     incrementView: (state, action) => {
       state.data = state.data?.map((video) => {
@@ -83,6 +102,8 @@ let {
   deletOneVideo,
   incrementView,
   setCurrentUserVideoLimit,
+  undoDeletOneVideo,
+  updateCurrentUserVideo,
 } = currentUserVideosSlice.actions;
 
 export {
@@ -91,5 +112,7 @@ export {
   clearCurrentUserVideos,
   deletOneVideo,
   setCurrentUserVideoLimit,
+  undoDeletOneVideo,
   incrementView,
+  updateCurrentUserVideo,
 };

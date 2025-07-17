@@ -22,7 +22,6 @@ const EditProfileForm = () => {
     setShowCoverImageFileInput(!showCoverImageFileInput);
 
   let submit = async (data) => {
-    const prevUserData = currentUser?.data;
     setError("");
 
     const avatarFile = data?.avatar?.[0];
@@ -48,7 +47,7 @@ const EditProfileForm = () => {
       return;
     }
 
-    // ✅ Validate file types
+    // Validate file types
     if (avatarFile && !isJpg(avatarFile)) {
       setError("Only .jpg images are allowed for Avatar.");
       return;
@@ -61,10 +60,13 @@ const EditProfileForm = () => {
     setLoader(true);
 
     try {
-      const trimmedFullName = data.fullName.trim();
-      if (trimmedFullName.trim().length > 0) {
+      let updatedUser = {};
+
+      // Full name
+      const trimmedFullName = data.fullName?.trim();
+      if (trimmedFullName.length > 0) {
         const formData = new FormData();
-        formData.append("fullName", data.fullName);
+        formData.append("fullName", trimmedFullName);
 
         const res = await axios.post(
           `${import.meta.env.VITE_API_URL}/user/change-full-name`,
@@ -74,9 +76,12 @@ const EditProfileForm = () => {
             withCredentials: true,
           },
         );
-        dispatch(updateCurrentUser(res?.data?.data));
+        Object.assign(updatedUser, res?.data?.data);
+      } else {
+        setError("Fullname cannot be empty");
       }
 
+      // Avatar
       if (avatarFile) {
         const formData = new FormData();
         formData.append("avatar", avatarFile);
@@ -89,9 +94,10 @@ const EditProfileForm = () => {
             withCredentials: true,
           },
         );
-        dispatch(updateCurrentUser(res?.data?.data));
+        Object.assign(updatedUser, res?.data?.data);
       }
 
+      // Cover image
       if (coverImageFile) {
         const formData = new FormData();
         formData.append("coverImage", coverImageFile);
@@ -104,11 +110,17 @@ const EditProfileForm = () => {
             withCredentials: true,
           },
         );
-        dispatch(updateCurrentUser(res?.data?.data));
+        Object.assign(updatedUser, res?.data?.data);
       }
 
+      // Dispatch only if there's something to update
+      if (Object.keys(updatedUser).length > 0) {
+        dispatch(updateCurrentUser(updatedUser));
+      }
+
+      // Cover image removal
       if (coverImageRemove) {
-        const res = await axios.post(
+        await axios.post(
           `${import.meta.env.VITE_API_URL}/user/remove-cover-image`,
           [],
           {
@@ -121,10 +133,8 @@ const EditProfileForm = () => {
       setError(
         error?.response?.data?.message || "Failed to change user details",
       );
-      dispatch(updateCurrentUser(prevUserData));
     } finally {
       setLoader(false);
-      setError("");
       setShowAvatarFileInput(false);
       setShowCoverImageFileInput(false);
       setCoverImageRemove(false);
@@ -135,18 +145,44 @@ const EditProfileForm = () => {
     <div className="flex justify-center">
       <div className="w-full max-w-md justify-end p-5">
         <h1 className="text-center text-[40px] mb-5">Edit profile</h1>
-        <form className="w-full" onSubmit={handleSubmit(submit)}>
+        <form
+          className="w-full"
+          autoComplete="off"
+          encType="multipart/form-data"
+          noValidate={false}
+          onSubmit={handleSubmit(submit)}
+        >
           <p className="text-md font-semibold my-2">Full name</p>
-          <input
-            type="text"
-            defaultValue={currentUser.data?.fullName}
-            className="input w-full"
-            required
-            {...register("fullName")}
-            placeholder="Full name"
-            minLength="3"
-            maxLength="30"
-          />
+
+          <label htmlFor="fullName" className="input w-full">
+            <svg
+              className="h-[1em] opacity-50"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+            >
+              <g
+                strokeLinejoin="round"
+                strokeLinecap="round"
+                strokeWidth="2.5"
+                fill="none"
+                stroke="currentColor"
+              >
+                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </g>
+            </svg>
+            <input
+              id="fullName"
+              defaultValue={currentUser.data?.fullName}
+              type="text"
+              required
+              placeholder="Full name"
+              className="w-full"
+              minLength={3}
+              maxLength={30}
+              {...register("fullName")}
+            />
+          </label>
 
           <p className="text-md font-semibold my-2">Avatar</p>
 

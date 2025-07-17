@@ -2,7 +2,7 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 
 let fetchHistory = createAsyncThunk("fetchHistory", async () => {
-  let res = await axios.get(`http://localhost:8000/user/get-history`, {
+  let res = await axios.get(`${import.meta.env.VITE_API_URL}/user/get-history`, {
     withCredentials: true,
   });
   return res.data;

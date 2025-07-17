@@ -10,76 +10,89 @@ import mongoose from "mongoose";
 import { LikedVideos } from "../models/likedVideos.model.js";
 import { History } from "../models/history.model.js";
 import { v2 as cloudinary } from "cloudinary";
+import fs from "fs";
 
-let uploadVideo = asyncHandler(async (req, res) => {
-  let owner = req.user?._id;
+const uploadVideo = asyncHandler(async (req, res) => {
+  const owner = req.user?._id;
   let { title, description } = req.body;
 
-  if ([title, description].some((e) => e.trim() == "")) {
+  title = title?.trim();
+  description = description?.trim();
+
+  if (!title || !description) {
     throw new error(400, "Title and description are required.");
   }
 
-  let videoLocalPath = req.files.video ? req.files.video[0]?.path : null;
-  if (!videoLocalPath) throw new error(401, "Invalid video path");
+  const videoPath = req.files?.video?.[0]?.path;
+  const thumbnailPath = req.files?.thumbnail?.[0]?.path;
 
-  let thumbnailLocalPath = req.files.thumbnail
-    ? req.files.thumbnail[0]?.path
-    : null;
-  if (!thumbnailLocalPath) throw new error(401, "Invalid thumbnail path");
+  if (!videoPath) throw new error(400, "Invalid video file.");
+  if (!thumbnailPath) throw new error(400, "Invalid thumbnail file.");
 
-  let videoRes = await uploadOnCloudinary(videoLocalPath, "video", "videos");
-  if (!videoRes) {
-    throw new error(401, "Video upload to Cloudinary failed");
+  let videoRes = null;
+  let thumbnailRes = null;
+
+  try {
+    // Upload video
+    videoRes = await uploadOnCloudinary(videoPath, "video", "video/video");
+    if (!videoRes) throw new error(500, "Video upload to Cloudinary failed");
+
+    // Upload thumbnail
+    thumbnailRes = await uploadOnCloudinary(thumbnailPath, "image", "video/thumbnail");
+    if (!thumbnailRes) throw new error(500, "Thumbnail upload to Cloudinary failed");
+
+    const videoHeight = videoRes?.height;
+    const qualityOptions = [
+      { label: "144p", height: 144 },
+      { label: "240p", height: 240 },
+      { label: "360p", height: 360 },
+      { label: "480p", height: 480 },
+      { label: "720p", height: 720 },
+      { label: "1080p", height: 1080 },
+    ];
+
+    const availableQualities = qualityOptions
+      .filter(q => videoHeight >= q.height)
+      .map(q => q.label);
+
+    const originalQuality = availableQualities.at(-1);
+
+    const videoUploaded = await Video.create({
+      video: videoRes.secure_url,
+      videoPublicId: videoRes.public_id,
+      thumbnail: thumbnailRes.secure_url,
+      thumbnailPublicId: thumbnailRes.public_id,
+      title,
+      description,
+      owner,
+      duration: videoRes?.duration,
+      width: videoRes?.width,
+      height: videoRes?.height,
+      availableQualities,
+      originalQuality,
+    });
+
+    if (!videoUploaded) {
+      throw new error(500, "Failed to save video to database.");
+    }
+
+    res
+      .status(201)
+      .json(new response(201, videoUploaded, "Video uploaded successfully."));
+  } catch (err) {
+    // Cleanup Cloudinary if either upload fails after one succeeds
+    if (videoRes?.public_id) {
+      await cloudinary.uploader.destroy(videoRes.public_id, { resource_type: "video" });
+    }
+    if (thumbnailRes?.public_id) {
+      await cloudinary.uploader.destroy(thumbnailRes.public_id, { resource_type: "image" });
+    }
+    throw err;
+  } finally {
+    // Always delete local files
+    if (fs.existsSync(videoPath)) fs.unlinkSync(videoPath);
+    if (fs.existsSync(thumbnailPath)) fs.unlinkSync(thumbnailPath);
   }
-
-  let thumbnailRes = await uploadOnCloudinary(
-    thumbnailLocalPath,
-    "image",
-    "thumbnails",
-  );
-  if (!thumbnailRes) {
-    throw new error(401, "Thumbnail upload to Cloudinary failed");
-  }
-
-  const videoHeight = videoRes?.height;
-
-  const qualityOptions = [
-    { label: "144p", height: 144 },
-    { label: "240p", height: 240 },
-    { label: "360p", height: 360 },
-    { label: "480p", height: 480 },
-    { label: "720p", height: 720 },
-    { label: "1080p", height: 1080 },
-  ];
-
-  const availableQualities = qualityOptions
-    .filter((q) => videoHeight >= q.height)
-    .map((q) => q.label);
-
-  const originalQuality = availableQualities.at(-1);
-
-  let videoUploaded = await Video.create({
-    video: videoRes?.secure_url,
-    videoPublicId: videoRes?.public_id,
-    thumbnail: thumbnailRes?.secure_url,
-    thumbnailPublicId: thumbnailRes?.public_id,
-    title,
-    description,
-    owner,
-    duration: videoRes?.duration,
-    width: videoRes?.width,
-    height: videoRes?.height,
-    availableQualities,
-    originalQuality,
-  });
-
-  if (!videoUploaded) {
-    throw new error(500, "Video upload failed");
-  }
-
-  res
-    .status(200)
-    .json(new response(200, videoUploaded, "Video uploaded successfully"));
 });
 
 let editVideo = asyncHandler(async (req, res) => {
@@ -124,102 +137,116 @@ let editVideo = asyncHandler(async (req, res) => {
   res.status(200).json(new response(200, [], "Video edited successfully"));
 });
 
-let changeVideoTitle = asyncHandler(async (req, res) => {
-  let videoId = req.params?.id;
+const changeVideoTitle = asyncHandler(async (req, res) => {
+  const videoId = req.params?.id;
+  const { title } = req.body;
 
-  let { title } = req.body;
-
-  if (title.trim() == "") {
-    throw new error(400, "Title must required");
+  if (!title || title.trim() === "") {
+    throw new error(400, "Title is required.");
   }
 
-  let editVideoSuccess = await Video.findByIdAndUpdate(videoId, {
-    $set: {
-      title,
-    },
-  });
+  const trimmedTitle = title.trim();
 
-  if (!editVideoSuccess) {
-    throw new error(500, "Error while changing title");
+  const updatedVideo = await Video.findByIdAndUpdate(
+    videoId,
+    { $set: { title: trimmedTitle } },
+    { new: true } // return the updated document
+  );
+
+  if (!updatedVideo) {
+    throw new error(404, "Video not found or title update failed.");
   }
 
-  res
+  return res
     .status(200)
-    .json(new response(200, editVideoSuccess, "Title edited successfully"));
+    .json(new response(200, updatedVideo, "Title updated successfully."));
 });
 
-let changeVideoDescription = asyncHandler(async (req, res) => {
-  let videoId = req.params?.id;
+const changeVideoDescription = asyncHandler(async (req, res) => {
+  const videoId = req.params?.id;
+  const { description } = req.body;
 
-  let { description } = req.body;
-
-  if (description.trim() == "") {
-    throw new error(400, "Description must required");
+  if (!description || description.trim() === "") {
+    throw new error(400, "Description is required.");
   }
 
-  let editVideoSuccess = await Video.findByIdAndUpdate(videoId, {
-    $set: {
-      description,
-    },
-  });
+  const trimmedDescription = description.trim();
 
-  if (!editVideoSuccess) {
-    throw new error(500, "Error while changing description");
+  const updatedVideo = await Video.findByIdAndUpdate(
+    videoId,
+    { $set: { description: trimmedDescription } },
+    { new: true }
+  );
+
+  if (!updatedVideo) {
+    throw new error(404, "Video not found or update failed.");
   }
 
-  res
+  return res
     .status(200)
-    .json(
-      new response(200, editVideoSuccess, "Description edited successfully"),
-    );
+    .json(new response(200, updatedVideo, "Description updated successfully."));
 });
 
-let changeVideoThumbnail = asyncHandler(async (req, res) => {
-  let id = req.params?.id;
-  let thumbnailLocalPath = req.file?.path;
-  let { thumbnailPublicId } = req.body;
-
-console.log(thumbnailPublicId);
+const changeVideoThumbnail = asyncHandler(async (req, res) => {
+  const videoId = req.params?.id;
+  const thumbnailLocalPath = req.file?.path;
 
   if (!thumbnailLocalPath) {
-    throw new error(401, "Invalid thumbnail");
+    throw new error(400, "Invalid thumbnail image.");
   }
 
-  let thumbnailRes = await uploadOnCloudinary(
+  // Upload new thumbnail
+  const uploadResult = await uploadOnCloudinary(
     thumbnailLocalPath,
     "image",
-    "thumbnails",
+    "video/thumbnail"
   );
 
-  if (!thumbnailRes) {
-    throw new error(
-      401,
-      "Something went wrong while uploading thumbnail on cloudinary",
-    );
+  if (!uploadResult) {
+    throw new error(500, "Thumbnail upload to Cloudinary failed.");
   }
 
-  await cloudinary.uploader.destroy(thumbnailPublicId, {
-    resource_type: "image",
-  });
+  // Find the existing video
+  const existingVideo = await Video.findById(videoId);
+  if (!existingVideo) {
+    // Clean up new Cloudinary upload if video not found
+    await cloudinary.uploader.destroy(uploadResult.public_id, {
+      resource_type: "image",
+    });
+    throw new error(404, "Video not found.");
+  }
 
-  let video = await Video.findByIdAndUpdate(
-    id,
+  // Delete previous thumbnail from Cloudinary if it exists
+  if (existingVideo.thumbnailPublicId) {
+    await cloudinary.uploader.destroy(existingVideo.thumbnailPublicId, {
+      resource_type: "image",
+    });
+  }
+
+  // Update video document
+  const updatedVideo = await Video.findByIdAndUpdate(
+    videoId,
     {
       $set: {
-        thumbnail: thumbnailRes?.secure_url,
-        thumbnailPublicId: thumbnailRes?.public_id,
+        thumbnail: uploadResult.secure_url,
+        thumbnailPublicId: uploadResult.public_id,
       },
     },
-    { new: true },
+    { new: true }
   );
 
-  if (!video) {
-    throw new error(401, "Thumbnail change failed");
+  // Clean up local file
+  if (fs.existsSync(thumbnailLocalPath)) {
+    fs.unlinkSync(thumbnailLocalPath);
   }
 
-  res
+  if (!updatedVideo) {
+    throw new error(500, "Failed to update video with new thumbnail.");
+  }
+
+  return res
     .status(200)
-    .json(new response(200, video, "Thumbnail changed successfully"));
+    .json(new response(200, updatedVideo, "Thumbnail changed successfully."));
 });
 
 let deleteVideo = asyncHandler(async (req, res) => {
@@ -235,18 +262,32 @@ let deleteVideo = asyncHandler(async (req, res) => {
     throw new error(403, "You are not authorized to delete this video");
   }
 
+  // ✅ Remove from Cloudinary (outside of DB transaction)
+  try {
+    if (video.videoPublicId) {
+      await cloudinary.uploader.destroy(video.videoPublicId, {
+        resource_type: "video",
+      });
+    }
+    if (video.thumbnailPublicId) {
+      await cloudinary.uploader.destroy(video.thumbnailPublicId, {
+        resource_type: "image",
+      });
+    }
+  } catch (cloudErr) {
+    // Log but don't block video deletion
+    console.error("Cloudinary cleanup failed:", cloudErr.message);
+  }
+
+  // ✅ Transactional DB cleanup
   const session = await Video.startSession();
 
   try {
     await session.withTransaction(async () => {
-      const comments = await Comment.find({ video: video._id }).session(
-        session,
-      );
+      const comments = await Comment.find({ video: video._id }).session(session);
       const commentIds = comments.map((comment) => comment._id);
 
-      await CommentReview.deleteMany({ comment: { $in: commentIds } }).session(
-        session,
-      );
+      await CommentReview.deleteMany({ comment: { $in: commentIds } }).session(session);
       await Comment.deleteMany({ video: video._id }).session(session);
       await Review.deleteMany({ video: video._id }).session(session);
       await History.deleteMany({ video: video._id }).session(session);
@@ -257,7 +298,7 @@ let deleteVideo = asyncHandler(async (req, res) => {
     res
       .status(200)
       .json(
-        new response(200, [], "Video and related data deleted successfully"),
+        new response(200, [], "Video and related data deleted successfully")
       );
   } catch (err) {
     throw new error(500, "Error while deleting video and associated data");

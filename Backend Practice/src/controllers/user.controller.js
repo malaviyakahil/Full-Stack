@@ -1531,7 +1531,6 @@ let getChannelDetails = asyncHandler(async (req, res) => {
     );
 });
 
-
 const searchAll = asyncHandler(async (req, res) => {
   const { query } = req.query;
 

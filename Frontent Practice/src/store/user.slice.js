@@ -5,7 +5,7 @@ let fetchCurrentUser = createAsyncThunk(
   "fetchCurrentUser",
   async (_, { rejectWithValue }) => {
     try {
-      let res = await axios.get("http://localhost:8000/user/get-current-user", {
+      let res = await axios.get(`${import.meta.env.VITE_API_URL}/user/get-current-user`, {
         withCredentials: true,
       });
       return res.data;

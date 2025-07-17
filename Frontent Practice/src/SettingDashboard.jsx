@@ -37,7 +37,7 @@ const SettingDashboard = () => {
         </NavLink>
       </div>
 
-      <div className="w-full h-full lg:w-3/4 overflow-y-scroll py-5">
+      <div className="w-full h-full lg:w-3/4 overflow-y-auto py-5 px-5">
         <Outlet />
       </div>
     </div>
