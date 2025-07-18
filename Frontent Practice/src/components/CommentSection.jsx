@@ -436,6 +436,44 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
     );
   };
 
+  useEffect(() => {
+    const handleClickOutsideDropdowns = (event) => {
+      let clickedInsideDropdown = false;
+
+      for (const commentId in commentRefs.current) {
+        const dropdownButton = commentRefs.current[commentId]?.querySelector(
+          ".comment-dropdown-trigger",
+        );
+        const dropdownMenu = commentRefs.current[commentId]?.querySelector(
+          ".comment-dropdown-menu",
+        );
+
+        if (
+          dropdownButton?.contains(event.target) ||
+          dropdownMenu?.contains(event.target)
+        ) {
+          clickedInsideDropdown = true;
+          break;
+        }
+      }
+
+      if (!clickedInsideDropdown) {
+        setComments((prev) =>
+          prev.map((comment) => ({
+            ...comment,
+            showDropdown: false,
+            editing: false,
+          })),
+        );
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutsideDropdowns);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutsideDropdowns);
+    };
+  }, []);
+
   return (
     <>
       <div className="flex  gap-5 items-center mb-2 relative" ref={sortRef}>
@@ -450,13 +488,13 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
             <MdOutlineSort className="text-xl" /> Sort by
           </button>
           {showSortMenu && (
-            <ul className="absolute right-0 z-50 mt-1 w-40 bg-gray-800 border border-gray-600 rounded shadow-lg">
+            <ul className="absolute overflow-hidden right-0 z-50 mt-1 w-40 bg-gray-700 rounded-md">
               <li
                 onClick={() => {
                   setSortBy("newest");
                   setShowSortMenu(false);
                 }}
-                className="px-4 py-2 text-sm text-white hover:bg-gray-700 cursor-pointer"
+                className="px-4 py-2 text-sm text-white hover:bg-gray-600 cursor-pointer"
               >
                 Newest
               </li>
@@ -465,9 +503,9 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
                   setSortBy("top");
                   setShowSortMenu(false);
                 }}
-                className="px-4 py-2 text-sm text-white hover:bg-gray-700 cursor-pointer"
+                className="px-4 py-2 text-sm text-white hover:bg-gray-600 cursor-pointer"
               >
-                Top Comments
+                Top comments
               </li>
             </ul>
           )}

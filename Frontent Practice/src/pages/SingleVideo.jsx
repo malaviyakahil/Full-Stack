@@ -66,8 +66,8 @@ const SingleVideo = () => {
   const [availableQualities, setAvailableQualities] = useState([]);
   const [switchingQuality, setSwitchingQuality] = useState(false);
 
-const qualityLoaderTimeout = useRef(null);
-const qualityLoaderMinimumTime = useRef(null);
+  const qualityLoaderTimeout = useRef(null);
+  const qualityLoaderMinimumTime = useRef(null);
 
   useEffect(() => {
     (async () => {
@@ -133,69 +133,68 @@ const qualityLoaderMinimumTime = useRef(null);
     })();
   }, []);
 
-useEffect(() => {
-  if (!video.video || !selectedQuality || !videoRef.current) return;
+  useEffect(() => {
+    if (!video.video || !selectedQuality || !videoRef.current) return;
 
-  const transformMap = {
-    "144p": "w_256,h_144,c_scale",
-    "240p": "w_426,h_240,c_scale",
-    "360p": "w_640,h_360,c_scale",
-    "480p": "w_854,h_480,c_scale",
-    "720p": "w_1280,h_720,c_scale",
-    "1080p": "w_1920,h_1080,c_scale",
-  };
+    const transformMap = {
+      "144p": "w_256,h_144,c_scale",
+      "240p": "w_426,h_240,c_scale",
+      "360p": "w_640,h_360,c_scale",
+      "480p": "w_854,h_480,c_scale",
+      "720p": "w_1280,h_720,c_scale",
+      "1080p": "w_1920,h_1080,c_scale",
+    };
 
-  const [, base] = video.video.split("/upload/");
-  const transform = transformMap[selectedQuality];
-  const newUrl =
-    selectedQuality === video.originalQuality
-      ? video.video
-      : `https://res.cloudinary.com/malaviyakahil/video/upload/${transform}/${base}`;
+    const [, base] = video.video.split("/upload/");
+    const transform = transformMap[selectedQuality];
+    const newUrl =
+      selectedQuality === video.originalQuality
+        ? video.video
+        : `https://res.cloudinary.com/malaviyakahil/video/upload/${transform}/${base}`;
 
-  const videoElement = videoRef.current;
-  const savedTime = videoElement.currentTime;
-  const wasPlaying = !videoElement.paused;
+    const videoElement = videoRef.current;
+    const savedTime = videoElement.currentTime;
+    const wasPlaying = !videoElement.paused;
 
-  setSwitchingQuality(true);
-  qualityLoaderMinimumTime.current = Date.now();
+    setSwitchingQuality(true);
+    qualityLoaderMinimumTime.current = Date.now();
 
-  videoElement.pause();
-  videoElement.removeAttribute("src");
-  videoElement.load();
-  videoElement.src = newUrl;
+    videoElement.pause();
+    videoElement.removeAttribute("src");
+    videoElement.load();
+    videoElement.src = newUrl;
 
-  const handleLoaded = () => {
-    try {
-      videoElement.currentTime = savedTime;
-      videoElement.playbackRate = speed;
-      if (wasPlaying) {
-        videoElement.play().catch((err) =>
-          console.warn("Playback error:", err)
-        );
+    const handleLoaded = () => {
+      try {
+        videoElement.currentTime = savedTime;
+        videoElement.playbackRate = speed;
+        if (wasPlaying) {
+          videoElement
+            .play()
+            .catch((err) => console.warn("Playback error:", err));
+        }
+      } catch (err) {
+        console.warn("Setting currentTime failed:", err);
       }
-    } catch (err) {
-      console.warn("Setting currentTime failed:", err);
-    }
 
-    const elapsed = Date.now() - qualityLoaderMinimumTime.current;
-    const remaining = Math.max(0, 200 - elapsed);
+      const elapsed = Date.now() - qualityLoaderMinimumTime.current;
+      const remaining = Math.max(0, 200 - elapsed);
 
-    qualityLoaderTimeout.current = setTimeout(() => {
-      setSwitchingQuality(false);
-    }, remaining);
+      qualityLoaderTimeout.current = setTimeout(() => {
+        setSwitchingQuality(false);
+      }, remaining);
 
-    videoElement.removeEventListener("loadeddata", handleLoaded);
-  };
+      videoElement.removeEventListener("loadeddata", handleLoaded);
+    };
 
-  videoElement.addEventListener("loadeddata", handleLoaded);
-  videoElement.load();
+    videoElement.addEventListener("loadeddata", handleLoaded);
+    videoElement.load();
 
-  return () => {
-    videoElement.removeEventListener("loadeddata", handleLoaded);
-    clearTimeout(qualityLoaderTimeout.current);
-  };
-}, [selectedQuality]);
-
+    return () => {
+      videoElement.removeEventListener("loadeddata", handleLoaded);
+      clearTimeout(qualityLoaderTimeout.current);
+    };
+  }, [selectedQuality]);
 
   useEffect(() => {
     if (loading) return;
@@ -262,44 +261,45 @@ useEffect(() => {
     };
   }, [loading, showSettings]);
 
-const handleSeek = (e) => {
-  const video = videoRef.current;
-  const wasPlaying = !video.paused;
+  const handleSeek = (e) => {
+    const video = videoRef.current;
+    const wasPlaying = !video.paused;
 
-  const inputValue = parseFloat(e.target.value);
-  const clampedValue = Math.min(Math.max(inputValue, 0), 100);
-  const seekTarget = (clampedValue / 100) * duration;
+    const inputValue = parseFloat(e.target.value);
+    const clampedValue = Math.min(Math.max(inputValue, 0), 100);
+    const seekTarget = (clampedValue / 100) * duration;
 
-  setProgress(clampedValue);
-  video.currentTime = seekTarget;
+    setProgress(clampedValue);
+    video.currentTime = seekTarget;
 
-  if (seekTarget >= duration) {
-    video.pause();
-    setPlaying(false);
-    console.log("Paused after end");
-    return;
-  }
+    if (seekTarget >= duration) {
+      video.pause();
+      setPlaying(false);
+      console.log("Paused after end");
+      return;
+    }
 
-  if (wasPlaying) {
-    setTimeout(() => {
-      video.play()
-        .then(() => {
-          if (video.currentTime < duration) {
-            setPlaying(true);
-            console.log("Play resumed");
-          } else {
-            video.pause();
+    if (wasPlaying) {
+      setTimeout(() => {
+        video
+          .play()
+          .then(() => {
+            if (video.currentTime < duration) {
+              setPlaying(true);
+              console.log("Play resumed");
+            } else {
+              video.pause();
+              setPlaying(false);
+              console.log("Auto-paused because seek was at end");
+            }
+          })
+          .catch((err) => {
+            console.warn("Play error:", err);
             setPlaying(false);
-            console.log("Auto-paused because seek was at end");
-          }
-        })
-        .catch((err) => {
-          console.warn("Play error:", err);
-          setPlaying(false);
-        });
-    }, 60);
-  }
-};
+          });
+      }, 60);
+    }
+  };
 
   const togglePlay = () => {
     const video = videoRef.current;
@@ -496,6 +496,46 @@ const handleSeek = (e) => {
     }
   };
 
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: video?.title || "Check out this video!",
+          text: video?.description || "",
+          url: window.location.href,
+        });
+      } catch (err) {
+        console.warn("Sharing failed:", err);
+      }
+    } else {
+      // Optional fallback
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        alert("Link copied to clipboard!");
+      } catch (err) {
+        alert("Unable to copy link. Please copy it manually.");
+        console.error("Clipboard error:", err);
+      }
+    }
+  };
+
+  const getDownloadUrl = (url) => {
+  if (!url.includes("/upload/")) return url;
+  const [prefix, suffix] = url.split("/upload/");
+  return `${prefix}/upload/fl_attachment/${suffix}`;
+};
+
+const handleDownload = () => {
+  const downloadUrl = getDownloadUrl(video.video);
+  const anchor = document.createElement("a");
+  anchor.href = downloadUrl;
+  anchor.download = `${video.title || "video"}.mp4`;
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+};
+
+
   if (loading) {
     return (
       <div className="bg-transparent text-white max-w-6xl mx-auto py-5 animate-pulse">
@@ -585,7 +625,6 @@ const handleSeek = (e) => {
             min="0"
             max="100"
             step="0.1"
-            // value={progress}
             value={Number.isFinite(progress) ? progress : 0}
             onChange={handleSeek}
             style={{ accentColor: "#ffffff" }}
@@ -747,10 +786,12 @@ const handleSeek = (e) => {
             {reviewCount.dislike.status ? <BiSolidDislike /> : <BiDislike />}
             {reviewCount.dislike.count}
           </button>
-          <button className="bg-gray-700 hover:bg-gray-600 px-4 py-1 rounded-4xl flex justify-center items-center gap-1">
+          <button className="bg-gray-700 hover:bg-gray-600 px-4 py-1 rounded-4xl flex justify-center items-center gap-1" 
+          onClick={handleShare}>
             <IoShareSocialOutline /> Share
           </button>
-          <button className="bg-gray-700 hover:bg-gray-600 px-4 py-1 rounded-4xl flex justify-center items-center gap-1">
+          <button className="bg-gray-700 hover:bg-gray-600 px-4 py-1 rounded-4xl flex justify-center items-center gap-1"
+          onClick={handleDownload}>
             <PiDownloadSimpleBold /> Download
           </button>
         </div>
