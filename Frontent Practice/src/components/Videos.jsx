@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Skeleton from "./Skeleton";
 import { Link } from "react-router-dom";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNowStrict } from "date-fns";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { fetchVideos } from "../store/videos.slice";
 
@@ -48,7 +48,7 @@ const VideoCard = ({ video }) => {
           <div className="flex items-center gap-1">
             <p className="text-xs text-gray-400 whitespace-nowrap overflow-hidden text-ellipsis">
               {video?.views} views •{" "}
-              {formatDistanceToNow(new Date(video?.createdAt), {
+              {formatDistanceToNowStrict(new Date(video?.createdAt), {
                 addSuffix: true,
               })}
             </p>

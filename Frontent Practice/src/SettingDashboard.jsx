@@ -33,7 +33,7 @@ const SettingDashboard = () => {
           }
           to="/app/settings/delete-user"
         >
-          Delete Account
+          Delete account
         </NavLink>
       </div>
 

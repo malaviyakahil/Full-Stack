@@ -5,23 +5,20 @@ import { fetchVideos } from "../store/videos.slice";
 import Panel from "../components/Panel";
 
 const Dashboard = () => {
-
-  let {fetched} = useSelector((store) => store.videos);
+  let { fetched, limit } = useSelector((store) => store.videos);
   let dispatch = useDispatch();
-  
+
   useEffect(() => {
     if (!fetched) {
       dispatch(fetchVideos());
     }
-  }, [fetched,dispatch]);
+  }, [fetched, dispatch, limit]);
 
   return (
-    <>
-      <div className="h-full py-3">
-        <Panel />
-        <Videos />
-      </div>
-    </>
+    <div className="h-full w-full py-5">
+      <Panel />
+      <Videos />
+    </div>
   );
 };
 

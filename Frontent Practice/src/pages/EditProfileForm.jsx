@@ -149,12 +149,11 @@ const EditProfileForm = () => {
           className="w-full"
           autoComplete="off"
           encType="multipart/form-data"
-          noValidate={false}
           onSubmit={handleSubmit(submit)}
         >
           <p className="text-md font-semibold my-2">Full name</p>
 
-          <label htmlFor="fullName" className="input w-full">
+          <label htmlFor="fullName" className="input w-full rounded-md">
             <svg
               className="h-[1em] opacity-50"
               xmlns="http://www.w3.org/2000/svg"
@@ -177,7 +176,7 @@ const EditProfileForm = () => {
               type="text"
               required
               placeholder="Full name"
-              className="w-full"
+              className="w-full "
               minLength={3}
               maxLength={30}
               {...register("fullName")}
@@ -186,7 +185,7 @@ const EditProfileForm = () => {
 
           <p className="text-md font-semibold my-2">Avatar</p>
 
-          <div className="relative aspect-video overflow-hidden rounded-lg bg-black flex justify-center items-center">
+          <div className="relative aspect-video overflow-hidden rounded-md bg-black flex justify-center items-center">
             <img
               src={currentUser.data?.avatar}
               alt="img"
@@ -203,7 +202,7 @@ const EditProfileForm = () => {
           </div>
 
           {showAvatarFileInput && (
-            <fieldset className="fieldset mb-3">
+            <fieldset className="fieldset mb-3 ">
               <legend className="fieldset-legend opacity-50">
                 Pick an image for Avatar
               </legend>
@@ -211,14 +210,14 @@ const EditProfileForm = () => {
                 type="file"
                 accept="image/*"
                 {...register("avatar")}
-                className="file-input w-full"
+                className="file-input w-full rounded-md"
               />
               <label className="fieldset-label">Max size 5MB</label>
             </fieldset>
           )}
           <p className="text-md font-semibold my-2">Cover Image</p>
 
-          <div className="relative aspect-video overflow-hidden rounded-lg bg-black flex justify-center items-center">
+          <div className="relative aspect-video overflow-hidden rounded-md bg-black flex justify-center items-center">
             {currentUser.data?.coverImage ? (
               <>
                 {!coverImageRemove ? (
@@ -228,7 +227,7 @@ const EditProfileForm = () => {
                     className="h-full object-contain"
                   />
                 ) : (
-                  <p>User has no cover image</p>
+                  <p>You haven’t uploaded a cover image yet.</p>
                 )}
                 {!coverImageRemove && (
                   <button
@@ -252,6 +251,8 @@ const EditProfileForm = () => {
                 )}
               </>
             ) : (
+              <>
+              <p>You haven’t uploaded a cover image yet.</p>
               <button
                 type="button"
                 onClick={handleCoverImageChangeClick}
@@ -259,11 +260,12 @@ const EditProfileForm = () => {
               >
                 {showCoverImageFileInput ? "Cancel" : "Add"}
               </button>
+              </>
             )}
           </div>
 
           {showCoverImageFileInput && (
-            <fieldset className="fieldset mb-3">
+            <fieldset className="fieldset mb-3 ">
               <legend className="fieldset-legend opacity-50">
                 Pick an image for Cover image
               </legend>
@@ -271,7 +273,7 @@ const EditProfileForm = () => {
                 type="file"
                 accept="image/*"
                 {...register("coverImage")}
-                className="file-input w-full"
+                className="file-input w-full rounded-md"
               />
               <label className="fieldset-label">Max size 5MB</label>
             </fieldset>
@@ -279,14 +281,14 @@ const EditProfileForm = () => {
 
           {error && <p className="text-red-500 text-center my-2">{error}</p>}
           {loader ? (
-            <div className="relative w-full h-[40px] rounded-lg overflow-hidden border border-gray-600 my-2">
+            <div className="relative w-full h-[40px] rounded-md overflow-hidden border border-gray-600 my-2">
               <div className="absolute top-[0px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-5" />
               <div className="absolute top-[9px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-3" />
               <div className="absolute top-[17px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-4" />
               <div className="absolute top-[22px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-6" />
             </div>
           ) : (
-            <button className="btn bg-gray-600 w-full my-2" type="submit">
+            <button className="btn bg-gray-600 w-full my-2 rounded-md" type="submit">
               Save
             </button>
           )}

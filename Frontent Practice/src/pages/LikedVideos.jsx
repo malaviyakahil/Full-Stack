@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, formatDistanceToNowStrict } from "date-fns";
 import { Link } from "react-router-dom";
 import { fetchLikedVideos } from "../store/likedVideos.slice.js";
 import InfiniteScroll from "react-infinite-scroll-component";
@@ -103,7 +103,7 @@ const LikedVideos = () => {
           endMessage={
             data.length != 0 && (
               <p className="text-center text-sm py-6 text-gray-400">
-                No more history to show.
+                No more liked videos to show.
               </p>
             )
           }
@@ -141,7 +141,7 @@ const LikedVideos = () => {
                     </Link>
                     <p className="text-gray-400 text-sm mb-2">
                       {item?.video?.views} views •{" "}
-                      {formatDistanceToNow(new Date(item?.video?.createdAt), {
+                      {formatDistanceToNowStrict(new Date(item?.video?.createdAt), {
                         addSuffix: true,
                       })}
                     </p>

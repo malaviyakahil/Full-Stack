@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNowStrict } from "date-fns";
 import { SlVolume2, SlVolumeOff } from "react-icons/sl";
 import { IoSettingsOutline } from "react-icons/io5";
 import { RiPictureInPictureLine } from "react-icons/ri";
@@ -196,7 +196,7 @@ useEffect(() => {
   };
 }, [selectedQuality]);
 
- 
+
   useEffect(() => {
     if (loading) return;
     const video = videoRef.current;
@@ -499,7 +499,7 @@ const handleSeek = (e) => {
   if (loading) {
     return (
       <div className="bg-transparent text-white max-w-6xl mx-auto py-5 animate-pulse">
-        <div className="relative aspect-video bg-gray-800 rounded-xl overflow-hidden">
+        <div className="relative aspect-video bg-gray-800 rounded-md overflow-hidden">
           <div className="absolute bottom-0 left-0 right-0 px-4 py-2 bg-gradient-to-t from-black/70 to-transparent text-white text-sm">
             <div className="h-2 bg-gray-600 rounded-full w-full mb-3" />
 
@@ -559,7 +559,7 @@ const handleSeek = (e) => {
     <div className="bg-transparent text-white max-w-6xl mx-auto">
       <div
         ref={containerRef}
-        className={`relative w-full bg-black aspect-video max-w-screen-xl rounded-lg mx-auto mt-4 overflow-hidden ${
+        className={`relative w-full bg-black aspect-video max-w-screen-xl rounded-md mx-auto mt-4 overflow-hidden ${
           theaterMode ? "xl:h-[80vh]" : ""
         }`}
       >
@@ -687,7 +687,7 @@ const handleSeek = (e) => {
         </div>
       </div>
 
-      <div className="mt-6">
+      <div className="mt-3">
         <h2 className="text-base sm:text-lg md:text-xl font-semibold">
           {video?.title || "Untitled Video"}
         </h2>
@@ -755,7 +755,7 @@ const handleSeek = (e) => {
           </button>
         </div>
 
-        <div className="my-3 w-full bg-gray-700 p-4 rounded-xl">
+        <div className="my-3 w-full bg-gray-700 p-4 rounded-md">
           <div
             className={`text-sm text-gray-100 whitespace-pre-line transition-all duration-300 ${
               isExpanded ? "" : "line-clamp-3"
@@ -764,7 +764,7 @@ const handleSeek = (e) => {
             <div className="font-semibold mb-2.5 text-gray-100">
               {video?.views} views &nbsp;{" "}
               {video?.createdAt &&
-                formatDistanceToNow(new Date(video.createdAt), {
+                formatDistanceToNowStrict(new Date(video.createdAt), {
                   addSuffix: true,
                 })}
             </div>

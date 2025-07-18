@@ -31,7 +31,7 @@ let videosSlice = createSlice({
     hasMore: true,
     loading: false,
     error: null,
-    limit: 6,
+    limit: 0,
     fetched: false,
   },
   reducers: {

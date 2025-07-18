@@ -79,7 +79,7 @@ const RegisterForm = () => {
           noValidate={false}
         >
           {/* Username */}
-          <label htmlFor="name" className="input validator w-full my-2">
+          <label htmlFor="name" className="input validator w-full my-2 rounded-md">
             <svg
               className="h-[1em] opacity-50"
               xmlns="http://www.w3.org/2000/svg"
@@ -99,7 +99,7 @@ const RegisterForm = () => {
             <input
               id="name"
               type="text"
-              placeholder="Username"
+              placeholder="Name"
               required
               minLength={3}
               maxLength={30}
@@ -110,7 +110,7 @@ const RegisterForm = () => {
           </label>
 
           {/* Full Name */}
-          <label htmlFor="fullName" className="input validator w-full my-2">
+          <label htmlFor="fullName" className="input validator w-full my-2 rounded-md">
             <svg
               className="h-[1em] opacity-50"
               xmlns="http://www.w3.org/2000/svg"
@@ -139,7 +139,7 @@ const RegisterForm = () => {
           </label>
 
           {/* Email */}
-          <label htmlFor="email" className="input validator w-full my-2">
+          <label htmlFor="email" className="input validator w-full my-2 rounded-md">
             <svg
               className="h-[1em] opacity-50"
               xmlns="http://www.w3.org/2000/svg"
@@ -167,7 +167,7 @@ const RegisterForm = () => {
           </label>
 
           {/* Password */}
-          <label htmlFor="password" className="input validator w-full my-2 relative">
+          <label htmlFor="password" className="input validator w-full my-2 relative rounded-md">
             <svg
               className="h-[1em] opacity-50"
               xmlns="http://www.w3.org/2000/svg"
@@ -206,13 +206,13 @@ const RegisterForm = () => {
           </label>
 
           {/* Avatar Upload */}
-          <fieldset className="fieldset my-2 ">
+          <fieldset className="fieldset my-2 rounded-md">
             <legend className="fieldset-legend opacity-50">Pick an Avatar Image</legend>
             <input
               type="file"
               accept="image/*"
               required
-              className="file-input w-full"
+              className="file-input w-full rounded-md"
               {...register("avatar")}
             />
             <label className="fieldset-label">Max size 5MB</label>
@@ -220,13 +220,13 @@ const RegisterForm = () => {
 
           {/* Cover Image Upload */}
           <fieldset className="fieldset my-2">
-            <legend className="fieldset-legend opacity-50">
+            <legend className="fieldset-legend opacity-50 ">
               Pick a Cover Image (Optional)
             </legend>
             <input
               type="file"
               accept="image/*"
-              className="file-input w-full"
+              className="file-input w-full rounded-md"
               {...register("coverImage")}
             />
             <label className="fieldset-label">Max size 5MB</label>
@@ -240,14 +240,14 @@ const RegisterForm = () => {
 
           {/* Submit / Loader */}
           {loader ? (
-            <div className="relative w-full h-[40px] rounded-lg overflow-hidden border border-gray-600 my-2">
+            <div className="relative w-full h-[40px] rounded-md overflow-hidden border border-gray-600 my-2">
               <div className="absolute top-[0px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-5" />
               <div className="absolute top-[9px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-3" />
               <div className="absolute top-[17px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-4" />
               <div className="absolute top-[22px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-6" />
             </div>
           ) : (
-            <button className="btn bg-gray-600 w-full my-2" type="submit">
+            <button className="btn bg-gray-600 w-full my-2 rounded-md" type="submit">
               Register
             </button>
           )}

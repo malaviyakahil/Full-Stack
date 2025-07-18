@@ -65,7 +65,7 @@ const LoginForm = () => {
           autoComplete="off"
         >
           {/* Username */}
-          <label className="input validator w-full my-2">
+          <label className="input validator w-full my-2 rounded-md">
             <svg
               className="h-[1em] opacity-50"
               xmlns="http://www.w3.org/2000/svg"
@@ -96,7 +96,7 @@ const LoginForm = () => {
           </label>
 
           {/* Email */}
-          <label className="input validator w-full my-2">
+          <label className="input validator w-full rounded-md my-2">
             <svg
               className="h-[1em] opacity-50"
               xmlns="http://www.w3.org/2000/svg"
@@ -125,7 +125,7 @@ const LoginForm = () => {
           </label>
 
           {/* Password */}
-          <label className="input validator w-full my-2 relative">
+          <label className="input validator w-full my-2 relative rounded-md">
             <svg
               className="h-[1em] opacity-50"
               xmlns="http://www.w3.org/2000/svg"
@@ -168,14 +168,14 @@ const LoginForm = () => {
 
           {/* Loader or Button */}
           {loader ? (
-            <div className="relative w-full h-[40px] rounded-lg overflow-hidden border border-gray-600 my-2">
+            <div className="relative w-full h-[40px] rounded-md overflow-hidden border border-gray-600 my-2">
               <div className="absolute top-[0px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-5" />
               <div className="absolute top-[9px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-3" />
               <div className="absolute top-[17px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-4" />
               <div className="absolute top-[22px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-6" />
             </div>
           ) : (
-            <button className="btn bg-gray-600 w-full my-2" type="submit">
+            <button className="btn bg-gray-600 w-full my-2 rounded-md" type="submit">
               Login
             </button>
           )}

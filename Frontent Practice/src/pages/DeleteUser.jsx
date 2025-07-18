@@ -32,12 +32,12 @@ const DeleteUser = () => {
           withCredentials: true,
         },
       );
-        dispatch(clearCurrentUser());
-        dispatch(clearCurrentUserVideos());
-        dispatch(clearVideos());
-        dispatch(clearHistory());
-        dispatch(clearLikedVideos());
-        navigate("/");
+      dispatch(clearCurrentUser());
+      dispatch(clearCurrentUserVideos());
+      dispatch(clearVideos());
+      dispatch(clearHistory());
+      dispatch(clearLikedVideos());
+      navigate("/");
     } catch (error) {
       setError(error?.response?.data?.message);
     } finally {
@@ -49,8 +49,13 @@ const DeleteUser = () => {
     <div className="flex justify-center items-center h-full">
       <div className="w-full max-w-md justify-end p-5">
         <h1 className="text-center text-[40px] mb-5">Delete account</h1>
-        <form className="w-full" onSubmit={handleSubmit(submit)}>
-          <label className="input validator w-full my-2 relative">
+        <form
+          className="w-full"
+          autoComplete="off"
+          encType="multipart/form-data"
+          onSubmit={handleSubmit(submit)}
+        >
+          <label className="input validator w-full my-2 relative rounded-md">
             <svg
               className="h-[1em] opacity-50"
               xmlns="http://www.w3.org/2000/svg"
@@ -90,14 +95,14 @@ const DeleteUser = () => {
 
           {error && <p className="text-red-500 text-center my-2">{error}</p>}
           {loader ? (
-            <div className="relative w-full h-[40px] rounded-lg overflow-hidden border border-gray-600 my-2">
+            <div className="relative w-full h-[40px] rounded-md overflow-hidden border border-gray-600 my-2">
               <div className="absolute top-[0px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-5" />
               <div className="absolute top-[9px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-3" />
               <div className="absolute top-[17px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-4" />
               <div className="absolute top-[22px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-6" />
             </div>
           ) : (
-            <button className="btn bg-gray-600 w-full my-2" type="submit">
+            <button className="btn bg-gray-600 w-full my-2 rounded-md" type="submit">
               Delete account
             </button>
           )}

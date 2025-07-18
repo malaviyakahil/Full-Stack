@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { deleteFromHsitory, fetchHistory } from "../store/history.slice.js";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNowStrict } from "date-fns";
 import { Link } from "react-router-dom";
 import { RxCross2 } from "react-icons/rx";
 import axios from "axios";
@@ -74,7 +74,7 @@ const History = () => {
                 {history.data?.map((item) => (
                   <div
                     key={item?._id}
-                    className="md:flex gap-5 w-full cursor-pointer sm:w-full md:w-[536px] lg:w-[760px] xl:w-[980px]"
+                    className="md:flex py-2.5 gap-5 w-full cursor-pointer sm:w-full md:w-[536px] lg:w-[760px] xl:w-[980px]"
                   >
                     <div className="relative  w-full aspect-video overflow-hidden rounded-lg bg-black flex justify-center">
                       <Link
@@ -102,7 +102,7 @@ const History = () => {
                       </Link>
                       <p className="text-gray-400 text-sm mb-2">
                         {item?.video?.views} views •{" "}
-                        {formatDistanceToNow(new Date(item?.video?.createdAt), {
+                        {formatDistanceToNowStrict(new Date(item?.video?.createdAt), {
                           addSuffix: true,
                         })}
                       </p>

@@ -84,26 +84,27 @@ const UploadVideoForm = () => {
           className="m-1  w-full"
           autoComplete="off"
           encType="multipart/form-data"
-          noValidate={false}
           onSubmit={handleSubmit(submit)}
         >
           <input
             type="text"
-            className="input w-full my-3"
+            className="input w-full my-3 rounded-md"
             key={"title"}
             required
             name="title"
             {...register("title")}
             placeholder="Title"
             minLength="3"
-            maxLength="30"
+            maxLength="60"
           />
           <input
             type="text"
-            className="input w-full my-3"
+            className="input w-full my-3 rounded-md"
             key={"description"}
             required
             name="description"
+            minLength="3"
+            maxLength="5000"
             {...register("description")}
             placeholder="Description"
           />
@@ -118,7 +119,7 @@ const UploadVideoForm = () => {
               required
               name="thumbnail"
               {...register("thumbnail")}
-              className="file-input w-full"
+              className="file-input w-full rounded-md"
             />
             <label className="fieldset-label">Max size 5MB</label>
           </fieldset>
@@ -129,25 +130,25 @@ const UploadVideoForm = () => {
             </legend>
             <input
               type="file"
-              accept="video/mp4"
+              accept="video/*"
               required
               name="video"
               {...register("video")}
-              className="file-input w-full"
+              className="file-input w-full rounded-md"
             />
             <label className="fieldset-label">Max size 100MB</label>
           </fieldset>
 
           {error && <p className="text-red-500 text-center mb-3.5">{error}</p>}
           {loader ? (
-            <div className="relative w-full h-[40px] rounded-lg overflow-hidden border border-gray-600 my-2">
+            <div className="relative w-full h-[40px] rounded-md overflow-hidden border border-gray-600 my-2 ">
               <div className="absolute top-[0px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-5" />
               <div className="absolute top-[9px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-3" />
               <div className="absolute top-[17px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-4" />
               <div className="absolute top-[22px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-6" />
             </div>
           ) : (
-            <button className="btn bg-gray-600 w-full my-2" type="submit">
+            <button className="btn bg-gray-600 w-full my-2 rounded-md" type="submit">
               Upload
             </button>
           )}

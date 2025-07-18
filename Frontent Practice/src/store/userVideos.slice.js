@@ -12,6 +12,7 @@ let fetchcurrentUserVideos = createAsyncThunk(
           withCredentials: true,
         },
       );
+      
       const { videos, total, pages } = res.data.data;
       return { videos, total, pages, page, limit };
     } catch (err) {
@@ -30,7 +31,7 @@ let currentUserVideosSlice = createSlice({
     hasMore: true,
     loading: false,
     error: null,
-    limit: 6,
+    limit: 0,
     fetched: false,
   },
   reducers: {
@@ -73,7 +74,7 @@ let currentUserVideosSlice = createSlice({
       });
     },
     setCurrentUserVideoLimit: (state, action) => {
-      state.limit = action.payload;
+      state.limit = action.payload;      
     },
   },
   extraReducers: (builder) => {

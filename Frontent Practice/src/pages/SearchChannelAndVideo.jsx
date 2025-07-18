@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import Panel from "../components/Panel";
 import { Link, useParams } from "react-router-dom";
 import axios from "axios";
 import { useSelector } from "react-redux";
@@ -112,12 +111,12 @@ const SearchChannelAndVideo = () => {
           ))}
         </>
       ) : (
-        <div className="flex flex-col  border-b-[1px] border-gray-600 ">
+        <div className="flex flex-col">
           {data.channel.map((profile) => (
             <div key={profile._id}>
-              <div className=" md:flex  border-b-[1px] border-gray-600 items-center gap-5 w-full cursor-pointer sm:w-full md:w-[536px] lg:w-[760px] xl:w-[980px]">
+              <div className=" md:flex py-5 items-center gap-5 w-full cursor-pointer sm:w-full md:w-[536px] lg:w-[760px] xl:w-[980px]">
                 <div className="w-full aspect-video overflow-hidden rounded-lg flex justify-center items-center">
-                  <div className="w-48 h-48 relative  overflow-hidden rounded-full bg-gray-800">
+                  <div className="aspect-square w-1/2 md:w-1/3 relative  overflow-hidden rounded-[1000px] bg-gray-800">
                     <Link to={`/app/dashboard/single-channel/${profile?._id}`}>
                       <img
                         src={profile.avatar}
@@ -160,7 +159,7 @@ const SearchChannelAndVideo = () => {
                 </div>
               </div>
               {profile?.videos?.length != 0 && (
-                <>
+                <div className="border-t-[1px] border-gray-600">
                   {" "}
                   <div className="w-full max-w-5xl pt-5">
                     <h2 className="text-xl font-semibold">
@@ -234,13 +233,13 @@ const SearchChannelAndVideo = () => {
                       </div>
                     ))}
                   </div>
-                </>
+                </div>
               )}
             </div>
           ))}
 
           {data.video.length != 0 && (
-            <div className="flex flex-col gap-5 py-5  border-b-[1px] border-gray-600">
+            <div className="flex flex-col gap-5 py-5 ">
               {data.video.map((video) => (
                 <div
                   key={video?._id}

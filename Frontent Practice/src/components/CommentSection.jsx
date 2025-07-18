@@ -498,7 +498,7 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
           />
         </div>
         <button
-          className="bg-gray-700 hover:bg-gray-600 text-white min-w-[7rem] px-6 py-2 rounded-lg text-center"
+          className="bg-gray-700 hover:bg-gray-600 text-white min-w-[7rem] px-6 py-2 rounded-md text-center"
           onClick={handlePostComment}
         >
           Comment
@@ -565,8 +565,6 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
               >
                 {comment?.editing ? (
                   <TextareaAutosize
-                    // value={editCommentText}
-
                     value={
                       typeof editCommentText === "string"
                         ? editCommentText
@@ -576,7 +574,7 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
                     minRows={1}
                     maxRows={10}
                     autoFocus
-                    className="w-full p-1 mb-0 resize-none outline-1 outline-gray-700 text-white text-sm rounded-lg"
+                    className="w-full p-1 mb-0 resize-none outline-1 outline-gray-700 text-white text-sm rounded-md"
                   />
                 ) : (
                   <p
@@ -654,7 +652,7 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
                       onClick={() => {
                         cancelEdit(comment?._id);
                       }}
-                      className={`text-white px-2 py-0.25 rounded-lg text-[13px] bg-gray-700 hover:bg-gray-600
+                      className={`text-white px-2 py-0.25 rounded-md text-[13px] bg-gray-700 hover:bg-gray-600
                     `}
                     >
                       Cancel
@@ -663,7 +661,7 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
                       onClick={() => {
                         editComment(comment?._id);
                       }}
-                      className={`text-white px-2 py-0.25 rounded-lg text-[13px] bg-gray-700 hover:bg-gray-600
+                      className={`text-white px-2 py-0.25 rounded-md text-[13px] bg-gray-700 hover:bg-gray-600
                     `}
                     >
                       Save

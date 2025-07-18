@@ -7,7 +7,7 @@ import { BiLike, BiDislike, BiSolidDislike, BiSolidLike } from "react-icons/bi";
 import { IoShareSocialOutline } from "react-icons/io5";
 import { PiDownloadSimpleBold } from "react-icons/pi";
 import CommentSection from "../components/CommentSection";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNowStrict } from "date-fns";
 import { useDispatch, useSelector } from "react-redux";
 import { addToHistory } from "../store/history.slice.js";
 import { addToLikedVideos, deleteFromLikedVideos } from "../store/likedVideos.slice.js";
@@ -509,7 +509,7 @@ const DemoSingleVideo = () => {
           >
             <div className="font-semibold mb-2.5 text-gray-100">
               {video?.views} views &nbsp;{" "}
-              {formatDistanceToNow(new Date(video?.createdAt), {
+              {formatDistanceToNowStrict(new Date(video?.createdAt), {
                 addSuffix: true,
               })}
             </div>

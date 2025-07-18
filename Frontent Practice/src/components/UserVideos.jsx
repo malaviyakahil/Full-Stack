@@ -9,11 +9,11 @@ import {
   undoDeletOneVideo,
 } from "../store/userVideos.slice";
 import axios from "axios";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNowStrict } from "date-fns";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { RiEditBoxLine } from "react-icons/ri";
 import { MdDeleteOutline } from "react-icons/md";
-
+import { HiOutlineUpload } from "react-icons/hi";
 const UserVideoCard = ({ video, index }) => {
   const dispatch = useDispatch();
   let [error, setError] = useState("");
@@ -65,7 +65,7 @@ const UserVideoCard = ({ video, index }) => {
           </h3>
           <p className="text-xs text-gray-400 whitespace-nowrap overflow-hidden text-ellipsis">
             {video?.views} views •{" "}
-            {formatDistanceToNow(new Date(video?.createdAt), {
+            {formatDistanceToNowStrict(new Date(video?.createdAt), {
               addSuffix: true,
             })}
           </p>
@@ -79,13 +79,13 @@ const UserVideoCard = ({ video, index }) => {
                 thumbnailPublicId: video?.thumbnailPublicId,
               }}
             >
-              <button className="bg-gray-700 hover:bg-gray-600 px-4 py-0.5 rounded-md text-[14px] flex gap-2 justify-center items-center ">
+              <button className="bg-gray-700 hover:bg-gray-600 px-3 py-0.5 rounded-md text-[14px] flex gap-2 justify-center items-center ">
                 <RiEditBoxLine /> Edit
               </button>
             </Link>
             <button
               onClick={deleteVideo}
-              className="bg-gray-700 hover:bg-gray-600 px-4 py-0.5 rounded-md text-[14px] flex gap-2 justify-center items-center "
+              className="bg-gray-700 hover:bg-gray-600 px-3 py-0.5 rounded-md text-[14px] flex gap-2 justify-center items-center "
             >
               <MdDeleteOutline className="text-[16px]" /> Delete
             </button>
@@ -109,16 +109,16 @@ const UserVideos = () => {
   const currentUser = useSelector((store) => store.currentUser);
 
   return (
-    <div className="h-full py-3">
-      <div className="mx-auto max-w-6xl flex w-full items-center justify-center flex-wrap gap-5">
+    <div className="py-5">
+      <div className="mx-auto max-w-6xl flex w-full items-center justify-center flex-wrap gap-3">
         <button
-          className="bg-gray-700 hover:bg-gray-600 rounded-lg p-2 px-4"
+          className="bg-gray-700 hover:bg-gray-600 rounded-md p-2 px-4 flex flex-nowrap items-center gap-1 justify-center"
           onClick={() => navigate("/app/my-videos/upload-video")}
         >
-          + Upload video
+          <HiOutlineUpload className="text-[18px]"/> Upload video
         </button>
-        <button className="bg-gray-700 hover:bg-gray-600 rounded-lg p-2 px-4">
-          {currentUser?.data?.subs} subscribers •{" "}
+        <button className="bg-gray-700 hover:bg-gray-600 rounded-md p-2 px-4">
+          {currentUser?.data?.subs} Subscribers •{" "}
           {videos.reduce((acc, video) => acc + video.views, 0)} Total views
         </button>
       </div>

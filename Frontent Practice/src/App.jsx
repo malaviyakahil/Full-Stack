@@ -14,14 +14,14 @@ const App = () => {
       const width = window.innerWidth;
       const limit = width >= 1200 ? 6 : width >= 768 ? 4 : 3;
       dispatch(setVideoLimit(limit));
-      dispatch(setCurrentUserVideoLimit(limit));
+      dispatch(setCurrentUserVideoLimit(limit));    
     };
 
     calculateLimit();
     window.addEventListener("resize", calculateLimit);
 
     return () => window.removeEventListener("resize", calculateLimit);
-  }, [dispatch]);
+  }, []);
 
   return (
     <div className="wrapper h-screen flex flex-col">

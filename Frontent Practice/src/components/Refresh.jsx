@@ -1,7 +1,7 @@
 import React from "react";
-import { RiRefreshLine } from "react-icons/ri";
-import { clearVideos, fetchVideos } from "../store/videos.slice.js";
+import { clearVideos } from "../store/videos.slice.js";
 import { useDispatch } from "react-redux";
+import { TbRefresh } from "react-icons/tb";
 
 const Refresh = () => {
   let dispatch = useDispatch();
@@ -10,10 +10,10 @@ const Refresh = () => {
   };
   return (
     <button
-      className=" bg-gray-700 hover:bg-gray-600 rounded-lg p-2 px-4 flex items-center justify-center gap-2"
+      className=" bg-gray-700 hover:bg-gray-600 rounded-md p-2 px-4 flex items-center justify-center gap-2"
       onClick={refresh}
     >
-      <RiRefreshLine className="text-[18px]" />
+      <TbRefresh className="text-[18px]" />
     </button>
   );
 };

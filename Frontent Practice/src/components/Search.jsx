@@ -29,7 +29,7 @@ const Search = () => {
       <div className="h-[100%] md:w-[350px] w-full relative">
         <label
           style={{ outlineColor: "transparent" }}
-          className="input rounded-lg w-full"
+          className="input rounded-md w-full"
         >
           <svg
             className="h-[1em] opacity-50"
@@ -71,7 +71,7 @@ const Search = () => {
                   }}
                   key={e?._id}
                 >
-                  <li className="w-full bg-gray-700 py-2  px-4 hover:bg-gray-600">
+                  <li className="w-full bg-gray-700 py-2 rounded-md  px-4 hover:bg-gray-600">
                     {e?.value}
                   </li>
                 </Link>

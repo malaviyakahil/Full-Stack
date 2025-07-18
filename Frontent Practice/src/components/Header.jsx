@@ -74,7 +74,7 @@ const Header = () => {
             </Link>
           </div>
           <div className="flex gap-3 items-center">
-            <h3 className="capitalize">{currentUser?.data?.name}</h3>
+            <h3>{currentUser?.data?.name}</h3>
             <div className="dropdown dropdown-end">
               <div
                 tabIndex={0}
@@ -87,7 +87,7 @@ const Header = () => {
               </div>
               <ul
                 tabIndex={0}
-                className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow"
+                className="menu menu-sm dropdown-content bg-base-100 rounded-md border-[1px] border-gray-600 z-1 mt-5 w-30 md:w-52 p-2 shadow"
               >
                 <li>
                   <Link className="justify-between" to="/app/profile/details">

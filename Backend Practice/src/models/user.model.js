@@ -8,7 +8,7 @@ let userSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
-      lowerCase: true,
+      lowercase: true,
       trim: true,
       index: true,
     },

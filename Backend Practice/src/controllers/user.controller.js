@@ -17,8 +17,8 @@ import { CommentReview } from "../models/commentReview.model.js";
 
 let generatingAccessAndRefreshToken = async function (id) {
   let user = await User.findById(id);
-  let accessToken = await user.generateAccessToken();
-  let refreshToken = await user.generateRefreshToken();
+  let accessToken =await user.generateAccessToken();
+  let refreshToken =await user.generateRefreshToken();
   let loginedUser = await User.findByIdAndUpdate(
     id,
     { $set: { refreshToken } },
@@ -26,6 +26,52 @@ let generatingAccessAndRefreshToken = async function (id) {
   );
   return { accessToken, refreshToken, loginedUser };
 };
+
+let renewAccessToken = asyncHandler(async (req, res) => {
+  const parseExpiry = (exp) => {
+    const time = parseInt(exp);
+    if (exp.includes("d")) return time * 24 * 60 * 60 * 1000;
+    if (exp.includes("h")) return time * 60 * 60 * 1000;
+    if (exp.includes("m")) return time * 60 * 1000;
+    if (exp.includes("s")) return time * 1000;
+    return time;
+  };
+  let token =
+    req.cookies?.refreshToken ||
+    req.header("Authorization")?.replace("Bearer ", "");
+
+  if (!token) {
+    throw new error(401, "Login required");
+  }
+
+  const decodedToken = jsonWebToken.verify(
+    token,
+    process.env.REFRESH_TOKEN_KEY,
+  );
+  const user = await User.findById(decodedToken._id);
+
+  if (!user || user.refreshToken !== token) {
+    throw new error(401, "Invalid refresh token");
+  }
+
+  let { accessToken, refreshToken } = await generatingAccessAndRefreshToken(
+    decodedToken._id,
+  );
+
+  let options = {
+    httpOnly: true,
+    secure: true,
+    sameSite: "Lax",
+    path: "/",
+    maxAge: parseExpiry(process.env.REFRESH_TOKEN_EXPIERY),
+  };
+
+  res
+    .status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(new response(200, [], "Access token renewed successfully"));
+});
 
 const registerUser = asyncHandler(async (req, res) => {
   const { name, email, fullName, password } = req.body;
@@ -222,9 +268,7 @@ let getCurrentUser = asyncHandler(async (req, res) => {
         fullName: 1,
         email: 1,
         avatar: 1,
-        avatarPublicId: 1,
         coverImage: 1,
-        coverImagePublicId: 1,
         subs: 1,
         totalViews: 1,
       },
@@ -241,7 +285,7 @@ let getCurrentUser = asyncHandler(async (req, res) => {
 const getCurrentUserVideos = asyncHandler(async (req, res) => {
   const id = req.user?._id;
   const page = Number(req.query.page) || 1;
-  const limit = Number(req.query.limit) || 6;
+  const limit = Number(req.query.limit);
   const skip = (page - 1) * limit;
 
   const result = await Video.aggregate([
@@ -347,65 +391,41 @@ let logoutUser = asyncHandler(async (req, res, next) => {
     .json(new response(200, [], "Logged out successfully"));
 });
 
-let renewAccessToken = asyncHandler(async (req, res) => {
-  let token =
-    req.cookies?.refreshToken ||
-    req.header("Authorization")?.replace("Bearer ", "");
-
-  if (!token) {
-    throw new error(401, "Login required");
-  }
-
-  let decodedToken = jsonWebToken.verify(token, process.env.REFRESH_TOKEN_KEY);
-
-  let { accessToken, refreshToken } = await generatingAccessAndRefreshToken(
-    decodedToken._id,
-  );
-
-  let options = {
-    httpOnly: true,
-    secure: true,
-  };
-
-  res
-    .status(200)
-    .cookie("accessToken", accessToken, options)
-    .cookie("refreshToken", refreshToken, options)
-    .json(new response(200, [], "Access token renewed successfully"));
-});
-
 let changePassword = asyncHandler(async (req, res) => {
-  let id = req.user?._id;
-  let { oldPassword, newPassword } = req.body;
+  const id = req.user?._id;
+  const { oldPassword, newPassword } = req.body;
 
-  if ([oldPassword, newPassword].some((e) => e?.trim == "")) {
+  // Trim check
+  if ([oldPassword, newPassword].some((e) => !e?.trim())) {
     throw new error(401, "Credentials cannot be empty");
   }
 
+  // Prevent same password reuse
   if (oldPassword === newPassword) {
-    throw new error(401, "Old password and new password cannot be same");
+    throw new error(401, "Old password and new password cannot be the same");
   }
 
-  let user = await User.findById(id);
-
-  let decodedPassword = await user.comparePassword(oldPassword);
-
-  if (!decodedPassword) {
-    throw new error(401, "Old password is wrong");
+  const user = await User.findById(id);
+  if (!user) {
+    throw new error(404, "User not found");
   }
 
+  const isMatch = await user.comparePassword(oldPassword);
+  if (!isMatch) {
+    throw new error(401, "Old password is incorrect");
+  }
+
+  // Trigger pre-save hash
   user.password = newPassword;
-  user.refreshToken = "";
-  let changed = await user.save({ validateBeforeSave: false });
+  user.refreshToken = ""; // Invalidate refresh token
+  await user.save(); // pre('save') will hash password
 
-  if (!changed) {
-    throw new error(401, "Password change failed");
-  }
-
-  let options = {
+  // Secure cookie clearing
+  const options = {
     httpOnly: true,
-    secure: true,
+    secure: true, // ensure HTTPS
   };
+
   res
     .status(200)
     .clearCookie("accessToken", options)
@@ -422,7 +442,11 @@ const changeAvatar = asyncHandler(async (req, res) => {
   }
 
   // Upload new avatar to Cloudinary
-  const avatarRes = await uploadOnCloudinary(avatarLocalPath, "image", "user/avatar");
+  const avatarRes = await uploadOnCloudinary(
+    avatarLocalPath,
+    "image",
+    "user/avatar",
+  );
   if (!avatarRes) {
     throw new error(500, "Failed to upload new avatar to Cloudinary.");
   }
@@ -449,7 +473,7 @@ const changeAvatar = asyncHandler(async (req, res) => {
         avatarPublicId: avatarRes.public_id,
       },
     },
-    { new: true }
+    { new: true },
   );
 
   // Cleanup local file
@@ -475,7 +499,11 @@ const changeCoverImage = asyncHandler(async (req, res) => {
   }
 
   // Upload new image to Cloudinary
-  const uploadResult = await uploadOnCloudinary(coverImageLocalPath, "image", "user/coverImage");
+  const uploadResult = await uploadOnCloudinary(
+    coverImageLocalPath,
+    "image",
+    "user/coverImage",
+  );
 
   if (!uploadResult) {
     throw new error(500, "Failed to upload cover image to Cloudinary.");
@@ -503,7 +531,7 @@ const changeCoverImage = asyncHandler(async (req, res) => {
         coverImagePublicId: uploadResult.public_id,
       },
     },
-    { new: true }
+    { new: true },
   );
 
   // Cleanup local file
@@ -545,14 +573,16 @@ const removeCoverImage = asyncHandler(async (req, res) => {
         coverImagePublicId: "",
       },
     },
-    { new: true }
+    { new: true },
   );
 
   if (!updatedUser) {
     throw new error(500, "Something went wrong while removing cover image.");
   }
 
-  res.status(200).json(new response(200, updatedUser, "Cover image removed successfully."));
+  res
+    .status(200)
+    .json(new response(200, updatedUser, "Cover image removed successfully."));
 });
 
 const changeFullName = asyncHandler(async (req, res) => {
@@ -568,7 +598,7 @@ const changeFullName = asyncHandler(async (req, res) => {
   const updatedUser = await User.findByIdAndUpdate(
     userId,
     { $set: { fullName } },
-    { new: true }
+    { new: true },
   );
 
   if (!updatedUser) {
@@ -580,71 +610,82 @@ const changeFullName = asyncHandler(async (req, res) => {
     .json(new response(200, updatedUser, "Full name changed successfully."));
 });
 
-let subscribeTo = asyncHandler(async (req, res) => {
-  let subscriber = req.user?._id;
-  let id = req.params?.id;
+const subscribeTo = asyncHandler(async (req, res) => {
+  const subscriber = req.user?._id;
+  const channelId = req.params?.id;
 
-  let user = await User.findById(id);
+  if (!channelId) {
+    throw new error(400, "Channel ID is required");
+  }
 
+  // Prevent self-subscription
+  if (subscriber.equals(channelId)) {
+    throw new error(400, "You cannot subscribe to your own channel");
+  }
+
+  const user = await User.findById(channelId);
   if (!user) {
-    throw new error(400, "Channel does not exists");
+    throw new error(404, "Channel does not exist");
   }
 
-  if (user?._id.equals(subscriber)) {
-    throw new error(400, "You can not subscribe to your own channel");
-  }
-
-  let channel = await Subscribtion.findOne({
-    channel: new mongoose.Types.ObjectId(user?._id),
-    subscriber: new mongoose.Types.ObjectId(subscriber),
+  const alreadySubscribed = await Subscribtion.findOne({
+    channel: channelId,
+    subscriber,
   });
 
-  if (channel) {
-    throw new error(400, "You already subscribed");
+  if (alreadySubscribed) {
+    throw new error(400, "You are already subscribed to this channel");
   }
 
-  let subscribed = await Subscribtion.create({
-    channel: user?._id,
+  const subscribed = await Subscribtion.create({
+    channel: channelId,
     subscriber,
   });
 
   if (!subscribed) {
-    throw new error(500, "something went wrong while subscribing");
+    throw new error(500, "Subscription failed");
   }
 
-  res.status(200).json(new response(200, [], `Subscribed to ${user?.name}`));
+  res
+    .status(200)
+    .json(new response(200, [], `Successfully subscribed to ${user.name}`));
 });
 
-let unsubscribeTo = asyncHandler(async (req, res) => {
-  let unSubscriber = req.user?._id;
-  let id = req.params?.id;
+const unsubscribeTo = asyncHandler(async (req, res) => {
+  const subscriber = req.user?._id;
+  const channelId = req.params?.id;
 
-  let user = await User.findById(id);
-
-  if (!user) {
-    throw new error(400, "Channel does not exists");
+  if (!channelId) {
+    throw new error(400, "Channel ID is required");
   }
 
-  if (user?._id.equals(unSubscriber)) {
-    throw new error(400, "You can not unsubscribe to your own channel");
+  // Prevent unsubscribing from oneself
+  if (subscriber.equals(channelId)) {
+    throw new error(400, "You cannot unsubscribe from your own channel");
   }
 
-  let subscribtion = await Subscribtion.findOne({
-    channel: new mongoose.Types.ObjectId(user?._id),
-    subscriber: new mongoose.Types.ObjectId(unSubscriber),
+  const channel = await User.findById(channelId);
+  if (!channel) {
+    throw new error(404, "Channel does not exist");
+  }
+
+  const subscription = await Subscribtion.findOne({
+    channel: channelId,
+    subscriber,
   });
 
-  if (!subscribtion) {
-    throw new error(400, "You haven't subscribed");
+  if (!subscription) {
+    throw new error(400, "You are not subscribed to this channel");
   }
 
-  let unSubscribed = await Subscribtion.findByIdAndDelete(subscribtion._id);
-
+  const unSubscribed = await Subscribtion.findByIdAndDelete(subscription._id);
   if (!unSubscribed) {
-    throw new error(500, "something went wrong while unsubscribing");
+    throw new error(500, "Unsubscription failed");
   }
 
-  res.status(200).json(new response(200, [], `Unsubscribed to ${user?.name}`));
+  res.status(200).json(
+    new response(200, [], `Successfully unsubscribed from ${channel.name}`)
+  );
 });
 
 let getChannelAndVideo = asyncHandler(async (req, res) => {
@@ -1015,12 +1056,29 @@ const getChannel = asyncHandler(async (req, res) => {
 const getChannelVideos = asyncHandler(async (req, res) => {
   const userId = req.params?.id;
   const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 5;
+  const limit = parseInt(req.query.limit);
   const skip = (page - 1) * limit;
+
+  const filter = req.query.filter || "latest"; // Default: latest
+
+  // Determine sorting criteria based on filter
+  let sortOption = {};
+  switch (filter) {
+    case "top":
+      sortOption =  { views: -1, createdAt: -1 }; // Most viewed
+      break;
+    case "oldest":
+      sortOption = { createdAt: 1 }; // Oldest first
+      break;
+    case "latest":
+    default:
+      sortOption = { createdAt: -1 }; // Newest first
+      break;
+  }
 
   const [videos, total] = await Promise.all([
     Video.find({ owner: userId })
-      .sort({ createdAt: -1 })
+      .sort(sortOption)
       .skip(skip)
       .limit(limit),
     Video.countDocuments({ owner: userId }),
@@ -1028,15 +1086,13 @@ const getChannelVideos = asyncHandler(async (req, res) => {
 
   const pages = Math.ceil(total / limit);
 
-  res
-    .status(200)
-    .json(
-      new response(
-        200,
-        { videos, total, page, pages, limit },
-        "Videos fetched",
-      ),
-    );
+  res.status(200).json(
+    new response(
+      200,
+      { videos, total, page, pages},
+      "Videos fetched"
+    )
+  );
 });
 
 const getComments = asyncHandler(async (req, res) => {

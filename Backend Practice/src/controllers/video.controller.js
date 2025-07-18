@@ -309,7 +309,7 @@ let deleteVideo = asyncHandler(async (req, res) => {
 
 const getAllVideo = asyncHandler(async (req, res) => {
   const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 6;
+  const limit = parseInt(req.query.limit);
   const skip = (page - 1) * limit;
 
   const userId = new mongoose.Types.ObjectId(req.user._id);
