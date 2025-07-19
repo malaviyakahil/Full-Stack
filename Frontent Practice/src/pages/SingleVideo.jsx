@@ -75,11 +75,11 @@ const SingleVideo = () => {
         setLoading(true);
 
         let [videoRes, statusRes, reviewRes, detailsRes] = await Promise.all([
-          axios.post(`http://localhost:8000/user/get-video/${videoId}`, [], {
+          axios.post(`http://localhost:8000/video/get-video/${videoId}`, [], {
             withCredentials: true,
           }),
           axios.post(
-            `http://localhost:8000/user/get-sub-status/${ownerId}`,
+            `http://localhost:8000/channel/get-sub-status/${ownerId}`,
             [],
             { withCredentials: true },
           ),
@@ -89,7 +89,7 @@ const SingleVideo = () => {
             { withCredentials: true },
           ),
           axios.get(
-            `http://localhost:8000/user/get-channel-details/${ownerId}`,
+            `http://localhost:8000/channel/get-channel-details/${ownerId}`,
             [],
             { withCredentials: true },
           ),
@@ -392,7 +392,7 @@ const SingleVideo = () => {
         status: false,
         count: subCount.count - 1,
       });
-      axios.post(`http://localhost:8000/user/unsubscribe-to/${ownerId}`, [], {
+      axios.post(`http://localhost:8000/channel/unsubscribe-to/${ownerId}`, [], {
         withCredentials: true,
       });
     } else {
@@ -401,7 +401,7 @@ const SingleVideo = () => {
         status: true,
         count: subCount.count + 1,
       });
-      axios.post(`http://localhost:8000/user/subscribe-to/${ownerId}`, [], {
+      axios.post(`http://localhost:8000/channel/subscribe-to/${ownerId}`, [], {
         withCredentials: true,
       });
     }

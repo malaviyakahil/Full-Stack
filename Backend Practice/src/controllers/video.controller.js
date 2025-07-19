@@ -307,6 +307,143 @@ let deleteVideo = asyncHandler(async (req, res) => {
   }
 });
 
+let getVideo = asyncHandler(async (req, res) => {
+  let videoId = req.params?.id;
+  let userId = req.user?._id;
+
+  let video = await Video.findByIdAndUpdate(
+    videoId,
+    { $inc: { views: 1 } },
+    { new: true },
+  );
+
+  if (!video) {
+    throw new error(400, "Video does not exists");
+  }
+
+  let review = await Review.aggregate([
+    {
+      $match: {
+        video: new mongoose.Types.ObjectId(video._id),
+      },
+    },
+    {
+      $group: {
+        _id: "$review",
+        count: { $sum: 1 },
+      },
+    },
+    {
+      $project: {
+        _id: 0,
+        review: "$_id",
+        count: 1,
+        createdAt: 1,
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        data: {
+          $push: {
+            k: "$review",
+            v: "$count",
+          },
+        },
+      },
+    },
+    {
+      $replaceRoot: {
+        newRoot: {
+          $mergeObjects: [{ Like: 0, Dislike: 0 }, { $arrayToObject: "$data" }],
+        },
+      },
+    },
+  ]);
+
+  video._doc.reviews = review[0] || { Like: 0, Dislike: 0 };
+
+  let prevVideo = await History.findOne({ user: userId }).sort({
+    createdAt: -1,
+  });
+
+  let history;
+  if (!prevVideo?.video?.equals(videoId)) {
+    history = await History.create({
+      user: userId,
+      video: video?._id,
+    });
+    if (!history) {
+      throw new error(500, "Something went wrong while managing history");
+    }
+  }
+
+  const count = await History.countDocuments({ user: userId });
+
+  if (count > 10) {
+    const oldest = await History.findOne({ user: userId })
+      .sort({ createdAt: 1 })
+      .limit(1);
+
+    if (oldest) {
+      await History.findByIdAndDelete(oldest._id);
+    }
+  }
+  res
+    .status(200)
+    .json(
+      new response(
+        200,
+        { ...video._doc, history: history || {} },
+        "Video fetched successfully",
+      ),
+    );
+});
+
+let getVideoQuality = asyncHandler(async (req, res) => {
+  const qualityOptions = [
+    { label: "144p", height: 144 },
+    { label: "240p", height: 240 },
+    { label: "360p", height: 360 },
+    { label: "480p", height: 480 },
+    { label: "720p", height: 720 },
+    { label: "1080p", height: 1080 },
+  ];
+
+  const extractPublicIdFromUrl = (videoUrl) => {
+    const pattern = /\/upload\/(?:v\d+\/)?([^\.]+)\.(mp4|webm|mov|avi|mkv)/;
+    const match = videoUrl.match(pattern);
+    return match?.[1] || null;
+  };
+
+  let { url } = req.body;
+
+  if (!url) {
+    throw new error(401, "Missing Cloudinary video URL.");
+  }
+
+  const publicId = extractPublicIdFromUrl(url);
+
+  if (!publicId) {
+    throw new error(401, "Invalid Cloudinary video URL.");
+  }
+  const result = await cloudinary.api.resource(publicId, {
+    resource_type: "video",
+  });
+
+  const originalHeight = result.height;
+
+  const availableQualities = qualityOptions
+    .filter((q) => q.height <= originalHeight)
+    .map((q) => q.label);
+
+  res
+    .status(200)
+    .json(
+      new response(200, { availableQualities }, "Quality fetched successfully"),
+    );
+});
+
 const getAllVideo = asyncHandler(async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit);
@@ -446,62 +583,6 @@ let disLikeVideo = asyncHandler(async (req, res) => {
   res.status(200).json(new response(200, [], "Disliked video successfully"));
 });
 
-let likeComment = asyncHandler(async (req, res) => {
-  let id = req.user?.id;
-  let commentId = req.params?.id;
-
-  let comment = await Comment.findById(commentId);
-
-  if (!comment) {
-    throw new error(400, "Comment does not exists");
-  }
-
-  await CommentReview.findOneAndDelete({
-    comment: new mongoose.Types.ObjectId(comment?._id),
-    user: new mongoose.Types.ObjectId(id),
-  });
-
-  let review = await CommentReview.create({
-    comment: comment?._id,
-    user: id,
-    review: "Like",
-  });
-
-  if (!review) {
-    throw new error(500, "Something went wrong while liking comment");
-  }
-
-  res.status(200).json(new response(200, [], "Liked comment successfully"));
-});
-
-let disLikeComment = asyncHandler(async (req, res) => {
-  let id = req.user?.id;
-  let commentId = req.params?.id;
-
-  let comment = await Comment.findById(commentId);
-
-  if (!comment) {
-    throw new error(400, "Comment does not exists");
-  }
-
-  await CommentReview.findOneAndDelete({
-    comment: new mongoose.Types.ObjectId(comment?._id),
-    user: new mongoose.Types.ObjectId(id),
-  });
-
-  let review = await CommentReview.create({
-    comment: comment?._id,
-    user: id,
-    review: "Dislike",
-  });
-
-  if (!review) {
-    throw new error(500, "Something went wrong while disliking comment");
-  }
-
-  res.status(200).json(new response(200, [], "Disliked comment successfully"));
-});
-
 let deleteReview = asyncHandler(async (req, res) => {
   let user = req.user?.id;
   let video = req.params?.id;
@@ -529,208 +610,6 @@ let deleteReview = asyncHandler(async (req, res) => {
   res.status(200).json(new response(200, [], "Review deleted successfully"));
 });
 
-let giveHeart = asyncHandler(async (req, res) => {
-  let commentId = req.params?.id;
-
-  let hearted = await Comment.findByIdAndUpdate(commentId, {
-    $set: {
-      heartByChannel: true,
-    },
-  });
-
-  if (!hearted) {
-    throw new error(500, "Something went wrong while hearting comment");
-  }
-
-  res.status(200).json(new response(200, [], "Hearted comment successfully"));
-});
-
-let takeHeart = asyncHandler(async (req, res) => {
-  let commentId = req.params?.id;
-
-  let unhearted = await Comment.findByIdAndUpdate(commentId, {
-    $set: {
-      heartByChannel: false,
-    },
-  });
-
-  if (!unhearted) {
-    throw new error(500, "Something went wrong while unhearting comment");
-  }
-
-  res.status(200).json(new response(200, [], "Unhearted comment successfully"));
-});
-
-let pin = asyncHandler(async (req, res) => {
-  let commentId = req.params?.id;
-
-  let pinned = await Comment.findByIdAndUpdate(commentId, {
-    $set: {
-      pinByChannel: true,
-    },
-  });
-
-  if (!pinned) {
-    throw new error(500, "Something went wrong while pinning comment");
-  }
-
-  res.status(200).json(new response(200, [], "Pinned comment successfully"));
-});
-
-let unPin = asyncHandler(async (req, res) => {
-  let commentId = req.params?.id;
-
-  let unPinned = await Comment.findByIdAndUpdate(commentId, {
-    $set: {
-      pinByChannel: false,
-    },
-  });
-
-  if (!unPinned) {
-    throw new error(500, "Something went wrong while un-pinning comment");
-  }
-
-  res.status(200).json(new response(200, [], "Un-pinned comment successfully"));
-});
-
-let deleteCommentReview = asyncHandler(async (req, res) => {
-  let user = req.user?.id;
-  let comment = req.params?.id;
-
-  let deleteSuccess = await CommentReview.findOneAndDelete({
-    $and: [{ comment }, { user }],
-  });
-
-  if (!deleteSuccess) {
-    throw new error(500, "Error while deleting review");
-  }
-
-  res.status(200).json(new response(200, [], "Review deleted successfully"));
-});
-
-const addComment = asyncHandler(async (req, res) => {
-  const userId = req.user._id;
-  const videoId = req.params.id;
-  const { comment } = req.body;
-
-  // Save basic comment
-  const newComment = await Comment.create({
-    comment,
-    video: videoId,
-    user: userId,
-  });
-
-  // Aggregate it back with all enrichments
-  const enriched = await Comment.aggregate([
-    { $match: { _id: newComment._id } },
-    {
-      $lookup: {
-        from: "users",
-        localField: "user",
-        foreignField: "_id",
-        as: "user",
-      },
-    },
-    { $unwind: "$user" },
-    {
-      $lookup: {
-        from: "commentreviews",
-        localField: "_id",
-        foreignField: "comment",
-        as: "reviews",
-      },
-    },
-    {
-      $addFields: {
-        like: {
-          count: {
-            $size: {
-              $filter: {
-                input: "$reviews",
-                as: "review",
-                cond: { $eq: ["$$review.review", "Like"] },
-              },
-            },
-          },
-          status: false, // Always false for new comment
-        },
-        dislike: {
-          count: {
-            $size: {
-              $filter: {
-                input: "$reviews",
-                as: "review",
-                cond: { $eq: ["$$review.review", "Dislike"] },
-              },
-            },
-          },
-          status: false,
-        },
-        isCurrentUser: true,
-        isPinned: { $eq: ["$pinByChannel", true] },
-      },
-    },
-    {
-      $project: {
-        comment: 1,
-        video: 1,
-        user: { _id: 1, avatar: 1, name: 1 },
-        heartByChannel: 1,
-        createdAt: 1,
-        like: 1,
-        dislike: 1,
-        pinByChannel: 1,
-        edited: 1,
-        isCurrentUser: 1,
-        isPinned: 1,
-      },
-    },
-  ]);
-
-  if (!enriched[0]) {
-    return res
-      .status(500)
-      .json(new response(500, null, "Failed to enrich comment"));
-  }
-
-  res.status(201).json(new response(201, enriched[0], "Comment created"));
-});
-
-let deleteComment = asyncHandler(async (req, res) => {
-  let comment = req.params?.id;
-
-  let deleteSuccess = await Comment.findByIdAndDelete(comment);
-  let deleteReviewSuccess = await CommentReview.deleteMany({
-    comment: new mongoose.Types.ObjectId(comment),
-  });
-
-  if (!(deleteSuccess && deleteReviewSuccess)) {
-    throw new error(500, "Error while deleting comment");
-  }
-
-  res.status(200).json(new response(200, [], "Comment deleted successfully"));
-});
-
-let editComment = asyncHandler(async (req, res) => {
-  let commentId = req.params?.id;
-
-  let { comment } = req.body;
-
-  if (comment.trim() == "") {
-    throw new error(500, "Comment can not be empty");
-  }
-
-  let editSuccess = await Comment.findByIdAndUpdate(commentId, {
-    $set: { comment: comment, edited: true },
-  });
-
-  if (!editSuccess) {
-    throw new error(500, "Error while editing comment");
-  }
-
-  res.status(200).json(new response(200, [], "Comment edited successfully"));
-});
-
 export {
   uploadVideo,
   editVideo,
@@ -741,15 +620,7 @@ export {
   getAllVideo,
   likeVideo,
   disLikeVideo,
-  likeComment,
-  disLikeComment,
-  giveHeart,
-  takeHeart,
+  getVideo,
+  getVideoQuality,
   deleteReview,
-  deleteCommentReview,
-  addComment,
-  deleteComment,
-  editComment,
-  pin,
-  unPin,
 };

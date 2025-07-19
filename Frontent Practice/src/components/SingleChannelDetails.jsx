@@ -20,7 +20,7 @@ const SingleChannelDetails = ({ ownerId }) => {
         status: false,
         count: subCount.count - 1,
       });
-      axios.post(`http://localhost:8000/user/unsubscribe-to/${ownerId}`, [], {
+      axios.post(`http://localhost:8000/channel/unsubscribe-to/${ownerId}`, [], {
         withCredentials: true,
       });
     } else {
@@ -40,7 +40,7 @@ const SingleChannelDetails = ({ ownerId }) => {
     (async () => {
       try {
         let res = await axios.get(
-          `http://localhost:8000/user/get-channel/${ownerId}`,
+          `http://localhost:8000/channel/get-channel/${ownerId}`,
           {
             withCredentials: true,
           },

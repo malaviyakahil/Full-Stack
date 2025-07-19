@@ -37,7 +37,7 @@ const SingleChannelVideos = ({ ownerId }) => {
     }
     try {
       const res = await axios.get(
-        `http://localhost:8000/user/get-channel-videos/${ownerId}?page=${page}&limit=${limit}&filter=${filter}`,
+        `http://localhost:8000/channel/get-channel-videos/${ownerId}?page=${page}&limit=${limit}&filter=${filter}`,
         { withCredentials: true },
       );
 

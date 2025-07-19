@@ -6,20 +6,11 @@ import {
   disLikeVideo,
   getAllVideo,
   deleteReview,
-  deleteCommentReview,
-  editVideo,
-  addComment,
-  deleteComment,
-  likeComment,
-  disLikeComment,
-  editComment,
-  giveHeart,
-  takeHeart,
-  pin,
-  unPin,
   changeVideoTitle,
   changeVideoDescription,
-  changeVideoThumbnail
+  changeVideoThumbnail,
+  getVideo,
+  getVideoQuality
 } from "../controllers/video.controller.js";
 import upload from "../middlewares/multer.middleware.js";
 import auth from "../middlewares/auth.middleware.js";
@@ -41,23 +32,16 @@ videoRouter.post(
   auth,
   uploadVideo,
 );
+videoRouter.post("/get-video/:id", upload.none(), auth, getVideo);
+videoRouter.post("/get-video-quality", upload.none(), auth, getVideoQuality);
 videoRouter.post("/change-video-title/:id", upload.none(), auth, changeVideoTitle);
 videoRouter.post("/change-video-description/:id", upload.none(), auth, changeVideoDescription);
 videoRouter.post("/change-video-thumbnail/:id", upload.single("thumbnail"), auth, changeVideoThumbnail);
 videoRouter.post("/delete-video/:id", upload.none(), auth, deleteVideo);
 videoRouter.post("/like-video/:id", upload.none(), auth, likeVideo);
 videoRouter.post("/dislike-video/:id", upload.none(), auth, disLikeVideo);
-videoRouter.post("/like-comment/:id", upload.none(), auth, likeComment);
-videoRouter.post("/dislike-comment/:id", upload.none(), auth, disLikeComment);
-videoRouter.post("/give-heart/:id", upload.none(), auth, giveHeart);
-videoRouter.post("/take-heart/:id", upload.none(), auth, takeHeart);
-videoRouter.post("/pin/:id", upload.none(), auth, pin);
-videoRouter.post("/un-pin/:id", upload.none(), auth, unPin);
 videoRouter.get("/get-all-videos", upload.none(), auth, getAllVideo);
 videoRouter.post("/delete-review/:id", upload.none(), auth, deleteReview);
-videoRouter.post("/delete-comment-review/:id", upload.none(), auth, deleteCommentReview);
-videoRouter.post("/add-comment/:id", upload.none(), auth, addComment);
-videoRouter.post("/delete-comment/:id", upload.none(), auth, deleteComment);
-videoRouter.post("/edit-comment/:id", upload.none(), auth, editComment);
+
 
 export default videoRouter;

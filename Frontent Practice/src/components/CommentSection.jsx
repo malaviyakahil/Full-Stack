@@ -74,7 +74,7 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
 
     try {
       const res = await axios.get(
-        `http://localhost:8000/user/get-comments/${videoId}`,
+        `http://localhost:8000/comment/get-comments/${videoId}`,
         { params, withCredentials: true },
       );
 
@@ -134,7 +134,7 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
     try {
       setLoader(true);
       const res = await axios.post(
-        `http://localhost:8000/video/add-comment/${videoId}`,
+        `http://localhost:8000/comment/add-comment/${videoId}`,
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },
@@ -175,7 +175,7 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
         ),
       );
       axios.post(
-        `http://localhost:8000/video/delete-comment-review/${id}`,
+        `http://localhost:8000/comment/delete-comment-review/${id}`,
         [],
         { withCredentials: true },
       );
@@ -216,7 +216,7 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
           ),
         );
       }
-      axios.post(`http://localhost:8000/video/like-comment/${id}`, [], {
+      axios.post(`http://localhost:8000/comment/like-comment/${id}`, [], {
         withCredentials: true,
       });
     }
@@ -239,7 +239,7 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
         ),
       );
       axios.post(
-        `http://localhost:8000/video/delete-comment-review/${id}`,
+        `http://localhost:8000/comment/delete-comment-review/${id}`,
         [],
         { withCredentials: true },
       );
@@ -280,7 +280,7 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
           ),
         );
       }
-      axios.post(`http://localhost:8000/video/dislike-comment/${id}`, [], {
+      axios.post(`http://localhost:8000/comment/dislike-comment/${id}`, [], {
         withCredentials: true,
       });
     }
@@ -312,7 +312,7 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
           item._id === id ? { ...item, heartByChannel: false } : item,
         ),
       );
-      axios.post(`http://localhost:8000/video/take-heart/${id}`, [], {
+      axios.post(`http://localhost:8000/comment/take-heart/${id}`, [], {
         withCredentials: true,
       });
     } else {
@@ -321,7 +321,7 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
           item._id === id ? { ...item, heartByChannel: true } : item,
         ),
       );
-      axios.post(`http://localhost:8000/video/give-heart/${id}`, [], {
+      axios.post(`http://localhost:8000/comment/give-heart/${id}`, [], {
         withCredentials: true,
       });
     }
@@ -343,7 +343,7 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
           item._id === id ? { ...item, pinByChannel: false } : item,
         ),
       );
-      axios.post(`http://localhost:8000/video/un-pin/${id}`, [], {
+      axios.post(`http://localhost:8000/comment/un-pin/${id}`, [], {
         withCredentials: true,
       });
     } else {
@@ -353,7 +353,7 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
             item._id === id ? { ...item, pinByChannel: true } : item,
           ),
         );
-        axios.post(`http://localhost:8000/video/pin/${id}`, [], {
+        axios.post(`http://localhost:8000/comment/pin/${id}`, [], {
           withCredentials: true,
         });
       }
@@ -374,7 +374,7 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
     setComments(comments.filter((item) => item._id != id));
     setTotalCount((prev) => prev - 1);
     try {
-      await axios.post(`http://localhost:8000/video/delete-comment/${id}`, [], {
+      await axios.post(`http://localhost:8000/comment/delete-comment/${id}`, [], {
         withCredentials: true,
       });
     } catch (error) {
@@ -403,7 +403,7 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
     );
     try {
       await axios.post(
-        `http://localhost:8000/video/edit-comment/${id}`,
+        `http://localhost:8000/comment/edit-comment/${id}`,
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },

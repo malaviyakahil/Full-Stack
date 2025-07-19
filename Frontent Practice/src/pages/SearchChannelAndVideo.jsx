@@ -34,7 +34,7 @@ const SearchChannelAndVideo = () => {
         }),
         video: [...data.video],
       });
-      axios.post(`http://localhost:8000/user/unsubscribe-to/${id}`, [], {
+      axios.post(`http://localhost:8000/channel/unsubscribe-to/${id}`, [], {
         withCredentials: true,
       });
     } else {
@@ -51,7 +51,7 @@ const SearchChannelAndVideo = () => {
         }),
         video: [...data.video],
       });
-      axios.post(`http://localhost:8000/user/subscribe-to/${id}`, [], {
+      axios.post(`http://localhost:8000/channel/subscribe-to/${id}`, [], {
         withCredentials: true,
       });
     }
@@ -61,7 +61,7 @@ const SearchChannelAndVideo = () => {
     (async () => {
       setLoading(true);
       let res = await axios.get(
-        `http://localhost:8000/user/search-channel-and-video/${name}`,
+        `http://localhost:8000/search/search-channel-and-video/${name}`,
         {
           withCredentials: true,
         },

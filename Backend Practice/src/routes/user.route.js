@@ -10,25 +10,14 @@ import {
   changeAvatar,
   changeCoverImage,
   changeFullName,
-  subscribeTo,
-  unsubscribeTo,
-  getChannelAndVideo,
-  getVideo,
   getHistory,
   deleteHistory,
-  getSubStatus,
   getReviewStatus,
-  getChannelDetails,
-  getComments,
-  searchAll,
-  getChannel,
   getLikedVideos,
   deleteLikedVideos,
-  getVideoQuality,
   authMe,
   deleteUser,
-  getChannelVideos,
-  removeCoverImage
+  removeCoverImage,
 } from "../controllers/user.controller.js";
 import upload from "../middlewares/multer.middleware.js";
 import auth from "../middlewares/auth.middleware.js";
@@ -74,23 +63,13 @@ userRouter.post("/remove-cover-image", upload.none(), auth, removeCoverImage);
 userRouter.get("/get-history", upload.none(), auth, getHistory);
 userRouter.post("/delete-history/:id", upload.none(), auth, deleteHistory);
 userRouter.get("/get-liked-videos", upload.none(), auth, getLikedVideos);
-userRouter.post("/delete-liked-videos/:id", upload.none(), auth, deleteLikedVideos);
-userRouter.post("/get-sub-status/:id", upload.none(), auth, getSubStatus);
-userRouter.post("/get-review-status/:id", upload.none(), auth, getReviewStatus);
-userRouter.post("/subscribe-to/:id", upload.none(), auth, subscribeTo);
-userRouter.post("/unsubscribe-to/:id", upload.none(), auth, unsubscribeTo);
-userRouter.get(
-  "/search-channel-and-video/:name",
+userRouter.post(
+  "/delete-liked-videos/:id",
   upload.none(),
   auth,
-  getChannelAndVideo,
+  deleteLikedVideos,
 );
-userRouter.get("/get-channel-details/:id", upload.none(), getChannelDetails);
-userRouter.post("/get-video/:id", upload.none(), auth, getVideo);
-userRouter.post("/get-video-quality", upload.none(), auth, getVideoQuality);
-userRouter.get("/get-channel/:id", upload.none(), auth, getChannel);
-userRouter.get("/get-channel-videos/:id", upload.none(), auth, getChannelVideos);
-userRouter.get("/get-comments/:id", upload.none(), auth, getComments);
-userRouter.get("/search-all", upload.none(), auth, searchAll);
+userRouter.post("/get-review-status/:id", upload.none(), auth, getReviewStatus);
+
 
 export default userRouter;

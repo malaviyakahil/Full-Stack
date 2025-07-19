@@ -11,7 +11,7 @@ const Search = () => {
     let timer = setTimeout(() => {
       (async () => {
         let res = await axios.get(
-          `http://localhost:8000/user/search-all?query=${encodeURIComponent(text)}`,
+          `http://localhost:8000/search/search-all?query=${encodeURIComponent(text)}`,
           {
             withCredentials: true,
           },

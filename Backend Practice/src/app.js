@@ -6,6 +6,9 @@ import cors from "cors";
 import dotenv from "dotenv";
 import userRouter  from "./routes/user.route.js";
 import videoRouter from "./routes/video.route.js";
+import commentRouter from "./routes/comment.route.js";
+import channelRouter from "./routes/channel.route.js";
+import searchRouter from "./routes/search.route.js";
 
 
 dotenv.config();
@@ -34,8 +37,6 @@ app.use(express.urlencoded({ extended: true }));
       console.log("====================================");
       console.log(`http://localhost:${process.env.PORT}`);
       console.log("====================================");
-      
-      
     });
   } catch (error) {
     console.log(error);
@@ -45,6 +46,9 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use('/user',userRouter)
 app.use('/video',videoRouter)
+app.use('/comment',commentRouter)
+app.use('/channel',channelRouter)
+app.use('/search',searchRouter)
 
 app.use((err, req, res, next) => {  
   res.status(500).json({
