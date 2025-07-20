@@ -10,7 +10,7 @@ import {
   changeVideoDescription,
   changeVideoThumbnail,
   getVideo,
-  getVideoQuality
+  getVideoQuality,
 } from "../controllers/video.controller.js";
 import upload from "../middlewares/multer.middleware.js";
 import auth from "../middlewares/auth.middleware.js";

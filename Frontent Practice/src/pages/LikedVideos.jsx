@@ -4,6 +4,7 @@ import { formatDistanceToNow, formatDistanceToNowStrict } from "date-fns";
 import { Link } from "react-router-dom";
 import { fetchLikedVideos } from "../store/likedVideos.slice.js";
 import InfiniteScroll from "react-infinite-scroll-component";
+import formatTime from "../utils/formatTime";
 
 const LikedVideos = () => {
   let { data, loading, hasMore, limit, fetched } = useSelector(
@@ -17,13 +18,6 @@ const LikedVideos = () => {
     }
   }, [fetched, dispatch]);
 
-  let formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60)
-      .toString()
-      .padStart(2, "0");
-    return `${mins}:${secs}`;
-  };
 
   return (
     <div className="flex flex-col items-center py-5">
@@ -115,7 +109,7 @@ const LikedVideos = () => {
                   key={item?._id}
                   className="md:flex py-2.5 gap-5 w-full cursor-pointer sm:w-full md:w-[536px] lg:w-[760px] xl:w-[980px]"
                 >
-                  <div className="relative  w-full aspect-video overflow-hidden rounded-lg bg-black flex justify-center">
+                  <div className="relative  w-full aspect-video overflow-hidden rounded-md bg-black flex justify-center">
                     <Link
                       to={`/app/dashboard/single-video/${item?.video?.owner._id}/${item?.video?._id}`}
                     >

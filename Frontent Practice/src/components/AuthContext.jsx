@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import axios from "axios";
+import { authMe } from "../apis/user.apis";
 
 const AuthContext = createContext(null);
 
@@ -8,21 +8,20 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    axios
-      .get("http://localhost:8000/user/auth-me", { withCredentials: true })
-      .then((res) => {
-        setUser(res.data.data || { authenticated: true });
-      })
-      .catch(() => {
+    (async () => {
+      try {
+        await authMe();
+        setUser({ authenticated: true });
+      } catch (error) {
         setUser(null);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+      }finally{
+        setLoading(false)
+      }
+    })();
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading ,setUser}}>
+    <AuthContext.Provider value={{ user, loading, setUser }}>
       {children}
     </AuthContext.Provider>
   );

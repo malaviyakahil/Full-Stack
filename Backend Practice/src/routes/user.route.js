@@ -3,7 +3,6 @@ import {
   registerUser,
   loginUser,
   getCurrentUser,
-  getCurrentUserVideos,
   logoutUser,
   renewAccessToken,
   changePassword,
@@ -18,6 +17,7 @@ import {
   authMe,
   deleteUser,
   removeCoverImage,
+  getCurrentUserVideos,
 } from "../controllers/user.controller.js";
 import upload from "../middlewares/multer.middleware.js";
 import auth from "../middlewares/auth.middleware.js";
@@ -42,12 +42,6 @@ userRouter.post("/login", upload.none(), loginUser);
 userRouter.post("/logout", upload.none(), auth, logoutUser);
 userRouter.post("/delete-user", upload.none(), auth, deleteUser);
 userRouter.get("/get-current-user", upload.none(), auth, getCurrentUser);
-userRouter.get(
-  "/get-current-user-videos",
-  upload.none(),
-  auth,
-  getCurrentUserVideos,
-);
 userRouter.post("/renew-access-token", upload.none(), renewAccessToken);
 userRouter.get("/auth-me", upload.none(), authMe);
 userRouter.post("/change-password", upload.none(), auth, changePassword);
@@ -70,6 +64,11 @@ userRouter.post(
   deleteLikedVideos,
 );
 userRouter.post("/get-review-status/:id", upload.none(), auth, getReviewStatus);
-
+userRouter.get(
+  "/get-current-user-videos",
+  upload.none(),
+  auth,
+  getCurrentUserVideos,
+);
 
 export default userRouter;

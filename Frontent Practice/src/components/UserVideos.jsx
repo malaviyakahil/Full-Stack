@@ -5,43 +5,29 @@ import Skeleton from "./Skeleton";
 import {
   deletOneVideo,
   fetchcurrentUserVideos,
-  incrementView,
   undoDeletOneVideo,
 } from "../store/userVideos.slice";
-import axios from "axios";
 import { formatDistanceToNowStrict } from "date-fns";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { RiEditBoxLine } from "react-icons/ri";
 import { MdDeleteOutline } from "react-icons/md";
 import { HiOutlineUpload } from "react-icons/hi";
+import formatTime from "../utils/formatTime";
+
 const UserVideoCard = ({ video, index }) => {
   const dispatch = useDispatch();
   let [error, setError] = useState("");
 
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60)
-      .toString()
-      .padStart(2, "0");
-    return `${mins}:${secs}`;
-  };
-
   const deleteVideo = async (e) => {
     e.preventDefault();
     e.stopPropagation();
-
     const backup = { index, video };
-    dispatch(deletOneVideo(video._id));
-
     try {
-      await axios.post(
-        `${import.meta.env.VITE_API_URL}/video/delete-video/${video._id}`,
-        [],
-        { withCredentials: true },
-      );
-    } catch (err) {
+      dispatch(deletOneVideo(video._id));
+      await deleteVideo(video._id);
+    } catch (error) {
       dispatch(undoDeletOneVideo(backup));
-      setError(error?.response?.data?.message || "Failed to delete video");
+      setError(error?.message);
     }
   };
 
@@ -49,7 +35,7 @@ const UserVideoCard = ({ video, index }) => {
     <>
       {error && <p className="text-red-500 text-center my-2">{error}</p>}
       <div className="flex flex-col w-full sm:w-[320px] md:w-[336px] lg:w-[360px] xl:w-[380px] cursor-pointer">
-        <div className="relative aspect-video overflow-hidden rounded-lg bg-black flex justify-center">
+        <div className="relative aspect-video overflow-hidden rounded-md bg-black flex justify-center">
           <img
             src={video?.thumbnail}
             alt={video?.title}
@@ -115,11 +101,11 @@ const UserVideos = () => {
           className="bg-gray-700 hover:bg-gray-600 rounded-md p-2 px-4 flex flex-nowrap items-center gap-1 justify-center"
           onClick={() => navigate("/app/my-videos/upload-video")}
         >
-          <HiOutlineUpload className="text-[18px]"/> Upload video
+          <HiOutlineUpload className="text-[18px]" /> Upload video
         </button>
         <button className="bg-gray-700 hover:bg-gray-600 rounded-md p-2 px-4">
           {currentUser?.data?.subs} Subscribers •{" "}
-          {videos.reduce((acc, video) => acc + video.views, 0)} Total views
+          {currentUser?.data?.totalViews} Total views
         </button>
       </div>
 
@@ -143,7 +129,6 @@ const UserVideos = () => {
                 <Link
                   key={video._id}
                   to={`/app/dashboard/single-video/${currentUser.data?._id}/${video._id}`}
-                  onClick={() => dispatch(incrementView(video._id))}
                 >
                   <UserVideoCard video={video} index={index} />
                 </Link>

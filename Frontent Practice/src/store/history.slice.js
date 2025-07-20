@@ -2,9 +2,12 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 
 let fetchHistory = createAsyncThunk("fetchHistory", async () => {
-  let res = await axios.get(`${import.meta.env.VITE_API_URL}/user/get-history`, {
-    withCredentials: true,
-  });
+  let res = await axios.get(
+    `${import.meta.env.VITE_API_URL}/user/get-history`,
+    {
+      withCredentials: true,
+    },
+  );
   return res.data;
 });
 
@@ -27,8 +30,11 @@ let historySlice = createSlice({
     addToHistory: (state, action) => {
       state.data?.unshift(action.payload);
       if (state.data?.length > 10) {
-    state.data = state.data.slice(0, 10);
-  }
+        state.data = state.data.slice(0, 10);
+      }
+    },
+     setHistory: (state, action) => {
+      state.data = action.payload
     },
   },
   extraReducers: (builder) => {
@@ -45,7 +51,7 @@ let historySlice = createSlice({
   },
 });
 
-let { clearHistory, deleteFromHsitory, addToHistory } = historySlice.actions;
+let { clearHistory, deleteFromHsitory, addToHistory,setHistory } = historySlice.actions;
 
 export {
   clearHistory,
@@ -53,4 +59,5 @@ export {
   fetchHistory,
   deleteFromHsitory,
   addToHistory,
+  setHistory
 };

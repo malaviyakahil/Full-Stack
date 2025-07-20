@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
-import axios from "axios";
-import { removeCoverImage, updateCurrentUser } from "../store/user.slice.js";
+import { updateCurrentUser, deleteCoverImage } from "../store/user.slice.js";
+import { changeAvatar, changeCoverImage, changeFullName, removeCoverImage } from "../apis/user.apis.js";
 
 const EditProfileForm = () => {
   let currentUser = useSelector((store) => store.currentUser);
@@ -68,33 +68,17 @@ const EditProfileForm = () => {
         const formData = new FormData();
         formData.append("fullName", trimmedFullName);
 
-        const res = await axios.post(
-          `${import.meta.env.VITE_API_URL}/user/change-full-name`,
-          formData,
-          {
-            headers: { "Content-Type": "multipart/form-data" },
-            withCredentials: true,
-          },
-        );
-        Object.assign(updatedUser, res?.data?.data);
-      } else {
-        setError("Fullname cannot be empty");
-      }
+        const res = await changeFullName(formData);
+        Object.assign(updatedUser, res?.data);
+      } 
 
       // Avatar
       if (avatarFile) {
         const formData = new FormData();
         formData.append("avatar", avatarFile);
 
-        const res = await axios.post(
-          `${import.meta.env.VITE_API_URL}/user/change-avatar`,
-          formData,
-          {
-            headers: { "Content-Type": "multipart/form-data" },
-            withCredentials: true,
-          },
-        );
-        Object.assign(updatedUser, res?.data?.data);
+        const res = await changeAvatar(formData)
+        Object.assign(updatedUser, res?.data);
       }
 
       // Cover image
@@ -102,15 +86,8 @@ const EditProfileForm = () => {
         const formData = new FormData();
         formData.append("coverImage", coverImageFile);
 
-        const res = await axios.post(
-          `${import.meta.env.VITE_API_URL}/user/change-cover-image`,
-          formData,
-          {
-            headers: { "Content-Type": "multipart/form-data" },
-            withCredentials: true,
-          },
-        );
-        Object.assign(updatedUser, res?.data?.data);
+        const res = await changeCoverImage(formData)
+        Object.assign(updatedUser, res?.data);
       }
 
       // Dispatch only if there's something to update
@@ -120,19 +97,11 @@ const EditProfileForm = () => {
 
       // Cover image removal
       if (coverImageRemove) {
-        await axios.post(
-          `${import.meta.env.VITE_API_URL}/user/remove-cover-image`,
-          [],
-          {
-            withCredentials: true,
-          },
-        );
-        dispatch(removeCoverImage());
+        await removeCoverImage();
+        dispatch(deleteCoverImage());
       }
     } catch (error) {
-      setError(
-        error?.response?.data?.message || "Failed to change user details",
-      );
+      setError(error?.message);
     } finally {
       setLoader(false);
       setShowAvatarFileInput(false);
@@ -252,14 +221,14 @@ const EditProfileForm = () => {
               </>
             ) : (
               <>
-              <p>You haven’t uploaded a cover image yet.</p>
-              <button
-                type="button"
-                onClick={handleCoverImageChangeClick}
-                className="absolute bottom-2 left-2 bg-gray-700 hover:bg-gray-600 px-4 py-0.5 rounded-md text-[14px] text-white"
-              >
-                {showCoverImageFileInput ? "Cancel" : "Add"}
-              </button>
+                <p>You haven’t uploaded a cover image yet.</p>
+                <button
+                  type="button"
+                  onClick={handleCoverImageChangeClick}
+                  className="absolute bottom-2 left-2 bg-gray-700 hover:bg-gray-600 px-4 py-0.5 rounded-md text-[14px] text-white"
+                >
+                  {showCoverImageFileInput ? "Cancel" : "Add"}
+                </button>
               </>
             )}
           </div>
@@ -288,7 +257,10 @@ const EditProfileForm = () => {
               <div className="absolute top-[22px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-6" />
             </div>
           ) : (
-            <button className="btn bg-gray-600 w-full my-2 rounded-md" type="submit">
+            <button
+              className="btn bg-gray-600 w-full my-2 rounded-md"
+              type="submit"
+            >
               Save
             </button>
           )}

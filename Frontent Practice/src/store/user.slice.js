@@ -1,16 +1,15 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import axios from "axios";
+
+import { getCurrentUser } from "../apis/user.apis";
 
 let fetchCurrentUser = createAsyncThunk(
   "fetchCurrentUser",
   async (_, { rejectWithValue }) => {
     try {
-      let res = await axios.get(`${import.meta.env.VITE_API_URL}/user/get-current-user`, {
-        withCredentials: true,
-      });
+      let res = await getCurrentUser()
       return res.data;
     } catch (error) {
-      return rejectWithValue(err.response?.data?.message || "Failed to user ");
+      return rejectWithValue(error?.message);
     }
   },
 );
@@ -24,7 +23,7 @@ let currentUserSlice = createSlice({
     fetched :false
   },
   reducers: {
-    clearCurrentUser: (state, action) => {
+    clearCurrentUser: (state) => {
       state.data = null;
       state.loading = false;
       state.error = null;
@@ -33,16 +32,16 @@ let currentUserSlice = createSlice({
     updateCurrentUser: (state, action) => {
       state.data = { ...state.data, ...action.payload };
     },
-    removeCoverImage: (state, action) => {
+    deleteCoverImage: (state) => {
       state.data = { ...state.data,coverImage:"" };
     },
   },
   extraReducers: (builder) => {
-    builder.addCase(fetchCurrentUser.pending, (state, action) => {
+    builder.addCase(fetchCurrentUser.pending, (state) => {
       state.loading = true;
     });
     builder.addCase(fetchCurrentUser.fulfilled, (state, action) => {
-      state.data = action.payload.data;
+      state.data = action.payload;
       state.loading = false;
       state.fetched = true
     });
@@ -53,12 +52,12 @@ let currentUserSlice = createSlice({
   },
 });
 
-let { clearCurrentUser, updateCurrentUser,removeCoverImage } = currentUserSlice.actions;
+let { clearCurrentUser, updateCurrentUser,deleteCoverImage } = currentUserSlice.actions;
 
 export {
   currentUserSlice,
   fetchCurrentUser,
   clearCurrentUser,
   updateCurrentUser,
-  removeCoverImage
+  deleteCoverImage
 };

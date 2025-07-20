@@ -8,6 +8,7 @@ import { clearCurrentUser } from "../store/user.slice";
 import { clearVideos } from "../store/videos.slice";
 import { RiEyeLine, RiEyeOffLine } from "react-icons/ri";
 import { clearLikedVideos } from "../store/likedVideos.slice";
+import { changePassword } from "../apis/user.apis";
 
 const ChangePasswordForm = () => {
   let { register, handleSubmit } = useForm();
@@ -26,15 +27,7 @@ const ChangePasswordForm = () => {
     formData.append("newPassword", data.newPassword);
 
     try {
-      let res = await axios.post(
-        `http://localhost:8000/user/change-password`,
-        formData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-          withCredentials: true,
-        },
-      );
-
+      await changePassword(formData);
       navigate("/login");
       dispatch(clearCurrentUser());
       dispatch(clearCurrentUserVideos());
@@ -42,7 +35,7 @@ const ChangePasswordForm = () => {
       dispatch(clearHistory());
       dispatch(clearLikedVideos());
     } catch (error) {
-      setError(error?.response?.data?.message);
+      setError(error?.message);
     } finally {
       setLoader(false);
     }
@@ -147,7 +140,10 @@ const ChangePasswordForm = () => {
               <div className="absolute top-[22px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-6" />
             </div>
           ) : (
-            <button className="btn bg-gray-600 w-full my-2 rounded-md" type="submit">
+            <button
+              className="btn bg-gray-600 w-full my-2 rounded-md"
+              type="submit"
+            >
               Change
             </button>
           )}

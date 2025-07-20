@@ -9,6 +9,7 @@ import { clearVideos } from "../store/videos.slice.js";
 import { clearHistory } from "../store/history.slice.js";
 import { clearLikedVideos } from "../store/likedVideos.slice.js";
 import { useDispatch } from "react-redux";
+import { deleteUser } from "../apis/user.apis.js";
 
 const DeleteUser = () => {
   let { register, handleSubmit } = useForm();
@@ -17,21 +18,16 @@ const DeleteUser = () => {
   let navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   let dispatch = useDispatch();
+
   let submit = async (data) => {
     setLoader(true);
     setError("");
+
     let formData = new FormData();
     formData.append("password", data.password);
 
     try {
-      let res = await axios.post(
-        `http://localhost:8000/user/delete-user`,
-        formData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-          withCredentials: true,
-        },
-      );
+      await deleteUser(formData)
       dispatch(clearCurrentUser());
       dispatch(clearCurrentUserVideos());
       dispatch(clearVideos());
@@ -39,7 +35,7 @@ const DeleteUser = () => {
       dispatch(clearLikedVideos());
       navigate("/");
     } catch (error) {
-      setError(error?.response?.data?.message);
+      setError(error?.message);
     } finally {
       setLoader(false);
     }

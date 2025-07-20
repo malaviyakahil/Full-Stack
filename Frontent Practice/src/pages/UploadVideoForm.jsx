@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { clearCurrentUserVideos } from "../store/userVideos.slice";
+import { uploadVideo } from "../apis/video.apis";
 
 const UploadVideoForm = () => {
   let { register, handleSubmit } = useForm();
@@ -59,18 +60,10 @@ const UploadVideoForm = () => {
     formData.append("video", videoFile);
 
     try {
-      let res = await axios.post(
-        "http://localhost:8000/video/upload-video",
-        formData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-          withCredentials: true,
-        },
-      );
-      dispatch(clearCurrentUserVideos());
+      await uploadVideo(formData)
       navigate("/app/my-videos/uploaded-videos");
     } catch (error) {
-      setError(error?.response?.data?.message || "Unable to upload video");
+      setError(error?.message);
     } finally {
       setLoader(false);
     }

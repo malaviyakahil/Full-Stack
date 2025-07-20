@@ -14,6 +14,19 @@ import { BsPinAngle } from "react-icons/bs";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { MdOutlineSort } from "react-icons/md";
 import TextareaAutosize from "react-textarea-autosize";
+import {
+  addComment,
+  deleteCommentReview,
+  disLikeComment,
+  getComments,
+  giveHeart,
+  likeComment,
+  takeHeart,
+  unPin,
+  pin,
+  editComment,
+  deleteComment
+} from "../apis/comment.apis";
 
 const CommentSection = ({ videoId, channelDetails, ownerId }) => {
   const currentUser = useSelector((store) => store.currentUser);
@@ -30,6 +43,7 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
   const commentRefs = useRef({});
   const [showSortMenu, setShowSortMenu] = useState(false);
   const sortRef = useRef(null);
+  let [error, setError] = useState("");
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -73,16 +87,11 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
     }
 
     try {
-      const res = await axios.get(
-        `http://localhost:8000/comment/get-comments/${videoId}`,
-        { params, withCredentials: true },
-      );
-
-      const newComments = res.data.data.comments;
-      const nextCursor = res.data.data.nextCursor;
-      const hasMoreRes = res.data.data.hasMore;
-      const total = res.data.data.total || 0;
-
+      const res = await getComments(videoId);
+      const newComments = res?.data?.comments;
+      const nextCursor = res?.data?.nextCursor;
+      const hasMoreRes = res?.data?.hasMore;
+      const total = res?.data?.total || 0;
       setTotalCount(total);
       setComments((prev) => [
         ...prev,
@@ -97,8 +106,8 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
 
       setLastCursor(nextCursor);
       setHasMore(hasMoreRes);
-    } catch (err) {
-      console.error("Failed to fetch comments", err);
+    } catch (error) {
+      setError(error?.message);
     } finally {
       setLoading(false);
     }
@@ -133,16 +142,9 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
 
     try {
       setLoader(true);
-      const res = await axios.post(
-        `http://localhost:8000/comment/add-comment/${videoId}`,
-        formData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-          withCredentials: true,
-        },
-      );
+      const res = await addComment(videoId, formData);
       const newComment = {
-        ...res.data.data,
+        ...res.data,
         showDropdown: false,
         readMore: false,
         hasOverflow: false,
@@ -150,7 +152,7 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
       setComments((prev) => [newComment, ...prev]);
       setTotalCount((prev) => prev + 1);
     } catch (error) {
-      console.error("Failed to post comment:", error);
+      setError(error?.message);
     } finally {
       setLoader(false);
     }
@@ -158,103 +160,20 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
     setCommentText("");
   };
 
-  const toggleLike = (id) => {
-    if (comments.find((item) => item._id === id).like.status === true) {
-      setComments((prevData) =>
-        prevData.map((item) =>
-          item._id === id
-            ? {
-                ...item,
-                like: {
-                  ...item.like,
-                  status: false,
-                  count: item.like.count - 1,
-                },
-              }
-            : item,
-        ),
-      );
-      axios.post(
-        `http://localhost:8000/comment/delete-comment-review/${id}`,
-        [],
-        { withCredentials: true },
-      );
-    } else {
-      if (comments.find((item) => item._id === id).dislike.status === true) {
-        setComments((prevData) =>
-          prevData.map((item) =>
-            item._id === id
-              ? {
-                  ...item,
-                  like: {
-                    ...item.like,
-                    status: true,
-                    count: item.like.count + 1,
-                  },
-                  dislike: {
-                    ...item.dislike,
-                    status: false,
-                    count: item.dislike.count - 1,
-                  },
-                }
-              : item,
-          ),
-        );
-      } else {
-        setComments((prevData) =>
-          prevData.map((item) =>
-            item._id === id
-              ? {
-                  ...item,
-                  like: {
-                    ...item.like,
-                    status: true,
-                    count: item.like.count + 1,
-                  },
-                }
-              : item,
-          ),
-        );
-      }
-      axios.post(`http://localhost:8000/comment/like-comment/${id}`, [], {
-        withCredentials: true,
-      });
-    }
-  };
+  const toggleLike = async (id) => {
+    const prevComments = [...comments];
+    const target = comments.find((item) => item._id === id);
 
-  const toggleDislike = (id) => {
-    if (comments.find((item) => item._id === id).dislike.status === true) {
-      setComments((prevData) =>
-        prevData.map((item) =>
-          item._id === id
-            ? {
-                ...item,
-                dislike: {
-                  ...item.dislike,
-                  status: false,
-                  count: item.dislike.count - 1,
-                },
-              }
-            : item,
-        ),
-      );
-      axios.post(
-        `http://localhost:8000/comment/delete-comment-review/${id}`,
-        [],
-        { withCredentials: true },
-      );
-    } else {
-      if (comments.find((item) => item._id === id).like.status === true) {
+    if (!target) return;
+
+    try {
+      if (target.like.status) {
+        // 🔽 UNLIKE
         setComments((prevData) =>
           prevData.map((item) =>
             item._id === id
               ? {
                   ...item,
-                  dislike: {
-                    ...item.dislike,
-                    status: true,
-                    count: item.dislike.count + 1,
-                  },
                   like: {
                     ...item.like,
                     status: false,
@@ -264,7 +183,64 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
               : item,
           ),
         );
+        await deleteCommentReview(id);
       } else {
+        // 👍 LIKE (could remove dislike if present)
+        setComments((prevData) =>
+          prevData.map((item) =>
+            item._id === id
+              ? {
+                  ...item,
+                  like: {
+                    ...item.like,
+                    status: true,
+                    count: item.like.count + 1,
+                  },
+                  dislike: item.dislike.status
+                    ? {
+                        ...item.dislike,
+                        status: false,
+                        count: item.dislike.count - 1,
+                      }
+                    : item.dislike,
+                }
+              : item,
+          ),
+        );
+        await likeComment(id);
+      }
+    } catch (error) {
+      setError(error?.message);
+      setComments(prevComments);
+    }
+  };
+
+  const toggleDislike = async (id) => {
+    const prevComments = [...comments];
+    const target = comments.find((item) => item._id === id);
+
+    if (!target) return;
+
+    try {
+      if (target.dislike.status) {
+        // 👎 REMOVE DISLIKE
+        setComments((prevData) =>
+          prevData.map((item) =>
+            item._id === id
+              ? {
+                  ...item,
+                  dislike: {
+                    ...item.dislike,
+                    status: false,
+                    count: item.dislike.count - 1,
+                  },
+                }
+              : item,
+          ),
+        );
+        await deleteCommentReview(id);
+      } else {
+        // 👎 ADD DISLIKE, REMOVE LIKE IF NEEDED
         setComments((prevData) =>
           prevData.map((item) =>
             item._id === id
@@ -275,14 +251,22 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
                     status: true,
                     count: item.dislike.count + 1,
                   },
+                  like: item.like.status
+                    ? {
+                        ...item.like,
+                        status: false,
+                        count: item.like.count - 1,
+                      }
+                    : item.like,
                 }
               : item,
           ),
         );
+        await disLikeComment(id);
       }
-      axios.post(`http://localhost:8000/comment/dislike-comment/${id}`, [], {
-        withCredentials: true,
-      });
+    } catch (error) {
+      setError(error?.message);
+      setComments(prevComments);
     }
   };
 
@@ -305,25 +289,27 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
     );
   };
 
-  const toggleHeart = (heart, id) => {
-    if (heart) {
+  const toggleHeart = async (heart, id) => {
+    const prevComments = [...comments]; // ✅ shallow copy is enough here
+
+    try {
+      // Optimistic UI update
       setComments((prevData) =>
         prevData.map((item) =>
-          item._id === id ? { ...item, heartByChannel: false } : item,
+          item._id === id ? { ...item, heartByChannel: !heart } : item,
         ),
       );
-      axios.post(`http://localhost:8000/comment/take-heart/${id}`, [], {
-        withCredentials: true,
-      });
-    } else {
-      setComments((prevData) =>
-        prevData.map((item) =>
-          item._id === id ? { ...item, heartByChannel: true } : item,
-        ),
-      );
-      axios.post(`http://localhost:8000/comment/give-heart/${id}`, [], {
-        withCredentials: true,
-      });
+
+      // Await the API call
+      if (heart) {
+        await takeHeart(id);
+      } else {
+        await giveHeart(id);
+      }
+    } catch (error) {
+      // Rollback on failure
+      setComments(prevComments);
+      setError(error?.message);
     }
   };
 
@@ -331,89 +317,91 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
     return comments.filter((comment) => comment.pinByChannel === true).length;
   };
 
-  const togglePin = (pin, id) => {
+  const togglePin = async (pinIt, id) => {
+    const prevComments = [...comments];
+
+    // Close all dropdowns
     setComments((prevData) =>
-      prevData.map((item) => {
-        return { ...item, showDropdown: false };
-      }),
+      prevData.map((item) => ({ ...item, showDropdown: false })),
     );
-    if (pin) {
-      setComments((prevData) =>
-        prevData.map((item) =>
-          item._id === id ? { ...item, pinByChannel: false } : item,
-        ),
-      );
-      axios.post(`http://localhost:8000/comment/un-pin/${id}`, [], {
-        withCredentials: true,
-      });
-    } else {
-      if (countPinnedComments() < 1) {
+
+    try {
+      if (pinIt) {
+        // Optimistically unpin
         setComments((prevData) =>
           prevData.map((item) =>
-            item._id === id ? { ...item, pinByChannel: true } : item,
+            item._id === id ? { ...item, pinByChannel: false } : item,
           ),
         );
-        axios.post(`http://localhost:8000/comment/pin/${id}`, [], {
-          withCredentials: true,
-        });
+        await unPin(id); // ✅ correct for unpin
+      } else {
+        // Only allow pinning if no other comment is pinned
+        if (countPinnedComments() < 1) {
+          setComments((prevData) =>
+            prevData.map((item) =>
+              item._id === id ? { ...item, pinByChannel: true } : item,
+            ),
+          );
+          await pin(id); // ✅ correct for pin
+        }
       }
+    } catch (error) {
+      setError(error?.message);
+      setComments(prevComments); // Rollback on failure
     }
   };
 
-  const deleteComment = async (id) => {
+  const handleDeleteComment = async (id) => {
     let prevData = [...comments];
+
     let prevTotalCount = totalCount;
-    setComments((prev) =>
-      prev.map((c) => ({
-        ...c,
-        showDropdown: false,
-        editing: false,
-      })),
-    );
-    setEditCommentText("");
-    setComments(comments.filter((item) => item._id != id));
-    setTotalCount((prev) => prev - 1);
     try {
-      await axios.post(`http://localhost:8000/comment/delete-comment/${id}`, [], {
-        withCredentials: true,
-      });
+      setComments((prev) =>
+        prev.map((c) => ({
+          ...c,
+          showDropdown: false,
+          editing: false,
+        })),
+      );
+      setEditCommentText("");
+      setComments(comments.filter((item) => item._id != id));
+      setTotalCount((prev) => prev - 1);
+      await deleteComment(id);
     } catch (error) {
       setComments(prevData);
       setTotalCount(prevTotalCount);
     }
   };
 
-  const editComment = async (id) => {
+  const handleEditComment = async (id) => {
     if (!editCommentText.trim()) return;
+
     const formData = new FormData();
     formData.append("comment", editCommentText);
+
     const prevComments = [...comments];
-    setComments((prev) =>
-      prev.map((item) =>
-        item._id === id
-          ? {
-              ...item,
-              comment: editCommentText,
-              showDropdown: false,
-              edited: true,
-              editing: false,
-            }
-          : item,
-      ),
-    );
+    let prevComment = editCommentText;
     try {
-      await axios.post(
-        `http://localhost:8000/comment/edit-comment/${id}`,
-        formData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-          withCredentials: true,
-        },
+      setComments((prev) =>
+        prev.map((item) =>
+          item._id === id
+            ? {
+                ...item,
+                comment: editCommentText,
+                showDropdown: false,
+                edited: true,
+                editing: false,
+              }
+            : item,
+        ),
       );
+      setEditCommentText("");
+      await editComment(id, formData);
     } catch (error) {
+      setError(error?.message);
       setComments(prevComments);
+      setEditCommentText(prevComment);
     }
-    setEditCommentText("");
   };
 
   const cancelEdit = (id) => {
@@ -435,44 +423,6 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
       ),
     );
   };
-
-  useEffect(() => {
-    const handleClickOutsideDropdowns = (event) => {
-      let clickedInsideDropdown = false;
-
-      for (const commentId in commentRefs.current) {
-        const dropdownButton = commentRefs.current[commentId]?.querySelector(
-          ".comment-dropdown-trigger",
-        );
-        const dropdownMenu = commentRefs.current[commentId]?.querySelector(
-          ".comment-dropdown-menu",
-        );
-
-        if (
-          dropdownButton?.contains(event.target) ||
-          dropdownMenu?.contains(event.target)
-        ) {
-          clickedInsideDropdown = true;
-          break;
-        }
-      }
-
-      if (!clickedInsideDropdown) {
-        setComments((prev) =>
-          prev.map((comment) => ({
-            ...comment,
-            showDropdown: false,
-            editing: false,
-          })),
-        );
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutsideDropdowns);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutsideDropdowns);
-    };
-  }, []);
 
   return (
     <>
@@ -697,7 +647,7 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
                     </button>
                     <button
                       onClick={() => {
-                        editComment(comment?._id);
+                        handleEditComment(comment?._id);
                       }}
                       className={`text-white px-2 py-0.25 rounded-md text-[13px] bg-gray-700 hover:bg-gray-600
                     `}
@@ -736,7 +686,7 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
                         <button
                           className="block w-full px-4 py-2 text-left hover:bg-gray-600"
                           onClick={() => {
-                            deleteComment(comment?._id);
+                            handleDeleteComment(comment?._id);
                           }}
                         >
                           Delete
@@ -796,7 +746,7 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
                         <button
                           className="block w-full px-4 py-2 text-left hover:bg-gray-600"
                           onClick={() => {
-                            deleteComment(comment?._id);
+                            handleDeleteComment(comment?._id);
                           }}
                         >
                           Delete

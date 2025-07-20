@@ -282,90 +282,6 @@ let getCurrentUser = asyncHandler(async (req, res) => {
   res.status(200).json(new response(200, currentUser[0], "Current user"));
 });
 
-const getCurrentUserVideos = asyncHandler(async (req, res) => {
-  const id = req.user?._id;
-  const page = Number(req.query.page) || 1;
-  const limit = Number(req.query.limit);
-  const skip = (page - 1) * limit;
-
-  const result = await Video.aggregate([
-    {
-      $match: { owner: new mongoose.Types.ObjectId(id) },
-    },
-    {
-      $lookup: {
-        from: "reviews",
-        localField: "_id",
-        foreignField: "video",
-        as: "result",
-      },
-    },
-    {
-      $addFields: {
-        likes: {
-          $size: {
-            $filter: {
-              input: "$result",
-              as: "review",
-              cond: { $eq: ["$$review.review", "Like"] },
-            },
-          },
-        },
-        dislikes: {
-          $size: {
-            $filter: {
-              input: "$result",
-              as: "review",
-              cond: { $eq: ["$$review.review", "Dislike"] },
-            },
-          },
-        },
-      },
-    },
-    {
-      $project: {
-        _id: 1,
-        title: 1,
-        thumbnail: 1,
-        thumbnailPublicId: 1,
-        videoPublicId: 1,
-        createdAt: 1,
-        duration: 1,
-        description: 1,
-        likes: 1,
-        dislikes: 1,
-        views: 1,
-      },
-    },
-    {
-      $sort: { createdAt: -1 },
-    },
-    {
-      $facet: {
-        paginatedResults: [{ $skip: skip }, { $limit: limit }],
-        totalCount: [{ $count: "count" }],
-      },
-    },
-  ]);
-
-  const videos = result[0]?.paginatedResults || [];
-  const total = result[0]?.totalCount?.[0]?.count || 0;
-  const totalPages = Math.ceil(total / limit);
-
-  res.status(200).json(
-    new response(
-      200,
-      {
-        videos,
-        total,
-        page,
-        pages: totalPages,
-      },
-      "Current user videos fetched",
-    ),
-  );
-});
-
 let logoutUser = asyncHandler(async (req, res, next) => {
   let id = req.user?._id;
 
@@ -917,11 +833,95 @@ const deleteUser = asyncHandler(async (req, res) => {
   }
 });
 
+
+const getCurrentUserVideos = asyncHandler(async (req, res) => {
+  const id = req.user?._id;
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit);
+  const skip = (page - 1) * limit;
+
+  const result = await Video.aggregate([
+    {
+      $match: { owner: new mongoose.Types.ObjectId(id) },
+    },
+    {
+      $lookup: {
+        from: "reviews",
+        localField: "_id",
+        foreignField: "video",
+        as: "result",
+      },
+    },
+    {
+      $addFields: {
+        likes: {
+          $size: {
+            $filter: {
+              input: "$result",
+              as: "review",
+              cond: { $eq: ["$$review.review", "Like"] },
+            },
+          },
+        },
+        dislikes: {
+          $size: {
+            $filter: {
+              input: "$result",
+              as: "review",
+              cond: { $eq: ["$$review.review", "Dislike"] },
+            },
+          },
+        },
+      },
+    },
+    {
+      $project: {
+        _id: 1,
+        title: 1,
+        thumbnail: 1,
+        thumbnailPublicId: 1,
+        videoPublicId: 1,
+        createdAt: 1,
+        duration: 1,
+        description: 1,
+        likes: 1,
+        dislikes: 1,
+        views: 1,
+      },
+    },
+    {
+      $sort: { createdAt: -1 },
+    },
+    {
+      $facet: {
+        paginatedResults: [{ $skip: skip }, { $limit: limit }],
+        totalCount: [{ $count: "count" }],
+      },
+    },
+  ]);
+
+  const videos = result[0]?.paginatedResults || [];
+  const total = result[0]?.totalCount?.[0]?.count || 0;
+  const totalPages = Math.ceil(total / limit);
+
+  res.status(200).json(
+    new response(
+      200,
+      {
+        videos,
+        total,
+        page,
+        pages: totalPages,
+      },
+      "Current user videos fetched",
+    ),
+  );
+});
+
 export {
   registerUser,
   loginUser,
   getCurrentUser,
-  getCurrentUserVideos,
   logoutUser,
   renewAccessToken,
   changePassword,
@@ -936,4 +936,5 @@ export {
   deleteLikedVideos,
   authMe,
   deleteUser,
+  getCurrentUserVideos
 };

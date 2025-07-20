@@ -2,6 +2,7 @@ import { User } from "../models/user.model.js";
 import { Video } from "../models/video.model.js";
 import response from "../utils/response.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import mongoose from "mongoose";
 
 const searchAll = asyncHandler(async (req, res) => {
   const { query } = req.query;

@@ -18,16 +18,20 @@ import {
   addToLikedVideos,
   deleteFromLikedVideos,
 } from "../store/likedVideos.slice.js";
-
-const formatTime = (time) => {
-  const minutes = Math.floor(time / 60)
-    .toString()
-    .padStart(2, "0");
-  const seconds = Math.floor(time % 60)
-    .toString()
-    .padStart(2, "0");
-  return `${minutes}:${seconds}`;
-};
+import formatTime from "../utils/formatTime";
+import {
+  deleteReview,
+  disLikeVideo,
+  getVideo,
+  likeVideo,
+} from "../apis/video.apis.js";
+import {
+  getChannelDetails,
+  getSubStatus,
+  subscribeTo,
+  unSubscribeTo,
+} from "../apis/channel.apis.js";
+import { getReviewStatus } from "../apis/user.apis.js";
 
 const SingleVideo = () => {
   const { ownerId, videoId } = useParams();
@@ -46,7 +50,6 @@ const SingleVideo = () => {
   const [showControls, setShowControls] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const timeoutRef = useRef(null);
-
   const [loading, setLoading] = useState(true);
   let [subCount, setSubCount] = useState({
     count: 0,
@@ -65,9 +68,9 @@ const SingleVideo = () => {
   const [selectedQuality, setSelectedQuality] = useState("");
   const [availableQualities, setAvailableQualities] = useState([]);
   const [switchingQuality, setSwitchingQuality] = useState(false);
-
   const qualityLoaderTimeout = useRef(null);
   const qualityLoaderMinimumTime = useRef(null);
+  let [error, setError] = useState("");
 
   useEffect(() => {
     (async () => {
@@ -75,58 +78,44 @@ const SingleVideo = () => {
         setLoading(true);
 
         let [videoRes, statusRes, reviewRes, detailsRes] = await Promise.all([
-          axios.post(`http://localhost:8000/video/get-video/${videoId}`, [], {
-            withCredentials: true,
-          }),
-          axios.post(
-            `http://localhost:8000/channel/get-sub-status/${ownerId}`,
-            [],
-            { withCredentials: true },
-          ),
-          axios.post(
-            `http://localhost:8000/user/get-review-status/${videoId}`,
-            [],
-            { withCredentials: true },
-          ),
-          axios.get(
-            `http://localhost:8000/channel/get-channel-details/${ownerId}`,
-            [],
-            { withCredentials: true },
-          ),
+          getVideo(videoId),
+          getSubStatus(ownerId),
+          getReviewStatus(videoId),
+          getChannelDetails(ownerId),
         ]);
-
         setSubCount({
-          status: statusRes.data?.data,
-          count: detailsRes.data?.data.subs,
+          status: statusRes?.data,
+          count: detailsRes?.data?.subs,
         });
-        setVideo(videoRes.data?.data);
-        setAvailableQualities(videoRes.data?.data?.availableQualities);
-        setSelectedQuality(videoRes.data?.data?.originalQuality);
+        setVideo(videoRes?.data);
+        setAvailableQualities(videoRes?.data?.availableQualities);
+        setSelectedQuality(videoRes?.data?.originalQuality);
         setReviewCount({
           like: {
-            count: videoRes?.data?.data?.reviews?.Like,
-            status: reviewRes.data?.data?.review === "Like",
+            count: videoRes?.data?.reviews?.Like,
+            status: reviewRes?.data?.review === "Like",
           },
           dislike: {
-            count: videoRes?.data?.data?.reviews?.Dislike,
-            status: reviewRes.data?.data?.review === "Dislike",
+            count: videoRes?.data?.reviews?.Dislike,
+            status: reviewRes?.data?.review === "Dislike",
           },
         });
-        setChannelDetails(detailsRes.data?.data);
+        setChannelDetails(detailsRes?.data);
 
-        if (videoRes.data.data.history._id) {
+        if (videoRes?.data?.history?._id) {
           dispatch(
             addToHistory({
-              _id: videoRes.data?.data.history._id,
+              _id: videoRes?.data?.history?._id,
               video: {
-                ...videoRes.data?.data,
-                owner: { ...detailsRes.data?.data },
+                ...videoRes?.data,
+                owner: { ...detailsRes?.data },
               },
             }),
           );
         }
       } catch (error) {
-        console.error(error);
+        setError(error?.message);
+        console.log(error);
       } finally {
         setLoading(false);
       }
@@ -385,114 +374,132 @@ const SingleVideo = () => {
     );
   };
 
-  const subscribeToggle = () => {
-    if (subCount.status) {
-      setSubCount({
+  const subscribeToggle = async () => {
+    const prevSubCount = { ...subCount };
+
+    try {
+      // Optimistically update
+      const updated = {
         ...subCount,
-        status: false,
-        count: subCount.count - 1,
-      });
-      axios.post(`http://localhost:8000/channel/unsubscribe-to/${ownerId}`, [], {
-        withCredentials: true,
-      });
-    } else {
-      setSubCount({
-        ...subCount,
-        status: true,
-        count: subCount.count + 1,
-      });
-      axios.post(`http://localhost:8000/channel/subscribe-to/${ownerId}`, [], {
-        withCredentials: true,
-      });
+        status: !subCount.status,
+        count: subCount.status ? subCount.count - 1 : subCount.count + 1,
+      };
+
+      setSubCount(updated);
+
+      // Perform the actual request
+      if (subCount.status) {
+        await unSubscribeTo(ownerId);
+      } else {
+        await subscribeTo(ownerId);
+      }
+    } catch (error) {
+      // Rollback UI
+      setSubCount(prevSubCount);
+      setError(error?.message);
     }
   };
 
-  const likeToggle = () => {
-    if (reviewCount.like.status) {
-      setReviewCount({
-        ...reviewCount,
-        like: {
-          status: false,
-          count: reviewCount.like.count - 1,
-        },
-      });
-      dispatch(deleteFromLikedVideos(videoId));
-      axios.post(`http://localhost:8000/video/delete-review/${videoId}`, [], {
-        withCredentials: true,
-      });
-    } else {
-      dispatch(
-        addToLikedVideos({
-          _id: videoId,
-          video: {
-            ...video,
-            owner: { ...channelDetails },
-          },
-        }),
-      );
-      if (reviewCount.dislike.status) {
-        setReviewCount({
-          like: {
-            status: true,
-            count: reviewCount.like.count + 1,
-          },
-          dislike: {
-            status: false,
-            count: reviewCount.dislike.count - 1,
-          },
-        });
-      } else {
+  const likeToggle = async () => {
+    const prevReviewCount = JSON.parse(JSON.stringify(reviewCount));
+
+    try {
+      if (reviewCount.like.status) {
+        // Optimistic unlike
         setReviewCount({
           ...reviewCount,
-          like: {
-            status: true,
-            count: reviewCount.like.count + 1,
-          },
-        });
-      }
-      axios.post(`http://localhost:8000/video/like-video/${videoId}`, [], {
-        withCredentials: true,
-      });
-    }
-  };
-
-  const dislikeToggle = () => {
-    if (reviewCount.dislike.status) {
-      setReviewCount({
-        ...reviewCount,
-        dislike: {
-          status: false,
-          count: reviewCount.dislike.count - 1,
-        },
-      });
-      axios.post(`http://localhost:8000/video/delete-review/${videoId}`, [], {
-        withCredentials: true,
-      });
-    } else {
-      dispatch(deleteFromLikedVideos(video._id));
-      if (reviewCount.like.status) {
-        setReviewCount({
-          dislike: {
-            status: true,
-            count: reviewCount.dislike.count + 1,
-          },
           like: {
             status: false,
             count: reviewCount.like.count - 1,
           },
         });
+        dispatch(deleteFromLikedVideos(videoId));
+        await deleteReview(videoId);
       } else {
+        // Optimistic like
+        if (reviewCount.dislike.status) {
+          setReviewCount({
+            like: {
+              status: true,
+              count: reviewCount.like.count + 1,
+            },
+            dislike: {
+              status: false,
+              count: reviewCount.dislike.count - 1,
+            },
+          });
+        } else {
+          setReviewCount({
+            ...reviewCount,
+            like: {
+              status: true,
+              count: reviewCount.like.count + 1,
+            },
+          });
+        }
+
+        dispatch(
+          addToLikedVideos({
+            _id: videoId,
+            video: {
+              ...video,
+              owner: { ...channelDetails },
+            },
+          }),
+        );
+
+        await likeVideo(videoId);
+      }
+    } catch (error) {
+      setReviewCount(prevReviewCount); // Rollback
+      setError(error?.message);
+    }
+  };
+
+  const dislikeToggle = async () => {
+    const prevReviewCount = JSON.parse(JSON.stringify(reviewCount));
+
+    try {
+      if (reviewCount.dislike.status) {
+        // Optimistically remove dislike
         setReviewCount({
           ...reviewCount,
           dislike: {
-            status: true,
-            count: reviewCount.dislike.count + 1,
+            status: false,
+            count: reviewCount.dislike.count - 1,
           },
         });
+
+        await deleteReview(videoId);
+      } else {
+        // Remove like from Redux if it was liked
+        if (reviewCount.like.status) {
+          dispatch(deleteFromLikedVideos(video._id));
+          setReviewCount({
+            dislike: {
+              status: true,
+              count: reviewCount.dislike.count + 1,
+            },
+            like: {
+              status: false,
+              count: reviewCount.like.count - 1,
+            },
+          });
+        } else {
+          setReviewCount({
+            ...reviewCount,
+            dislike: {
+              status: true,
+              count: reviewCount.dislike.count + 1,
+            },
+          });
+        }
+
+        await disLikeVideo(videoId);
       }
-      axios.post(`http://localhost:8000/video/dislike-video/${videoId}`, [], {
-        withCredentials: true,
-      });
+    } catch (error) {
+      setReviewCount(prevReviewCount); // rollback
+      setError(error?.message);
     }
   };
 
@@ -520,21 +527,20 @@ const SingleVideo = () => {
   };
 
   const getDownloadUrl = (url) => {
-  if (!url.includes("/upload/")) return url;
-  const [prefix, suffix] = url.split("/upload/");
-  return `${prefix}/upload/fl_attachment/${suffix}`;
-};
+    if (!url.includes("/upload/")) return url;
+    const [prefix, suffix] = url.split("/upload/");
+    return `${prefix}/upload/fl_attachment/${suffix}`;
+  };
 
-const handleDownload = () => {
-  const downloadUrl = getDownloadUrl(video.video);
-  const anchor = document.createElement("a");
-  anchor.href = downloadUrl;
-  anchor.download = `${video.title || "video"}.mp4`;
-  document.body.appendChild(anchor);
-  anchor.click();
-  document.body.removeChild(anchor);
-};
-
+  const handleDownload = () => {
+    const downloadUrl = getDownloadUrl(video.video);
+    const anchor = document.createElement("a");
+    anchor.href = downloadUrl;
+    anchor.download = `${video.title || "video"}.mp4`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+  };
 
   if (loading) {
     return (
@@ -786,12 +792,16 @@ const handleDownload = () => {
             {reviewCount.dislike.status ? <BiSolidDislike /> : <BiDislike />}
             {reviewCount.dislike.count}
           </button>
-          <button className="bg-gray-700 hover:bg-gray-600 px-4 py-1 rounded-4xl flex justify-center items-center gap-1" 
-          onClick={handleShare}>
+          <button
+            className="bg-gray-700 hover:bg-gray-600 px-4 py-1 rounded-4xl flex justify-center items-center gap-1"
+            onClick={handleShare}
+          >
             <IoShareSocialOutline /> Share
           </button>
-          <button className="bg-gray-700 hover:bg-gray-600 px-4 py-1 rounded-4xl flex justify-center items-center gap-1"
-          onClick={handleDownload}>
+          <button
+            className="bg-gray-700 hover:bg-gray-600 px-4 py-1 rounded-4xl flex justify-center items-center gap-1"
+            onClick={handleDownload}
+          >
             <PiDownloadSimpleBold /> Download
           </button>
         </div>

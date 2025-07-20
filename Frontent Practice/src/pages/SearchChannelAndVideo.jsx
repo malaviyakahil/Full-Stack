@@ -3,80 +3,74 @@ import { Link, useParams } from "react-router-dom";
 import axios from "axios";
 import { useSelector } from "react-redux";
 import { formatDistanceToNowStrict } from "date-fns";
+import formatTime from "../utils/formatTime";
+import { searchChannelAndVideo } from "../apis/search.apis";
+import { subscribeTo, unSubscribeTo } from "../apis/channel.apis";
 
 const SearchChannelAndVideo = () => {
-  
   let { name } = useParams();
   let [loading, setLoading] = useState(false);
   let [data, setData] = useState({ channel: [], video: [] });
   let currentUser = useSelector((store) => store.currentUser);
+  let [error, setError] = useState("");
+  
+  const subscribeToggle = async (id, status) => {
+    // 1. Keep a full backup of the previous state
+    const prevData = JSON.parse(JSON.stringify(data)); // deep copy
 
-  let formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60)
-      .toString()
-      .padStart(2, "0");
-    return `${mins}:${secs}`;
-  };
-
-  const subscribeToggle = (id, status) => {
-    if (status) {
+    try {
+      // 2. Optimistic UI update
       setData({
         ...data,
         channel: data.channel.map((e) => {
-          if (e._id == id) {
+          if (e._id === id) {
             return {
               ...e,
-              subStatus: false,
-              subscribersCount: e.subscribersCount - 1,
+              subStatus: !status,
+              subscribersCount: e.subscribersCount + (status ? -1 : 1),
             };
           }
+          return e; // Always return a value
         }),
         video: [...data.video],
       });
-      axios.post(`http://localhost:8000/channel/unsubscribe-to/${id}`, [], {
-        withCredentials: true,
-      });
-    } else {
-      setData({
-        ...data,
-        channel: data.channel.map((e) => {
-          if (e._id == id) {
-            return {
-              ...e,
-              subStatus: true,
-              subscribersCount: e.subscribersCount + 1,
-            };
-          }
-        }),
-        video: [...data.video],
-      });
-      axios.post(`http://localhost:8000/channel/subscribe-to/${id}`, [], {
-        withCredentials: true,
-      });
+
+      // 3. Perform API call
+      if (status) {
+        await unSubscribeTo(id);
+      } else {
+        await subscribeTo(id);
+      }
+    } catch (error) {
+      // 4. Rollback on failure
+      setData(prevData);
+      setError(
+        error?.message
+      );
     }
   };
 
   useEffect(() => {
     (async () => {
       setLoading(true);
-      let res = await axios.get(
-        `http://localhost:8000/search/search-channel-and-video/${name}`,
-        {
-          withCredentials: true,
-        },
-      );
-      setData({
-        ...data,
-        channel: res.data.data.channel || [],
-        video: res.data.data.video || [],
-      });
-      setLoading(false);
+      try {
+        let res = await searchChannelAndVideo(name);
+        setData({
+          ...data,
+          channel: res?.data?.channel || [],
+          video: res?.data?.video || [],
+        });
+      } catch (error) {
+        setError(error?.message);
+      } finally {
+        setLoading(false);
+      }
     })();
   }, [name]);
 
   return (
     <div className="flex flex-col items-center">
+      {error && <p className="text-red-500 text-center my-2">{error}</p>}
       {loading ? (
         <>
           {[...Array(4)].map((_, index) => (
@@ -84,7 +78,7 @@ const SearchChannelAndVideo = () => {
               key={index}
               className="md:flex py-2.5 gap-5 w-full cursor-pointer sm:w-full md:w-[536px] lg:w-[760px] xl:w-[980px] animate-pulse"
             >
-              <div className="relative w-full aspect-video overflow-hidden rounded-lg bg-gray-800 flex justify-center items-center">
+              <div className="relative w-full aspect-video overflow-hidden rounded-md bg-gray-800 flex justify-center items-center">
                 <div className="h-full w-full bg-gray-700"></div>
                 <div className="absolute bottom-2 right-2 bg-gray-600 bg-opacity-75 text-white text-xs px-1 py-0.5 rounded w-10 h-4"></div>
               </div>
@@ -115,7 +109,7 @@ const SearchChannelAndVideo = () => {
           {data.channel.map((profile) => (
             <div key={profile._id}>
               <div className=" md:flex py-5 items-center gap-5 w-full cursor-pointer sm:w-full md:w-[536px] lg:w-[760px] xl:w-[980px]">
-                <div className="w-full aspect-video overflow-hidden rounded-lg flex justify-center items-center">
+                <div className="w-full aspect-video overflow-hidden rounded-md flex justify-center items-center">
                   <div className="aspect-square w-1/2 md:w-1/3 relative  overflow-hidden rounded-[1000px] bg-gray-800">
                     <Link to={`/app/dashboard/single-channel/${profile?._id}`}>
                       <img
@@ -172,7 +166,7 @@ const SearchChannelAndVideo = () => {
                         key={video?._id}
                         className="md:flex w-full cursor-pointer sm:w-full md:w-[536px] lg:w-[760px] xl:w-[980px]"
                       >
-                        <div className="relative  w-full aspect-video overflow-hidden rounded-lg bg-black flex justify-center">
+                        <div className="relative  w-full aspect-video overflow-hidden rounded-md bg-black flex justify-center">
                           <Link
                             to={`/app/dashboard/single-video/${profile?._id}/${video?._id}`}
                           >
@@ -245,7 +239,7 @@ const SearchChannelAndVideo = () => {
                   key={video?._id}
                   className="md:flex gap-5 w-full cursor-pointer sm:w-full md:w-[536px] lg:w-[760px] xl:w-[980px]"
                 >
-                  <div className="relative  w-full aspect-video overflow-hidden rounded-lg bg-black flex justify-center">
+                  <div className="relative  w-full aspect-video overflow-hidden rounded-md bg-black flex justify-center">
                     <Link
                       to={`/app/dashboard/single-video/${video.owner._id}/${video?._id}`}
                     >

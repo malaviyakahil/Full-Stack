@@ -1,24 +1,17 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import axios from "axios";
+import { getCurrentUserVideos } from "../apis/user.apis.js";
 
 let fetchcurrentUserVideos = createAsyncThunk(
   "fetchcurrentUserVideos",
   async (_, { getState, rejectWithValue }) => {
     try {
       const { page, limit } = getState().currentUserVideos;
-      let res = await axios.get(
-        `${import.meta.env.VITE_API_URL}/user/get-current-user-videos?page=${page}&limit=${limit}`,
-        {
-          withCredentials: true,
-        },
-      );
-      
-      const { videos, total, pages } = res.data.data;
+      let res = await getCurrentUserVideos({ page, limit });
+
+      const { videos, total, pages } = res.data;
       return { videos, total, pages, page, limit };
-    } catch (err) {
-      return rejectWithValue(
-        err.response?.data?.message || "Failed to fetch videos",
-      );
+    } catch (error) {
+      return rejectWithValue(error?.message);
     }
   },
 );
@@ -35,7 +28,7 @@ let currentUserVideosSlice = createSlice({
     fetched: false,
   },
   reducers: {
-    clearCurrentUserVideos: (state, action) => {
+    clearCurrentUserVideos: (state) => {
       state.data = [];
       state.page = 1;
       state.hasMore = true;
@@ -65,16 +58,8 @@ let currentUserVideosSlice = createSlice({
         video._id === updatedVideo._id ? updatedVideo : video,
       );
     },
-    incrementView: (state, action) => {
-      state.data = state.data?.map((video) => {
-        if (video._id == action.payload) {
-          return { ...video, views: video.views + 1 };
-        }
-        return video;
-      });
-    },
     setCurrentUserVideoLimit: (state, action) => {
-      state.limit = action.payload;      
+      state.limit = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -101,7 +86,6 @@ let currentUserVideosSlice = createSlice({
 let {
   clearCurrentUserVideos,
   deletOneVideo,
-  incrementView,
   setCurrentUserVideoLimit,
   undoDeletOneVideo,
   updateCurrentUserVideo,
@@ -114,6 +98,5 @@ export {
   deletOneVideo,
   setCurrentUserVideoLimit,
   undoDeletOneVideo,
-  incrementView,
   updateCurrentUserVideo,
 };

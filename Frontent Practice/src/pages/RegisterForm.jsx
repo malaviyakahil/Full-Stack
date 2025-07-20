@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { RiEyeLine, RiEyeOffLine } from "react-icons/ri";
+import { registerUser } from "../apis/user.apis";
 
 const RegisterForm = () => {
   const { register, handleSubmit } = useForm();
@@ -13,58 +14,49 @@ const RegisterForm = () => {
   const navigate = useNavigate();
 
   const submit = async (data) => {
-  if (loader) return;
+    if (loader) return;
 
-  setErrorMessage("");
-  setSuccessMessage("");
+    setErrorMessage("");
+    setSuccessMessage("");
 
-  const maxSize = 5 * 1024 * 1024;
-  const avatarSize = data.avatar?.[0]?.size || 0;
-  const coverSize = data.coverImage?.[0]?.size || 0;
+    const maxSize = 5 * 1024 * 1024;
+    const avatarSize = data.avatar?.[0]?.size || 0;
+    const coverSize = data.coverImage?.[0]?.size || 0;
 
-  if (avatarSize > maxSize && coverSize > maxSize) {
-    setErrorMessage("Both Avatar and Cover Image exceed 5MB limit.");
-    return;
-  }
-  if (avatarSize > maxSize) {
-    setErrorMessage("Avatar exceeds 5MB limit.");
-    return;
-  }
-  if (coverSize > maxSize) {
-    setErrorMessage("Cover Image exceeds 5MB limit.");
-    return;
-  }
+    if (avatarSize > maxSize && coverSize > maxSize) {
+      setErrorMessage("Both Avatar and Cover Image exceed 5MB limit.");
+      return;
+    }
+    if (avatarSize > maxSize) {
+      setErrorMessage("Avatar exceeds 5MB limit.");
+      return;
+    }
+    if (coverSize > maxSize) {
+      setErrorMessage("Cover Image exceeds 5MB limit.");
+      return;
+    }
 
-  const formData = new FormData();
-  formData.append("fullName", data.fullName.trim());
-  formData.append("name", data.name.trim());
-  formData.append("email", data.email.trim());
-  formData.append("password", data.password);
-  formData.append("avatar", data.avatar[0]);
-  if (data.coverImage?.[0]) {
-    formData.append("coverImage", data.coverImage[0]);
-  }
+    const formData = new FormData();
+    formData.append("fullName", data.fullName.trim());
+    formData.append("name", data.name.trim());
+    formData.append("email", data.email.trim());
+    formData.append("password", data.password);
+    formData.append("avatar", data.avatar[0]);
+    if (data.coverImage?.[0]) {
+      formData.append("coverImage", data.coverImage[0]);
+    }
 
-  try {
-    setLoader(true);
-    const res = await axios.post(
-      `${import.meta.env.VITE_API_URL}/user/register`,
-      formData,
-      {
-        headers: { "Content-Type": "multipart/form-data" },
-      }
-    );
-
-    if (res.data?.success) {
+    try {
+      setLoader(true);
+      await registerUser(formData);
       setSuccessMessage("Registration successful! Redirecting...");
       setTimeout(() => navigate("/login"), 1500);
+    } catch (error) {
+      setErrorMessage(error?.message || "Registration failed.");
+    } finally {
+      setLoader(false);
     }
-  } catch (error) {
-    setErrorMessage(error?.response?.data?.message || "Registration failed.");
-  } finally {
-    setLoader(false);
-  }
-};
+  };
 
   return (
     <div className="flex justify-center items-center min-h-screen">
@@ -79,7 +71,10 @@ const RegisterForm = () => {
           noValidate={false}
         >
           {/* Username */}
-          <label htmlFor="name" className="input validator w-full my-2 rounded-md">
+          <label
+            htmlFor="name"
+            className="input validator w-full my-2 rounded-md"
+          >
             <svg
               className="h-[1em] opacity-50"
               xmlns="http://www.w3.org/2000/svg"
@@ -110,7 +105,10 @@ const RegisterForm = () => {
           </label>
 
           {/* Full Name */}
-          <label htmlFor="fullName" className="input validator w-full my-2 rounded-md">
+          <label
+            htmlFor="fullName"
+            className="input validator w-full my-2 rounded-md"
+          >
             <svg
               className="h-[1em] opacity-50"
               xmlns="http://www.w3.org/2000/svg"
@@ -139,7 +137,10 @@ const RegisterForm = () => {
           </label>
 
           {/* Email */}
-          <label htmlFor="email" className="input validator w-full my-2 rounded-md">
+          <label
+            htmlFor="email"
+            className="input validator w-full my-2 rounded-md"
+          >
             <svg
               className="h-[1em] opacity-50"
               xmlns="http://www.w3.org/2000/svg"
@@ -167,7 +168,10 @@ const RegisterForm = () => {
           </label>
 
           {/* Password */}
-          <label htmlFor="password" className="input validator w-full my-2 relative rounded-md">
+          <label
+            htmlFor="password"
+            className="input validator w-full my-2 relative rounded-md"
+          >
             <svg
               className="h-[1em] opacity-50"
               xmlns="http://www.w3.org/2000/svg"
@@ -207,7 +211,9 @@ const RegisterForm = () => {
 
           {/* Avatar Upload */}
           <fieldset className="fieldset my-2 rounded-md">
-            <legend className="fieldset-legend opacity-50">Pick an Avatar Image</legend>
+            <legend className="fieldset-legend opacity-50">
+              Pick an Avatar Image
+            </legend>
             <input
               type="file"
               accept="image/*"
@@ -233,7 +239,9 @@ const RegisterForm = () => {
           </fieldset>
 
           {/* Errors / Success */}
-          {errorMessage && <p className="text-red-500 text-center my-2">{errorMessage}</p>}
+          {errorMessage && (
+            <p className="text-red-500 text-center my-2">{errorMessage}</p>
+          )}
           {successMessage && (
             <p className="text-green-600 text-center my-2">{successMessage}</p>
           )}
@@ -247,7 +255,10 @@ const RegisterForm = () => {
               <div className="absolute top-[22px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-6" />
             </div>
           ) : (
-            <button className="btn bg-gray-600 w-full my-2 rounded-md" type="submit">
+            <button
+              className="btn bg-gray-600 w-full my-2 rounded-md"
+              type="submit"
+            >
               Register
             </button>
           )}

@@ -5,19 +5,13 @@ import { Link } from "react-router-dom";
 import { formatDistanceToNowStrict } from "date-fns";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { fetchVideos } from "../store/videos.slice";
+import formatTime from "../utils/formatTime";
 
 const VideoCard = ({ video }) => {
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60)
-      .toString()
-      .padStart(2, "0");
-    return `${mins}:${secs}`;
-  };
 
   return (
     <div className="flex flex-col w-full sm:w-[320px] md:w-[336px] lg:w-[360px] xl:w-[380px] cursor-pointer">
-      <div className="relative aspect-video overflow-hidden rounded-lg bg-black flex justify-center">
+      <div className="relative aspect-video overflow-hidden rounded-md bg-black flex justify-center">
         <img
           src={video?.thumbnail}
           alt={video?.title}

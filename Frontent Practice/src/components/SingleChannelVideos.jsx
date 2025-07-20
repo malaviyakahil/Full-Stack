@@ -4,18 +4,20 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import InfiniteScroll from "react-infinite-scroll-component";
+import formatTime from "../utils/formatTime";
+import { getChannelVideos } from "../apis/channel.apis";
 
 const SingleChannelVideos = ({ ownerId }) => {
-
   const [videos, setVideos] = useState([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [limit, setLimit] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [filter, setFilter] = useState("latest"); 
+  const [filter, setFilter] = useState("latest");
   const [total, setTotal] = useState(0);
   const [initialLoad, setInitialLoad] = useState(true);
-
+  const [error, setError] = useState("");
+  
   useEffect(() => {
     const calculateLimit = () => {
       const width = window.innerWidth;
@@ -36,12 +38,9 @@ const SingleChannelVideos = ({ ownerId }) => {
       setLoading(true);
     }
     try {
-      const res = await axios.get(
-        `http://localhost:8000/channel/get-channel-videos/${ownerId}?page=${page}&limit=${limit}&filter=${filter}`,
-        { withCredentials: true },
-      );
+      const res = await getChannelVideos({ ownerId, page, limit, filter });
 
-      const { videos: newVideos, pages, total } = res.data.data;
+      const { videos: newVideos, pages, total } = res?.data;
 
       setVideos((prev) => [...prev, ...newVideos]);
       setTotal(total);
@@ -50,8 +49,8 @@ const SingleChannelVideos = ({ ownerId }) => {
       }
 
       setPage((prev) => prev + 1);
-    } catch (err) {
-      console.error("Error fetching channel videos:", err);
+    } catch (error) {
+      setError(error?.message);
       setHasMore(false);
     } finally {
       setLoading(false);
@@ -159,18 +158,9 @@ const SingleChannelVideos = ({ ownerId }) => {
 export default SingleChannelVideos;
 
 const ChannelVideoCard = ({ video }) => {
-
-  let formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60)
-      .toString()
-      .padStart(2, "0");
-    return `${mins}:${secs}`;
-  };
-
   return (
     <div className="flex flex-col w-full sm:w-[320px] md:w-[336px] lg:w-[360px] xl:w-[370px] cursor-pointer">
-      <div className="relative aspect-video overflow-hidden rounded-lg bg-black flex justify-center">
+      <div className="relative aspect-video overflow-hidden rounded-md bg-black flex justify-center">
         <img
           src={video?.thumbnail}
           alt={video?.title}

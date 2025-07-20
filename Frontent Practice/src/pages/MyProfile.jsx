@@ -3,7 +3,7 @@ import { useSelector } from "react-redux";
 
 const MyProfile = () => {
 
-  let currentUser = useSelector((store) => store.currentUser);
+  let {data} = useSelector((store) => store.currentUser);
   
   return (
     <div className="flex justify-center items-center h-full">
@@ -13,21 +13,21 @@ const MyProfile = () => {
             <img
               className="h-full w-full object-cover"
               alt="avatar"
-              src={currentUser?.data?.avatar}
+              src={data?.avatar}
             />
           </div>
         </div>
         <p className="text-center mt-6">Name</p>
         <h1 className="text-[40px] text-center break-words">
-          {currentUser.data?.name}
+          {data?.name}
         </h1>
         <p className="text-center mt-6">Full Name</p>
         <h1 className="text-[40px] text-center break-words">
-          {currentUser.data?.fullName}
+          {data?.fullName}
         </h1>
         <p className="text-center mt-6">Email</p>
         <h1 className="text-[40px] text-center break-words">
-          {currentUser.data?.email}
+          {data?.email}
         </h1>
       </div>
     </div>

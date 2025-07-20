@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../components/AuthContext";
 import { RiEyeLine, RiEyeOffLine } from "react-icons/ri";
+import { authMe, loginUser } from "../apis/user.apis";
 
 const LoginForm = () => {
   const { register, handleSubmit } = useForm();
@@ -26,30 +27,15 @@ const LoginForm = () => {
     formData.append("password", data.password.trim());
 
     try {
-      const res = await axios.post(
-        `${import.meta.env.VITE_API_URL}/user/login`,
-        formData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-          withCredentials: true,
-        },
-      );
-
-      if (res.data?.success) {
-        const userRes = await axios.get(
-          `${import.meta.env.VITE_API_URL}/user/auth-me`,
-          { withCredentials: true },
-        );
-
-        setUser(userRes.data.data || { authenticated: true });
-
-        const redirect =
-          new URLSearchParams(location.search).get("redirect") ||
-          "/app/dashboard/all";
-        navigate(redirect);
-      }
+      await loginUser(formData);
+      await authMe();
+      setUser({ authenticated: true });
+      const redirect =
+        new URLSearchParams(location.search).get("redirect") ||
+        "/app/dashboard/all";
+      navigate(redirect);
     } catch (error) {
-      setError(error?.response?.data?.message || "Login failed");
+      setError(error?.message);
     } finally {
       setLoader(false);
     }
@@ -175,7 +161,10 @@ const LoginForm = () => {
               <div className="absolute top-[22px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-6" />
             </div>
           ) : (
-            <button className="btn bg-gray-600 w-full my-2 rounded-md" type="submit">
+            <button
+              className="btn bg-gray-600 w-full my-2 rounded-md"
+              type="submit"
+            >
               Login
             </button>
           )}

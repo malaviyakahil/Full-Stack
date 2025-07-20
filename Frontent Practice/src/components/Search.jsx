@@ -1,6 +1,7 @@
 import axios from "axios";
 import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { searchAll } from "../apis/search.apis";
 
 const Search = () => {
   let [text, setText] = useState("");
@@ -10,13 +11,8 @@ const Search = () => {
   useEffect(() => {
     let timer = setTimeout(() => {
       (async () => {
-        let res = await axios.get(
-          `http://localhost:8000/search/search-all?query=${encodeURIComponent(text)}`,
-          {
-            withCredentials: true,
-          },
-        );
-        setData(res?.data?.data);
+        let res = await searchAll(encodeURIComponent(text));
+        setData(res?.data);
       })();
     }, 500);
     return () => {
@@ -59,7 +55,7 @@ const Search = () => {
         </label>
       </div>
       {data.length > 0 && (
-        <div className="absolute z-50 top-[100%] mt-4 left-[50%] translate-x-[-50%] w-full bg-[linear-gradient(to_right,_#374151_0%,_#374151_2%,_#6B7280_2%,_#6B7280_98%,_#374151_98%,_#374151_100%)] rounded-lg overflow-hidden">
+        <div className="absolute z-50 top-[100%] mt-4 left-[50%] translate-x-[-50%] w-full bg-[linear-gradient(to_right,_#374151_0%,_#374151_2%,_#6B7280_2%,_#6B7280_98%,_#374151_98%,_#374151_100%)] rounded-md overflow-hidden">
           <ul className="w-full flex flex-col gap-[1px]">
             {data.map((e) => {
               return (

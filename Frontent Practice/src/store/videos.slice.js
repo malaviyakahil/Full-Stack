@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import axios from "axios";
+import { getAllVideos } from "../apis/video.apis.js";
 
 let fetchVideos = createAsyncThunk(
   "fetchVideos",
@@ -7,18 +7,12 @@ let fetchVideos = createAsyncThunk(
     try {
       const { page, limit } = getState().videos;
 
-      const res = await axios.get(
-        `${import.meta.env.VITE_API_URL}/video/get-all-videos?page=${page}&limit=${limit}`,
-        { withCredentials: true },
-      );
-
-      const { videos, total, pages } = res.data.data;
+      const res = await getAllVideos({ page, limit });
+      const { videos, total, pages } = res.data;
 
       return { videos, total, pages, page, limit };
-    } catch (err) {
-      return rejectWithValue(
-        err.response?.data?.message || "Failed to fetch videos",
-      );
+    } catch (error) {
+      return rejectWithValue(error?.message);
     }
   },
 );

@@ -7,37 +7,32 @@ import { clearCurrentUserVideos } from "../store/userVideos.slice.js";
 import { clearVideos } from "../store/videos.slice.js";
 import { clearHistory } from "../store/history.slice.js";
 import { clearLikedVideos } from "../store/likedVideos.slice.js";
+import { logoutUser } from "../apis/user.apis.js";
 
 const Header = () => {
-  let currentUser = useSelector((store) => store.currentUser);
+  let { data, fetched, loading } = useSelector((store) => store.currentUser);
   let dispatch = useDispatch();
   let [loader, setLoader] = useState(false);
   let navigate = useNavigate();
 
   useEffect(() => {
-    if (!currentUser.fetched) {
+    if (!fetched) {
       dispatch(fetchCurrentUser());
     }
-  }, [currentUser.fetched, dispatch]);
+  }, [fetched, dispatch]);
 
   let handleLogout = async () => {
     setLoader(true);
     try {
-      let res = await axios.post(
-        "http://localhost:8000/user/logout",
-        [],
-        {
-          withCredentials: true,
-        },
-      );
-        dispatch(clearCurrentUser());
-        dispatch(clearCurrentUserVideos());
-        dispatch(clearVideos());
-        dispatch(clearHistory());
-        dispatch(clearLikedVideos());
-        navigate("/");
+      await logoutUser();
+      dispatch(clearCurrentUser());
+      dispatch(clearCurrentUserVideos());
+      dispatch(clearVideos());
+      dispatch(clearHistory());
+      dispatch(clearLikedVideos());
+      navigate("/");
     } catch (error) {
-      console.log(error?.response?.data?.message);
+      alert(error?.message);
     } finally {
       setLoader(false);
     }
@@ -45,7 +40,7 @@ const Header = () => {
 
   return (
     <>
-      {currentUser.loading ? (
+      {loading ? (
         <div className="navbar bg-base-100 shadow-sm px-6 animate-pulse ">
           <div className="flex-1">
             <div className="h-6 w-24 bg-gray-200 dark:bg-gray-700 rounded"></div>
@@ -74,7 +69,7 @@ const Header = () => {
             </Link>
           </div>
           <div className="flex gap-3 items-center">
-            <h3>{currentUser?.data?.name}</h3>
+            <h3>{data?.name}</h3>
             <div className="dropdown dropdown-end">
               <div
                 tabIndex={0}
@@ -82,7 +77,7 @@ const Header = () => {
                 className="btn btn-ghost btn-circle avatar"
               >
                 <div className="w-8 rounded-full">
-                  <img alt="avatar" src={currentUser?.data?.avatar} />
+                  <img alt="avatar" src={data?.avatar} />
                 </div>
               </div>
               <ul

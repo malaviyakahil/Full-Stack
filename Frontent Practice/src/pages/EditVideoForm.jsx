@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { updateCurrentUserVideo } from "../store/userVideos.slice";
+import { changeVideoDescription, changeVideoThumbnail, changeVideoTitle } from "../apis/video.apis";
 
 const EditVideoForm = () => {
   const location = useLocation();
@@ -45,15 +46,8 @@ const EditVideoForm = () => {
         const formData = new FormData();
         formData.append("title", trimmedTitle);
 
-        const res = await axios.post(
-          `${import.meta.env.VITE_API_URL}/video/change-video-title/${id}`,
-          formData,
-          {
-            headers: { "Content-Type": "multipart/form-data" },
-            withCredentials: true,
-          },
-        );
-        Object.assign(combinedUpdatedVideo, res?.data?.data);
+        const res = await changeVideoTitle(id, formData);
+        Object.assign(combinedUpdatedVideo, res?.data);
       }
 
       // Update description
@@ -62,15 +56,8 @@ const EditVideoForm = () => {
         const formData = new FormData();
         formData.append("description", trimmedDescription);
 
-        const res = await axios.post(
-          `${import.meta.env.VITE_API_URL}/video/change-video-description/${id}`,
-          formData,
-          {
-            headers: { "Content-Type": "multipart/form-data" },
-            withCredentials: true,
-          },
-        );
-        Object.assign(combinedUpdatedVideo, res?.data?.data);
+        const res = await changeVideoDescription(id,formData)
+        Object.assign(combinedUpdatedVideo, res?.data);
       }
 
       // Update thumbnail
@@ -78,15 +65,8 @@ const EditVideoForm = () => {
         const formData = new FormData();
         formData.append("thumbnail", thumbnailFile);
 
-        const res = await axios.post(
-          `${import.meta.env.VITE_API_URL}/video/change-video-thumbnail/${id}`,
-          formData,
-          {
-            headers: { "Content-Type": "multipart/form-data" },
-            withCredentials: true,
-          },
-        );
-        Object.assign(combinedUpdatedVideo, res?.data?.data);
+        const res = await changeVideoThumbnail(id,formData)
+        Object.assign(combinedUpdatedVideo, res?.data);
       }
 
       // Dispatch only once
@@ -95,8 +75,8 @@ const EditVideoForm = () => {
       }
 
       navigate("/app/my-videos/uploaded-videos");
-    } catch (err) {
-      setError(err?.response?.data?.message || "Failed to update video.");
+    } catch (error) {
+      setError(error?.message);
     } finally {
       setShowFileInput(false);
       setLoader(false);
@@ -130,13 +110,13 @@ const EditVideoForm = () => {
             defaultValue={description}
             className="input w-full rounded-md"
             required
-              minLength="3"
+            minLength="3"
             maxLength="5000"
             {...register("description")}
             placeholder="Description"
           />
           <p className="text-md font-semibold my-2">Thumbnail</p>
-          <div className="relative aspect-video overflow-hidden rounded-lg bg-black flex justify-center ">
+          <div className="relative aspect-video overflow-hidden rounded-md bg-black flex justify-center ">
             <img
               src={thumbnail}
               alt={title}
@@ -175,7 +155,10 @@ const EditVideoForm = () => {
               <div className="absolute top-[22px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-6" />
             </div>
           ) : (
-            <button className="btn bg-gray-600 w-full my-2 rounded-md" type="submit">
+            <button
+              className="btn bg-gray-600 w-full my-2 rounded-md"
+              type="submit"
+            >
               Save
             </button>
           )}
