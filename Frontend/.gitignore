@@ -15,6 +15,9 @@ dist/
 dist-ssr/
 .vite/
 
+# Firebase credentials or config
+src/firebase.js
+
 # Environment variables
 .env
 .env.*

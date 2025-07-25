@@ -4,51 +4,55 @@ import { dbName } from "./constants.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import dotenv from "dotenv";
-import userRouter  from "./routes/user.route.js";
+import userRouter from "./routes/user.route.js";
 import videoRouter from "./routes/video.route.js";
 import commentRouter from "./routes/comment.route.js";
 import channelRouter from "./routes/channel.route.js";
 import searchRouter from "./routes/search.route.js";
 
-
+// Load environment variables
 dotenv.config();
 
-let app = express();
+// Initialize express app
+const app = express();
 
-app.use(cors({ origin: process.env.CROSS_ORIGIN ,credentials:true}));
+// Strict CORS (only allow your frontend origin)
+app.use(cors({
+  origin: process.env.CROSS_ORIGIN,
+  credentials: true,
+}));
+
+// Middleware
 app.use(cookieParser());
 app.use(express.static("public"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// MongoDB connection and server startup
 (async () => {
   try {
     await mongoose.connect(`${process.env.MONGODBL_URL}/${dbName}`);
-  //  const result = await cloudinary.api.resources({ resource_type:"video",max_results: 20 ,direction: 'desc' });
-  //   console.log('📦 Cloudinary Uploaded Assets:');
-  //   result.resources.forEach(resource => {
-  //     console.log('-----------------------------');
-  //     console.log('Public ID:', resource.public_id);
-  //     console.log('Type:', resource.resource_type);
-  //     console.log('Format:', resource.format);
-  //     console.log('URL:', resource.secure_url);
-  //   });
-  app.listen(process.env.PORT, '0.0.0.0', () => {
-  console.log(`Server is running at http://0.0.0.0:${process.env.PORT}`);
-});
+    console.log("✅ Connected to MongoDB");
+
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => {
+      console.log(`🚀 Server listening on port ${PORT}`);
+    });
   } catch (error) {
-    console.log(error);
-    console.log("Cannot connect to mongoDB atlas");
+    console.error("❌ MongoDB connection error:", error.message);
   }
 })();
 
-app.use('/user',userRouter)
-app.use('/video',videoRouter)
-app.use('/comment',commentRouter)
-app.use('/channel',channelRouter)
-app.use('/search',searchRouter)
+// API routes
+app.use("/user", userRouter);
+app.use("/video", videoRouter);
+app.use("/comment", commentRouter);
+app.use("/channel", channelRouter);
+app.use("/search", searchRouter);
 
-app.use((err, req, res, next) => {  
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error("❌ Internal Error:", err);
   res.status(500).json({
     success: false,
     message: err.message || "Internal Server Error",
