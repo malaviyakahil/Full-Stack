@@ -740,7 +740,7 @@ const authMe = asyncHandler(async (req, res) => {
     req.header("Authorization")?.replace("Bearer ", "");
 
   if (!token) {
-    throw new error(401, "Login required");
+    throw new error(401, "Not authorised");
   }
 
   try {
