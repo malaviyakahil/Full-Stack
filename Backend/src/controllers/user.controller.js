@@ -61,7 +61,7 @@ let renewAccessToken = asyncHandler(async (req, res) => {
   let options = {
     httpOnly: true,
     secure: true,
-    sameSite: "Lax",
+    sameSite: "None",
     path: "/",
     maxAge: parseExpiry(process.env.REFRESH_TOKEN_EXPIERY),
   };
@@ -211,7 +211,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
   const cookieOptions = {
     httpOnly: true,
-    sameSite: "Lax",
+    sameSite: "None",
     secure: true,
   };
 
