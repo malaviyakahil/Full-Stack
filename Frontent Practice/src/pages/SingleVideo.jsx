@@ -74,6 +74,7 @@ const SingleVideo = () => {
   const qualityLoaderMinimumTime = useRef(null);
   let [error, setError] = useState("");
   const [reviewLock, setReviewLock] = useState(false);
+  const [subscribeLock, setSubscribeLock] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -369,10 +370,12 @@ const SingleVideo = () => {
   };
 
   const subscribeToggle = async () => {
+    if (subscribeLock) return; // prevent rapid re-entry
+    setSubscribeLock(true);
+
     const prevSubCount = { ...subCount };
 
     try {
-      // Optimistically update
       const updated = {
         ...subCount,
         status: !subCount.status,
@@ -381,16 +384,19 @@ const SingleVideo = () => {
 
       setSubCount(updated);
 
-      // Perform the actual request
       if (subCount.status) {
         await unSubscribeTo(ownerId);
       } else {
         await subscribeTo(ownerId);
       }
     } catch (error) {
-      // Rollback UI
       setSubCount(prevSubCount);
       setError(error?.message);
+    } finally {
+      // Lock duration: 500ms
+      setTimeout(() => {
+        setSubscribeLock(false);
+      }, 500);
     }
   };
 
@@ -694,7 +700,9 @@ const SingleVideo = () => {
                 {showSettings && (
                   <div className="absolute p-1 right-0 bottom-full mb-2 bg-base-100  rounded-md w-30 md:w-40 z-10 max-h-25 md:max-h-48 text-xs">
                     <div className="p-2 border-b border-gray-700 flex gap-2 md:block ">
-                      <label className="block mb-1 text-xs md:text-lg">Speed</label>
+                      <label className="block mb-1 text-xs md:text-lg">
+                        Speed
+                      </label>
                       <SpeedSelector
                         currentSpeed={speed}
                         onChange={(newSpeed) => {
@@ -707,7 +715,9 @@ const SingleVideo = () => {
                       />
                     </div>
                     <div className="p-2 border-gray-700 flex gap-2 items-center md:block">
-                      <label className="block mb-1 text-xs md:text-lg">Quality</label>
+                      <label className="block mb-1 text-xs md:text-lg">
+                        Quality
+                      </label>
                       <QualitySelector
                         selectedQuality={selectedQuality}
                         availableQualities={availableQualities}
@@ -758,9 +768,9 @@ const SingleVideo = () => {
           ) : (
             <div className="flex space-x-3">
               <button
-                disabled={subCount.disabled}
+                disabled={subscribeLock}
                 onClick={subscribeToggle}
-                className={` px-4 py-1 rounded-4xl text-sm md:text-md ${
+                className={`px-4 py-1 rounded-4xl text-sm md:text-md ${
                   subCount?.status
                     ? "bg-gray-800"
                     : "bg-gray-700 hover:bg-gray-600"
@@ -777,7 +787,7 @@ const SingleVideo = () => {
             onClick={likeToggle}
             className="bg-gray-700 hover:bg-gray-600 text-md px-3 py-0.75 md:px-4 md:py-1 rounded-md flex justify-center items-center gap-1"
           >
-            {reviewCount.like.status ? <BiSolidLike  /> : <BiLike />}
+            {reviewCount.like.status ? <BiSolidLike /> : <BiLike />}
             {reviewCount.like.count}
           </button>
           <button

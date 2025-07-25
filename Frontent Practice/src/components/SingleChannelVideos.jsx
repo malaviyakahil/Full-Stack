@@ -123,9 +123,9 @@ const SingleChannelVideos = ({ ownerId }) => {
                     <div className="flex flex-col flex-1 overflow-hidden space-y-2">
                       <div className="h-4 bg-gray-700 rounded w-3/4"></div>
                       <div className="flex gap-2">
-                        <div className="h-3 w-16 bg-gray-600 rounded"></div>
-                        <div className="h-3 w-3 bg-gray-600 rounded-full"></div>
-                        <div className="h-3 w-24 bg-gray-600 rounded"></div>
+                        <div className="h-3 w-16 bg-gray-700 rounded"></div>
+                  <div className="h-3 w-3 bg-gray-700 rounded-full"></div>
+                  <div className="h-3 w-24 bg-gray-700 rounded"></div>
                       </div>
                     </div>
                   </div>
@@ -214,9 +214,9 @@ const SingleChannelVideosSkeleton = ({ limit }) => {
               <div className="flex flex-col flex-1 overflow-hidden space-y-2">
                 <div className="h-4 bg-gray-700 rounded w-3/4"></div>
                 <div className="flex gap-2">
-                  <div className="h-3 w-16 bg-gray-600 rounded"></div>
-                  <div className="h-3 w-3 bg-gray-600 rounded-full"></div>
-                  <div className="h-3 w-24 bg-gray-600 rounded"></div>
+                  <div className="h-3 w-16 bg-gray-700 rounded"></div>
+                  <div className="h-3 w-3 bg-gray-700 rounded-full"></div>
+                  <div className="h-3 w-24 bg-gray-700 rounded"></div>
                 </div>
               </div>
             </div>

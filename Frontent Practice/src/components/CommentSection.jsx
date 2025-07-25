@@ -25,7 +25,7 @@ import {
   unPin,
   pin,
   editComment,
-  deleteComment
+  deleteComment,
 } from "../apis/comment.apis";
 
 const CommentSection = ({ videoId, channelDetails, ownerId }) => {
@@ -44,6 +44,14 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
   const [showSortMenu, setShowSortMenu] = useState(false);
   const sortRef = useRef(null);
   let [error, setError] = useState("");
+  const [isActionLocked, setIsActionLocked] = useState(false);
+
+  const lockActionsTemporarily = (duration = 500) => {
+    setIsActionLocked(true);
+    setTimeout(() => {
+      setIsActionLocked(false);
+    }, duration);
+  };
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -161,14 +169,15 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
   };
 
   const toggleLike = async (id) => {
+    if (isActionLocked) return;
+    lockActionsTemporarily();
+
     const prevComments = [...comments];
     const target = comments.find((item) => item._id === id);
-
     if (!target) return;
 
     try {
       if (target.like.status) {
-        // 🔽 UNLIKE
         setComments((prevData) =>
           prevData.map((item) =>
             item._id === id
@@ -185,7 +194,6 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
         );
         await deleteCommentReview(id);
       } else {
-        // 👍 LIKE (could remove dislike if present)
         setComments((prevData) =>
           prevData.map((item) =>
             item._id === id
@@ -216,14 +224,15 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
   };
 
   const toggleDislike = async (id) => {
+    if (isActionLocked) return;
+    lockActionsTemporarily();
+
     const prevComments = [...comments];
     const target = comments.find((item) => item._id === id);
-
     if (!target) return;
 
     try {
       if (target.dislike.status) {
-        // 👎 REMOVE DISLIKE
         setComments((prevData) =>
           prevData.map((item) =>
             item._id === id
@@ -240,7 +249,6 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
         );
         await deleteCommentReview(id);
       } else {
-        // 👎 ADD DISLIKE, REMOVE LIKE IF NEEDED
         setComments((prevData) =>
           prevData.map((item) =>
             item._id === id
@@ -271,6 +279,9 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
   };
 
   const toggleDropdown = (id) => {
+    if (isActionLocked) return;
+    lockActionsTemporarily(); // Optional if you want a delay here too
+
     setComments((prevData) =>
       prevData.map((item) =>
         item._id === id
@@ -278,7 +289,6 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
           : { ...item, showDropdown: false, editing: false },
       ),
     );
-    setCommentText("");
   };
 
   const toggleReadMore = (id) => {
@@ -290,24 +300,23 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
   };
 
   const toggleHeart = async (heart, id) => {
-    const prevComments = [...comments]; // ✅ shallow copy is enough here
+    if (isActionLocked) return;
+    lockActionsTemporarily();
+
+    const prevComments = [...comments];
 
     try {
-      // Optimistic UI update
       setComments((prevData) =>
         prevData.map((item) =>
           item._id === id ? { ...item, heartByChannel: !heart } : item,
         ),
       );
-
-      // Await the API call
       if (heart) {
         await takeHeart(id);
       } else {
         await giveHeart(id);
       }
     } catch (error) {
-      // Rollback on failure
       setComments(prevComments);
       setError(error?.message);
     }
@@ -318,36 +327,35 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
   };
 
   const togglePin = async (pinIt, id) => {
-    const prevComments = [...comments];
+    if (isActionLocked) return;
+    lockActionsTemporarily();
 
-    // Close all dropdowns
+    const prevComments = [...comments];
     setComments((prevData) =>
       prevData.map((item) => ({ ...item, showDropdown: false })),
     );
 
     try {
       if (pinIt) {
-        // Optimistically unpin
         setComments((prevData) =>
           prevData.map((item) =>
             item._id === id ? { ...item, pinByChannel: false } : item,
           ),
         );
-        await unPin(id); // ✅ correct for unpin
+        await unPin(id);
       } else {
-        // Only allow pinning if no other comment is pinned
         if (countPinnedComments() < 1) {
           setComments((prevData) =>
             prevData.map((item) =>
               item._id === id ? { ...item, pinByChannel: true } : item,
             ),
           );
-          await pin(id); // ✅ correct for pin
+          await pin(id);
         }
       }
     } catch (error) {
+      setComments(prevComments);
       setError(error?.message);
-      setComments(prevComments); // Rollback on failure
     }
   };
 
@@ -435,7 +443,7 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
             onClick={() => setShowSortMenu(!showSortMenu)}
             className=" transition flex gap-1.5 items-center text-sm md:text-md"
           >
-            <MdOutlineSort  /> Sort by
+            <MdOutlineSort /> Sort by
           </button>
           {showSortMenu && (
             <ul className="absolute overflow-hidden right-0 z-50 mt-1 w-30 md:w-40 bg-gray-700 rounded-md">
@@ -569,7 +577,7 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
                     className={`p-1 mb-[13px] text-sm md:text-md  ${comment.readMore ? "" : "line-clamp-3"}`}
                     ref={(el) => (commentRefs.current[comment._id] = el)}
                   >
-                    {comment.comment} Lorem ipsum dolor sit amet consectetur adipisicing elit. Eligendi distinctio voluptatem fugit, totam assumenda nulla voluptas itaque recusandae unde deserunt cupiditate quia perspiciatis. Necessitatibus fugiat ducimus, saepe fuga non laborum?
+                    {comment.comment}
                   </p>
                 )}
               </div>
@@ -640,7 +648,7 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
                       onClick={() => {
                         cancelEdit(comment?._id);
                       }}
-                      className={`   px-2 py-0.25 rounded-md text-[13px] bg-gray-700 hover:bg-gray-600
+                      className={`px-2 py-0.25 rounded-md text-[13px] bg-gray-700 hover:bg-gray-600
                     `}
                     >
                       Cancel
@@ -731,7 +739,7 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
                 </button>
                 {comment?.showDropdown && (
                   <div className="absolute right-0 w-22 md:w-32 text-sm mt-2 bg-gray-700 rounded-md shadow-lg overflow-hidden">
-                    <ul className=" text-gray-100"> 
+                    <ul className=" text-gray-100">
                       <li>
                         <button
                           className="block px-3 py-1.5 md:px-4 md:py-2  w-full text-left hover:bg-gray-600"
@@ -766,4 +774,4 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
   );
 };
 
-export default CommentSection; 
+export default CommentSection;
