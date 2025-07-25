@@ -60,13 +60,14 @@ const Videos = () => {
   const dispatch = useDispatch();
   const {
     data: videos,
+    fetched,
     loading,
     hasMore,
   } = useSelector((store) => store.videos);
 
   return (
     <div>
-      {loading && videos.length === 0 ? (
+      {loading && !fetched === 0 ? (
         <Skeleton />
       ) : (
         <InfiniteScroll
@@ -97,14 +98,18 @@ const Videos = () => {
               ))}
             </div>
           ) : (
-            <div className="h-[80dvh] w-full flex flex-col items-center justify-center">
-              <h2 className=" text-4xl font-bold text-gray-300">
-                No videos to show
-              </h2>
-              <p className="text-md text-gray-500 mt-2">
-                Please check back later.
-              </p>
-            </div>
+            <>
+              {fetched && (
+                <div className="h-[80dvh] w-full flex flex-col items-center justify-center">
+                  <h2 className=" text-4xl font-bold text-gray-300">
+                    No videos to show
+                  </h2>
+                  <p className="text-md text-gray-500 mt-2">
+                    Please check back later.
+                  </p>
+                </div>
+              )}
+            </>
           )}
         </InfiniteScroll>
       )}
