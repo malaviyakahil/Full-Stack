@@ -7,9 +7,8 @@ import { PiPause, PiPlay } from "react-icons/pi";
 import { BiExitFullscreen, BiFullscreen } from "react-icons/bi";
 import { TbRewindBackward10, TbRewindForward10 } from "react-icons/tb";
 import { Link, useParams } from "react-router-dom";
-import axios from "axios";
 import { BiLike, BiDislike, BiSolidDislike, BiSolidLike } from "react-icons/bi";
-import { IoShareSocialOutline } from "react-icons/io5";
+import { GoShareAndroid } from "react-icons/go";
 import { PiDownloadSimpleBold } from "react-icons/pi";
 import CommentSection from "../components/CommentSection";
 import { useDispatch, useSelector } from "react-redux";
@@ -32,6 +31,9 @@ import {
   unSubscribeTo,
 } from "../apis/channel.apis.js";
 import { getReviewStatus } from "../apis/user.apis.js";
+import SpeedSelector from "../components/SpeedSelector.jsx";
+import QualitySelector from "../components/QualitySelector.jsx";
+import formatNumber from "../utils/formatNumber.js";
 
 const SingleVideo = () => {
   const { ownerId, videoId } = useParams();
@@ -71,6 +73,7 @@ const SingleVideo = () => {
   const qualityLoaderTimeout = useRef(null);
   const qualityLoaderMinimumTime = useRef(null);
   let [error, setError] = useState("");
+  const [reviewLock, setReviewLock] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -126,12 +129,12 @@ const SingleVideo = () => {
     if (!video.video || !selectedQuality || !videoRef.current) return;
 
     const transformMap = {
-      "144p": "w_256,h_144,c_scale",
-      "240p": "w_426,h_240,c_scale",
-      "360p": "w_640,h_360,c_scale",
-      "480p": "w_854,h_480,c_scale",
-      "720p": "w_1280,h_720,c_scale",
-      "1080p": "w_1920,h_1080,c_scale",
+      "144p": "w_256,h_144",
+      "240p": "w_426,h_240",
+      "360p": "w_640,h_360",
+      "480p": "w_854,h_480",
+      "720p": "w_1280,h_720",
+      "1080p": "w_1920,h_1080",
     };
 
     const [, base] = video.video.split("/upload/");
@@ -148,22 +151,22 @@ const SingleVideo = () => {
     setSwitchingQuality(true);
     qualityLoaderMinimumTime.current = Date.now();
 
-    videoElement.pause();
-    videoElement.removeAttribute("src");
-    videoElement.load();
-    videoElement.src = newUrl;
-
-    const handleLoaded = () => {
+    const handleLoadedMetadata = () => {
       try {
+        // Ensure duration is updated
+        setDuration(videoElement.duration);
+
+        // Restore current time
         videoElement.currentTime = savedTime;
         videoElement.playbackRate = speed;
+
         if (wasPlaying) {
-          videoElement
-            .play()
-            .catch((err) => console.warn("Playback error:", err));
+          videoElement.play().catch((err) => {
+            console.warn("Playback failed after switching quality:", err);
+          });
         }
       } catch (err) {
-        console.warn("Setting currentTime failed:", err);
+        console.warn("Restoring time failed:", err);
       }
 
       const elapsed = Date.now() - qualityLoaderMinimumTime.current;
@@ -173,14 +176,16 @@ const SingleVideo = () => {
         setSwitchingQuality(false);
       }, remaining);
 
-      videoElement.removeEventListener("loadeddata", handleLoaded);
+      videoElement.removeEventListener("loadedmetadata", handleLoadedMetadata);
     };
 
-    videoElement.addEventListener("loadeddata", handleLoaded);
+    videoElement.pause();
+    videoElement.src = newUrl;
     videoElement.load();
+    videoElement.addEventListener("loadedmetadata", handleLoadedMetadata);
 
     return () => {
-      videoElement.removeEventListener("loadeddata", handleLoaded);
+      videoElement.removeEventListener("loadedmetadata", handleLoadedMetadata);
       clearTimeout(qualityLoaderTimeout.current);
     };
   }, [selectedQuality]);
@@ -232,7 +237,7 @@ const SingleVideo = () => {
       if (!showSettings) {
         timeoutRef.current = setTimeout(() => {
           setShowControls(false);
-        }, 1000);
+        }, 1500);
       }
     };
 
@@ -349,17 +354,6 @@ const SingleVideo = () => {
     }
   };
 
-  const changeSpeed = (e) => {
-    const newSpeed = parseFloat(e.target.value);
-    videoRef.current.playbackRate = newSpeed;
-    setSpeed(newSpeed);
-  };
-
-  const changeQuality = (e) => {
-    const newQuality = e.target.value;
-    setSelectedQuality(newQuality);
-  };
-
   const skipBackward = () => {
     videoRef.current.currentTime = Math.max(
       0,
@@ -401,105 +395,99 @@ const SingleVideo = () => {
   };
 
   const likeToggle = async () => {
+    if (reviewLock) return; // prevent re-entry
+    setReviewLock(true);
     const prevReviewCount = JSON.parse(JSON.stringify(reviewCount));
 
     try {
       if (reviewCount.like.status) {
         // Optimistic unlike
-        setReviewCount({
-          ...reviewCount,
+        setReviewCount((prev) => ({
+          ...prev,
           like: {
             status: false,
-            count: reviewCount.like.count - 1,
+            count: prev.like.count - 1,
           },
-        });
+        }));
         dispatch(deleteFromLikedVideos(videoId));
         await deleteReview(videoId);
       } else {
-        // Optimistic like
-        if (reviewCount.dislike.status) {
-          setReviewCount({
-            like: {
-              status: true,
-              count: reviewCount.like.count + 1,
-            },
-            dislike: {
-              status: false,
-              count: reviewCount.dislike.count - 1,
-            },
-          });
-        } else {
-          setReviewCount({
-            ...reviewCount,
-            like: {
-              status: true,
-              count: reviewCount.like.count + 1,
-            },
-          });
-        }
+        const newReview = {
+          like: {
+            status: true,
+            count: reviewCount.like.count + 1,
+          },
+          dislike: reviewCount.dislike.status
+            ? {
+                status: false,
+                count: reviewCount.dislike.count - 1,
+              }
+            : reviewCount.dislike,
+        };
+        setReviewCount(newReview);
 
         dispatch(
           addToLikedVideos({
-            _id: videoId,
-            video: {
-              ...video,
-              owner: { ...channelDetails },
-            },
+            video: { ...video, owner: { ...channelDetails } },
           }),
         );
 
-        await likeVideo(videoId);
+        if (reviewCount.dislike.status) {
+          await Promise.all([deleteReview(videoId), likeVideo(videoId)]);
+        } else {
+          await likeVideo(videoId);
+        }
       }
     } catch (error) {
-      setReviewCount(prevReviewCount); // Rollback
+      setReviewCount(prevReviewCount);
       setError(error?.message);
+    } finally {
+      setReviewLock(false);
     }
   };
 
   const dislikeToggle = async () => {
+    if (reviewLock) return;
+    setReviewLock(true);
     const prevReviewCount = JSON.parse(JSON.stringify(reviewCount));
 
     try {
       if (reviewCount.dislike.status) {
-        // Optimistically remove dislike
-        setReviewCount({
-          ...reviewCount,
+        setReviewCount((prev) => ({
+          ...prev,
           dislike: {
             status: false,
-            count: reviewCount.dislike.count - 1,
+            count: prev.dislike.count - 1,
           },
-        });
-
+        }));
         await deleteReview(videoId);
       } else {
-        // Remove like from Redux if it was liked
+        const newReview = {
+          dislike: {
+            status: true,
+            count: reviewCount.dislike.count + 1,
+          },
+          like: reviewCount.like.status
+            ? {
+                status: false,
+                count: reviewCount.like.count - 1,
+              }
+            : reviewCount.like,
+        };
+        setReviewCount(newReview);
+
         if (reviewCount.like.status) {
           dispatch(deleteFromLikedVideos(video._id));
-          setReviewCount({
-            dislike: {
-              status: true,
-              count: reviewCount.dislike.count + 1,
-            },
-            like: {
-              status: false,
-              count: reviewCount.like.count - 1,
-            },
-          });
+          await Promise.all([deleteReview(videoId), disLikeVideo(videoId)]);
         } else {
-          setReviewCount({
-            ...reviewCount,
-            dislike: {
-              status: true,
-              count: reviewCount.dislike.count + 1,
-            },
-          });
+          await disLikeVideo(videoId);
         }
-
-        await disLikeVideo(videoId);
       }
     } catch (error) {
-      setReviewCount(prevReviewCount); // rollback
+      setReviewCount(prevReviewCount);
       setError(error?.message);
+    } finally {
+      setReviewLock(false);
     }
   };
 
@@ -544,35 +532,42 @@ const SingleVideo = () => {
 
   if (loading) {
     return (
-      <div className="bg-transparent text-white max-w-6xl mx-auto py-5 animate-pulse">
+      <div className="bg-transparent max-w-6xl mx-auto py-5 animate-pulse">
+        {/* Video Container */}
         <div className="relative aspect-video bg-gray-800 rounded-md overflow-hidden">
-          <div className="absolute bottom-0 left-0 right-0 px-4 py-2 bg-gradient-to-t from-black/70 to-transparent text-white text-sm">
+          <div className="absolute bottom-0 left-0 right-0 px-4 py-2 bg-gradient-to-t from-black/70 to-transparent">
             <div className="h-2 bg-gray-600 rounded-full w-full mb-3" />
 
-            <div className="flex justify-between items-center gap-4">
-              <div className="flex items-center gap-3">
-                <div className="w-5 h-5 bg-gray-600 rounded" />
-                <div className="w-20 h-2 bg-gray-600 rounded hidden md:block" />
-                <div className="w-24 h-3 bg-gray-600 rounded" />
+            <div className="flex justify-between items-center gap-4 overflow-hidden">
+              {/* Left Icons */}
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-gray-600 rounded" />
+                <div className="w-16 h-2 bg-gray-600 rounded hidden sm:block" />
+                <div className="w-20 h-2.5 bg-gray-600 rounded" />
               </div>
 
-              <div className="flex items-center gap-3">
-                <div className="w-6 h-6 bg-gray-600 rounded-full" />
-                <div className="w-6 h-6 bg-gray-600 rounded-full" />
-                <div className="w-6 h-6 bg-gray-600 rounded-full" />
+              {/* Center Controls */}
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 bg-gray-600 rounded-full" />
+                <div className="w-5 h-5 bg-gray-600 rounded-full" />
+                <div className="w-5 h-5 bg-gray-600 rounded-full" />
               </div>
 
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-4 bg-gray-600 rounded hidden md:inline" />
-                <div className="w-5 h-5 bg-gray-600 rounded" />
-                <div className="w-5 h-5 bg-gray-600 rounded" />
-                <div className="w-5 h-5 bg-gray-600 rounded" />
+              {/* Right Actions */}
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-3 bg-gray-600 rounded hidden md:inline" />
+                <div className="w-4 h-4 bg-gray-600 rounded" />
+                <div className="w-4 h-4 bg-gray-600 rounded" />
+                <div className="w-4 h-4 bg-gray-600 rounded" />
               </div>
             </div>
           </div>
         </div>
-        <div className="mt-6 w-3/5 h-5 bg-gray-700 rounded" />
 
+        {/* Title */}
+        <div className="mt-6 w-full sm:w-3/5 h-5 bg-gray-700 rounded" />
+
+        {/* Channel Info */}
         <div className="flex flex-col sm:flex-row sm:items-center gap-4 mt-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gray-700 rounded-full" />
@@ -581,16 +576,18 @@ const SingleVideo = () => {
               <div className="w-20 h-3 bg-gray-600 rounded" />
             </div>
           </div>
-          <div className="w-24 h-8 bg-gray-700 rounded-4xl" />
+          <div className="w-24 h-8 bg-gray-700 rounded-full" />
         </div>
 
-        <div className="flex flex-wrap gap-3 mt-4 text-sm">
-          <div className="w-20 h-8 bg-gray-700 rounded-4xl" />
-          <div className="w-24 h-8 bg-gray-700 rounded-4xl" />
-          <div className="w-20 h-8 bg-gray-700 rounded-4xl" />
-          <div className="w-24 h-8 bg-gray-700 rounded-4xl" />
+        {/* Tags */}
+        <div className="flex flex-wrap gap-3 mt-4">
+          <div className="w-20 h-8 bg-gray-700 rounded-full" />
+          <div className="w-24 h-8 bg-gray-700 rounded-full" />
+          <div className="w-20 h-8 bg-gray-700 rounded-full" />
+          <div className="w-24 h-8 bg-gray-700 rounded-full" />
         </div>
 
+        {/* Description */}
         <div className="mt-5 w-full bg-gray-700 p-4 rounded-xl space-y-3">
           <div className="w-40 h-4 bg-gray-600 rounded" />
           <div className="w-full h-3 bg-gray-600 rounded" />
@@ -602,18 +599,14 @@ const SingleVideo = () => {
   }
 
   return (
-    <div className="bg-transparent text-white max-w-6xl mx-auto">
+    <div className="bg-transparent  max-w-6xl mx-auto">
       <div
         ref={containerRef}
         className={`relative w-full bg-black aspect-video max-w-screen-xl rounded-md mx-auto mt-4 overflow-hidden ${
           theaterMode ? "xl:h-[80vh]" : ""
         }`}
       >
-        <video
-          ref={videoRef}
-          className="w-full h-full transition-all"
-          onClick={togglePlay}
-        />
+        <video ref={videoRef} className="w-full h-full transition-all" />
         {switchingQuality && (
           <div className="absolute inset-0 z-50 bg-black flex items-center justify-center">
             <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin" />
@@ -624,7 +617,7 @@ const SingleVideo = () => {
             showControls || showSettings
               ? "opacity-100"
               : "opacity-0 pointer-events-none"
-          } bg-gradient-to-t from-black/80 to-transparent p-3 text-white flex flex-col gap-2`}
+          } bg-gradient-to-t from-black/80 to-transparent  p-1 px-2  md:p-3 flex flex-col gap-2`}
         >
           <input
             type="range"
@@ -634,16 +627,16 @@ const SingleVideo = () => {
             value={Number.isFinite(progress) ? progress : 0}
             onChange={handleSeek}
             style={{ accentColor: "#ffffff" }}
-            className="w-full text-gr"
+            className="w-full h-1 md:h-3"
           />
 
-          <div className="flex items-center justify-between gap-3 text-sm flex-wrap">
+          <div className="flex items-center justify-between gap-3  flex-wrap">
             <div className="flex items-center gap-3">
               <button onClick={toggleMute}>
                 {muted || volume === 0 ? (
-                  <SlVolumeOff size={20} />
+                  <SlVolumeOff className="text-md md:text-xl" />
                 ) : (
-                  <SlVolume2 size={20} />
+                  <SlVolume2 className="text-md md:text-xl" />
                 )}
               </button>
               <input
@@ -656,20 +649,24 @@ const SingleVideo = () => {
                 className="w-20 hidden md:block"
                 style={{ accentColor: "#ffffff" }}
               />
-              <span>
-                {formatTime(currentTime)} / {formatTime(duration)}
+              <span className="text-sm md:text-md">
+                {formatTime(currentTime)} / {formatTime(duration || 0)}
               </span>
             </div>
 
             <div className="flex items-center gap-3">
               <button onClick={skipBackward}>
-                <TbRewindBackward10 size={20} />
+                <TbRewindBackward10 className="text-md md:text-xl" />
               </button>
               <button onClick={togglePlay}>
-                {playing ? <PiPause size={20} /> : <PiPlay size={20} />}
+                {playing ? (
+                  <PiPause className="text-md md:text-xl" />
+                ) : (
+                  <PiPlay className="text-md md:text-xl" />
+                )}
               </button>
               <button onClick={skipForward}>
-                <TbRewindForward10 size={20} />
+                <TbRewindForward10 className="text-md md:text-xl" />
               </button>
             </div>
 
@@ -681,48 +678,44 @@ const SingleVideo = () => {
                 <span className="text-sm">Theater</span>
               </button>
               <button onClick={togglePiP}>
-                <RiPictureInPictureLine size={20} />
+                <RiPictureInPictureLine className="text-md md:text-xl" />
               </button>
               <button onClick={toggleFullscreen}>
                 {fullscreen ? (
-                  <BiExitFullscreen size={20} />
+                  <BiExitFullscreen className="text-md md:text-xl" />
                 ) : (
-                  <BiFullscreen size={20} />
+                  <BiFullscreen className="text-md md:text-xl" />
                 )}
               </button>
               <div className="relative flex align-middle">
                 <button onClick={() => setShowSettings((prev) => !prev)}>
-                  <IoSettingsOutline size={20} />
+                  <IoSettingsOutline className="text-md md:text-xl" />
                 </button>
                 {showSettings && (
-                  <div className="absolute p-1 right-0 bottom-full mb-2 bg-base-100 text-white text-sm rounded-xl shadow-md w-40 z-10 max-h-48 overflow-y-auto">
-                    <div className="p-2 border-b border-gray-700">
-                      <label className="block mb-1">Speed</label>
-                      <select
-                        value={speed}
-                        onChange={changeSpeed}
-                        className="w-full p-1 bg-gray-700 text-white rounded outline-none"
-                      >
-                        {[0.25, 0.5, 1, 1.25, 1.5, 2].map((s) => (
-                          <option key={s} value={s}>
-                            {s}x
-                          </option>
-                        ))}
-                      </select>
+                  <div className="absolute p-1 right-0 bottom-full mb-2 bg-base-100  rounded-md w-30 md:w-40 z-10 max-h-25 md:max-h-48 text-xs">
+                    <div className="p-2 border-b border-gray-700 flex gap-2 md:block ">
+                      <label className="block mb-1 text-xs md:text-lg">Speed</label>
+                      <SpeedSelector
+                        currentSpeed={speed}
+                        onChange={(newSpeed) => {
+                          setSpeed(newSpeed);
+                          if (videoRef.current) {
+                            videoRef.current.playbackRate = newSpeed;
+                          }
+                          setShowSettings(false);
+                        }}
+                      />
                     </div>
-                    <div className="p-2 border-b border-gray-700">
-                      <label className="block mb-1">Quality</label>
-                      <select
-                        value={String(selectedQuality)}
-                        onChange={changeQuality}
-                        className="w-full bg-gray-700 text-white rounded outline-none p-1"
-                      >
-                        {availableQualities?.map((s, i) => (
-                          <option key={i} value={String(s)}>
-                            {s}
-                          </option>
-                        ))}
-                      </select>
+                    <div className="p-2 border-gray-700 flex gap-2 items-center md:block">
+                      <label className="block mb-1 text-xs md:text-lg">Quality</label>
+                      <QualitySelector
+                        selectedQuality={selectedQuality}
+                        availableQualities={availableQualities}
+                        onChange={(newQuality) => {
+                          setSelectedQuality(newQuality);
+                          setShowSettings(false);
+                        }}
+                      />
                     </div>
                   </div>
                 )}
@@ -733,13 +726,13 @@ const SingleVideo = () => {
       </div>
 
       <div className="mt-3">
-        <h2 className="text-base sm:text-lg md:text-xl font-semibold">
-          {video?.title || "Untitled Video"}
+        <h2 className="text-white font-semibold text-lg md:text-xl leading-tight break-words overflow-hidden text-ellipsis line-clamp-2">
+          {video?.title}
         </h2>
 
         <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-6 mt-4">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 overflow-hidden rounded-full">
+            <div className="w-10 h-10 md:h-12 md:w-12 overflow-hidden rounded-full">
               <Link to={`/app/dashboard/single-channel/${channelDetails?._id}`}>
                 <img
                   src={channelDetails?.avatar}
@@ -750,10 +743,12 @@ const SingleVideo = () => {
             </div>
             <div>
               <Link to={`/app/dashboard/single-channel/${channelDetails?._id}`}>
-                <p className="font-semibold">{channelDetails?.name}</p>
+                <p className="font-semibold text-md md:text-xl">
+                  {channelDetails?.name}
+                </p>
               </Link>
-              <p className="text-sm text-gray-400">
-                {subCount?.count} subscribers
+              <p className=" text-gray-400">
+                {formatNumber(subCount?.count)} subscribers
               </p>
             </div>
           </div>
@@ -765,7 +760,7 @@ const SingleVideo = () => {
               <button
                 disabled={subCount.disabled}
                 onClick={subscribeToggle}
-                className={`text-white px-4 py-1 rounded-4xl text-md ${
+                className={` px-4 py-1 rounded-4xl text-sm md:text-md ${
                   subCount?.status
                     ? "bg-gray-800"
                     : "bg-gray-700 hover:bg-gray-600"
@@ -777,29 +772,29 @@ const SingleVideo = () => {
           )}
         </div>
 
-        <div className="flex flex-wrap gap-3 mt-4 text-sm">
+        <div className="flex flex-wrap gap-3 mt-4 items-center">
           <button
             onClick={likeToggle}
-            className="bg-gray-700 hover:bg-gray-600 px-4 py-1 rounded-4xl flex justify-center items-center gap-1"
+            className="bg-gray-700 hover:bg-gray-600 text-md px-3 py-0.75 md:px-4 md:py-1 rounded-md flex justify-center items-center gap-1"
           >
-            {reviewCount.like.status ? <BiSolidLike /> : <BiLike />}
+            {reviewCount.like.status ? <BiSolidLike  /> : <BiLike />}
             {reviewCount.like.count}
           </button>
           <button
             onClick={dislikeToggle}
-            className="bg-gray-700 hover:bg-gray-600 px-4 py-1 rounded-4xl flex justify-center items-center gap-1"
+            className="bg-gray-700 hover:bg-gray-600 text-md px-3 py-0.75 md:px-4 md:py-1 rounded-md flex justify-center items-center gap-1"
           >
             {reviewCount.dislike.status ? <BiSolidDislike /> : <BiDislike />}
             {reviewCount.dislike.count}
           </button>
           <button
-            className="bg-gray-700 hover:bg-gray-600 px-4 py-1 rounded-4xl flex justify-center items-center gap-1"
+            className="bg-gray-700 hover:bg-gray-600 text-md px-3 py-0.75 md:px-4 md:py-1 rounded-md flex justify-center items-center gap-1"
             onClick={handleShare}
           >
-            <IoShareSocialOutline /> Share
+            <GoShareAndroid /> Share
           </button>
           <button
-            className="bg-gray-700 hover:bg-gray-600 px-4 py-1 rounded-4xl flex justify-center items-center gap-1"
+            className="bg-gray-700 hover:bg-gray-600 text-md px-3 py-0.75 md:px-4 md:py-1 rounded-md flex justify-center items-center gap-1"
             onClick={handleDownload}
           >
             <PiDownloadSimpleBold /> Download
@@ -808,22 +803,24 @@ const SingleVideo = () => {
 
         <div className="my-3 w-full bg-gray-700 p-4 rounded-md">
           <div
-            className={`text-sm text-gray-100 whitespace-pre-line transition-all duration-300 ${
+            className={` text-gray-100 whitespace-pre-line transition-all duration-300 ${
               isExpanded ? "" : "line-clamp-3"
             }`}
           >
-            <div className="font-semibold mb-2.5 text-gray-100">
-              {video?.views} views &nbsp;{" "}
-              {video?.createdAt &&
-                formatDistanceToNowStrict(new Date(video.createdAt), {
-                  addSuffix: true,
-                })}
+            <div className="font-medium mb-2.5 text-gray-300 flex gap-2">
+              <span>{formatNumber(video?.views)} views</span>
+              <span>
+                {video?.createdAt &&
+                  formatDistanceToNowStrict(new Date(video.createdAt), {
+                    addSuffix: true,
+                  })}
+              </span>
             </div>
-            {video?.description}
+            <p className="leading-tight break-words">{video?.description}</p>
           </div>
           <button
             onClick={toggleExpanded}
-            className="mt-2 text-gray-300 text-sm font-medium"
+            className="mt-2 text-gray-300 font-medium text-md"
           >
             {isExpanded ? "Show less" : "Show more"}
           </button>

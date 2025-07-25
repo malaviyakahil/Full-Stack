@@ -1,10 +1,11 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { formatDistanceToNow, formatDistanceToNowStrict } from "date-fns";
+import { formatDistanceToNowStrict } from "date-fns";
 import { Link } from "react-router-dom";
 import { fetchLikedVideos } from "../store/likedVideos.slice.js";
 import InfiniteScroll from "react-infinite-scroll-component";
 import formatTime from "../utils/formatTime";
+import formatNumber from "../utils/formatNumber.js";
 
 const LikedVideos = () => {
   let { data, loading, hasMore, limit, fetched } = useSelector(
@@ -16,11 +17,15 @@ const LikedVideos = () => {
     if (!fetched) {
       dispatch(fetchLikedVideos());
     }
-  }, [fetched, dispatch]);
-
+  }, []);
 
   return (
     <div className="flex flex-col items-center py-5">
+      {data?.length > 0 && (
+        <div className="w-full flex justify-start md:w-[536px] lg:w-[760px] xl:w-[980px] mb-2">
+          <h2 className="text-3xl">Liked videos</h2>
+        </div>
+      )}
       {loading ? (
         <>
           {[...Array(limit)].map((_, index) => (
@@ -28,9 +33,9 @@ const LikedVideos = () => {
               key={index}
               className="md:flex py-2.5 gap-5 w-full cursor-pointer sm:w-full md:w-[536px] lg:w-[760px] xl:w-[980px] animate-pulse"
             >
-              <div className="relative w-full aspect-video overflow-hidden rounded-lg bg-gray-800 flex justify-center items-center">
+              <div className="relative w-full aspect-video overflow-hidden rounded-md bg-gray-800 flex justify-center items-center">
                 <div className="h-full w-full bg-gray-700"></div>
-                <div className="absolute bottom-2 right-2 bg-gray-600 bg-opacity-75 text-white text-xs px-1 py-0.5 rounded w-10 h-4"></div>
+                <div className="absolute bottom-2 right-2 bg-gray-600 bg-opacity-75   px-1 py-0.5 rounded w-10 h-4"></div>
               </div>
 
               <div className="w-full md:w-[50%] flex flex-col justify-start+">
@@ -69,9 +74,9 @@ const LikedVideos = () => {
               key={index}
               className="md:flex py-2.5 gap-5 w-full cursor-pointer sm:w-full md:w-[536px] lg:w-[760px] xl:w-[980px]  animate-pulse"
             >
-              <div className="relative w-full aspect-video overflow-hidden rounded-lg bg-gray-800 flex justify-center items-center">
+              <div className="relative w-full aspect-video overflow-hidden rounded-md bg-gray-800 flex justify-center items-center">
                 <div className="h-full w-full bg-gray-700"></div>
-                <div className="absolute bottom-2 right-2 bg-gray-600 bg-opacity-75 text-white text-xs px-1 py-0.5 rounded w-10 h-4"></div>
+                <div className="absolute bottom-2 right-2 bg-gray-600 bg-opacity-75   px-1 py-0.5 rounded w-10 h-4"></div>
               </div>
 
               <div className="w-full md:w-[50%] flex flex-col justify-start+">
@@ -95,18 +100,19 @@ const LikedVideos = () => {
             </div>
           ))}
           endMessage={
-            data.length != 0 && (
-              <p className="text-center text-sm py-6 text-gray-400">
+            data?.length != 0 && (
+              <p className="text-center  py-6 text-gray-400">
                 No more liked videos to show.
               </p>
             )
           }
         >
+          
           {data?.length > 0 ? (
             <>
               {data?.map((item) => (
                 <div
-                  key={item?._id}
+                  key={item?.video?._id}
                   className="md:flex py-2.5 gap-5 w-full cursor-pointer sm:w-full md:w-[536px] lg:w-[760px] xl:w-[980px]"
                 >
                   <div className="relative  w-full aspect-video overflow-hidden rounded-md bg-black flex justify-center">
@@ -119,7 +125,7 @@ const LikedVideos = () => {
                         className="h-full object-contain"
                       />
 
-                      <div className="absolute bottom-2 right-2 bg-black bg-opacity-75 text-white text-xs px-1 py-0.5 rounded">
+                      <div className="absolute text-xs md:text-sm  bottom-2 right-2 bg-black bg-opacity-75   px-1 py-0.5 rounded">
                         {formatTime(item?.video?.duration)}
                       </div>
                     </Link>
@@ -129,22 +135,33 @@ const LikedVideos = () => {
                     <Link
                       to={`/app/dashboard/single-video/${item?.video?.owner._id}/${item?.video?._id}`}
                     >
-                      <h3 className="text-lg my-2 font-semibold leading-tight break-words overflow-hidden text-ellipsis line-clamp-2">
+                      <h3 className=" my-2 text-md md:text-lg font-semibold leading-tight break-words overflow-hidden text-ellipsis line-clamp-2">
                         {item?.video?.title}
                       </h3>
                     </Link>
-                    <p className="text-gray-400 text-sm mb-2">
-                      {item?.video?.views} views •{" "}
-                      {formatDistanceToNowStrict(new Date(item?.video?.createdAt), {
-                        addSuffix: true,
-                      })}
-                    </p>
-                    <div className="flex items-center justify-between gap-2 mb-2">
+                    <div className="flex items-center gap-1 mb-2 text-sm md:md">
+                      <Link
+                        className="text-gray-400 block md:hidden"
+                        to={`/app/dashboard/single-channel/${item?.video?.owner._id}`}
+                      >
+                        {item?.video?.owner?.name} •{" "}
+                      </Link>
+                      <p className="text-gray-400 ">
+                        {formatNumber(item?.video?.views)} views •{" "}
+                        {formatDistanceToNowStrict(
+                          new Date(item?.video?.createdAt),
+                          {
+                            addSuffix: true,
+                          },
+                        )}
+                      </p>
+                    </div>
+                    <div className="items-center justify-between gap-2 hidden md:flex">
                       <div className="flex items-center gap-2">
                         <Link
                           to={`/app/dashboard/single-channel/${item?.video?.owner._id}`}
                         >
-                          <div className="w-9 h-9 overflow-hidden rounded-full">
+                          <div className="w-9 h-9  overflow-hidden rounded-full">
                             <img
                               className="object-cover h-full w-full"
                               src={item?.video?.owner?.avatar}
@@ -171,10 +188,10 @@ const LikedVideos = () => {
             </>
           ) : (
             <div className="flex flex-col items-center justify-center h-[80vh]">
-              <h2 className="text-xl md:text-2xl font-semibold ">
+              <h2 className=" text-4xl text-center font-bold text-gray-300 ">
                 You haven't liked any video yet
               </h2>
-              <p className="text-sm text-gray-500 mt-2">
+              <p className="text-md text-gray-500 mt-2 text-center">
                 Explore and like videos to see them here.
               </p>
             </div>

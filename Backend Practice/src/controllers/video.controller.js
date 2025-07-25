@@ -12,87 +12,144 @@ import { History } from "../models/history.model.js";
 import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
 
+// const uploadVideo = asyncHandler(async (req, res) => {
+//   const owner = req.user?._id;
+//   let { title, description } = req.body;
+
+//   title = title?.trim();
+//   description = description?.trim();
+
+//   if (!title || !description) {
+//     throw new error(400, "Title and description are required.");
+//   }
+
+//   const videoPath = req.files?.video?.[0]?.path;
+//   const thumbnailPath = req.files?.thumbnail?.[0]?.path;
+
+//   if (!videoPath) throw new error(400, "Invalid video file.");
+//   if (!thumbnailPath) throw new error(400, "Invalid thumbnail file.");
+
+//   let videoRes = null;
+//   let thumbnailRes = null;
+
+//   try {
+//     // Upload video
+//     videoRes = await uploadOnCloudinary(videoPath, "video", "video/video");
+//     if (!videoRes) throw new error(500, "Video upload to Cloudinary failed");
+
+//     // Upload thumbnail
+//     thumbnailRes = await uploadOnCloudinary(thumbnailPath, "image", "video/thumbnail");
+//     if (!thumbnailRes) throw new error(500, "Thumbnail upload to Cloudinary failed");
+
+//     const videoHeight = videoRes?.height;
+//     const qualityOptions = [
+//       { label: "144p", height: 144 },
+//       { label: "240p", height: 240 },
+//       { label: "360p", height: 360 },
+//       { label: "480p", height: 480 },
+//       { label: "720p", height: 720 },
+//       { label: "1080p", height: 1080 },
+//     ];
+
+//     const availableQualities = qualityOptions
+//       .filter(q => videoHeight >= q.height)
+//       .map(q => q.label);
+
+//     const originalQuality = availableQualities.at(-1);
+
+//     const videoUploaded = await Video.create({
+//       video: videoRes.secure_url,
+//       videoPublicId: videoRes.public_id,
+//       thumbnail: thumbnailRes.secure_url,
+//       thumbnailPublicId: thumbnailRes.public_id,
+//       title,
+//       description,
+//       owner,
+//       duration: videoRes?.duration,
+//       width: videoRes?.width,
+//       height: videoRes?.height,
+//       availableQualities,
+//       originalQuality,
+//     });
+
+//     if (!videoUploaded) {
+//       throw new error(500, "Failed to save video to database.");
+//     }
+
+//     res
+//       .status(201)
+//       .json(new response(201, videoUploaded, "Video uploaded successfully."));
+//   } catch (err) {
+//     // Cleanup Cloudinary if either upload fails after one succeeds
+//     if (videoRes?.public_id) {
+//       await cloudinary.uploader.destroy(videoRes.public_id, { resource_type: "video" });
+//     }
+//     if (thumbnailRes?.public_id) {
+//       await cloudinary.uploader.destroy(thumbnailRes.public_id, { resource_type: "image" });
+//     }
+//     throw err;
+//   } finally {
+//     // Always delete local files
+//     if (fs.existsSync(videoPath)) fs.unlinkSync(videoPath);
+//     if (fs.existsSync(thumbnailPath)) fs.unlinkSync(thumbnailPath);
+//   }
+// });
+
 const uploadVideo = asyncHandler(async (req, res) => {
   const owner = req.user?._id;
-  let { title, description } = req.body;
+  let { title, description, videoRes, thumbnailRes } = req.body;
 
   title = title?.trim();
   description = description?.trim();
+  videoRes = JSON.parse(videoRes)
+  thumbnailRes = JSON.parse(thumbnailRes)
 
-  if (!title || !description) {
-    throw new error(400, "Title and description are required.");
+  if (!title || !description || !videoRes || !thumbnailRes) {
+    throw new error(
+      400,
+      "All fields including Cloudinary upload data are required.",
+    );
   }
 
-  const videoPath = req.files?.video?.[0]?.path;
-  const thumbnailPath = req.files?.thumbnail?.[0]?.path;
+  const videoHeight = videoRes?.height;
+  const qualityOptions = [
+    { label: "144p", height: 144 },
+    { label: "240p", height: 240 },
+    { label: "360p", height: 360 },
+    { label: "480p", height: 480 },
+    { label: "720p", height: 720 },
+    { label: "1080p", height: 1080 },
+  ];
 
-  if (!videoPath) throw new error(400, "Invalid video file.");
-  if (!thumbnailPath) throw new error(400, "Invalid thumbnail file.");
+  const availableQualities = qualityOptions
+    .filter((q) => videoHeight >= q.height)
+    .map((q) => q.label);
+  const originalQuality = availableQualities.at(-1);
 
-  let videoRes = null;
-  let thumbnailRes = null;
+  const videoUploaded = await Video.create({
+    video: videoRes.secure_url,
+    videoPublicId: videoRes.public_id,
+    thumbnail: thumbnailRes.secure_url,
+    thumbnailPublicId: thumbnailRes.public_id,
+    title,
+    description,
+    owner,
+    duration: videoRes?.duration,
+    width: videoRes?.width,
+    height: videoRes?.height,
+    availableQualities,
+    originalQuality,
+  });
 
-  try {
-    // Upload video
-    videoRes = await uploadOnCloudinary(videoPath, "video", "video/video");
-    if (!videoRes) throw new error(500, "Video upload to Cloudinary failed");
-
-    // Upload thumbnail
-    thumbnailRes = await uploadOnCloudinary(thumbnailPath, "image", "video/thumbnail");
-    if (!thumbnailRes) throw new error(500, "Thumbnail upload to Cloudinary failed");
-
-    const videoHeight = videoRes?.height;
-    const qualityOptions = [
-      { label: "144p", height: 144 },
-      { label: "240p", height: 240 },
-      { label: "360p", height: 360 },
-      { label: "480p", height: 480 },
-      { label: "720p", height: 720 },
-      { label: "1080p", height: 1080 },
-    ];
-
-    const availableQualities = qualityOptions
-      .filter(q => videoHeight >= q.height)
-      .map(q => q.label);
-
-    const originalQuality = availableQualities.at(-1);
-
-    const videoUploaded = await Video.create({
-      video: videoRes.secure_url,
-      videoPublicId: videoRes.public_id,
-      thumbnail: thumbnailRes.secure_url,
-      thumbnailPublicId: thumbnailRes.public_id,
-      title,
-      description,
-      owner,
-      duration: videoRes?.duration,
-      width: videoRes?.width,
-      height: videoRes?.height,
-      availableQualities,
-      originalQuality,
-    });
-
-    if (!videoUploaded) {
-      throw new error(500, "Failed to save video to database.");
-    }
-
-    res
-      .status(201)
-      .json(new response(201, videoUploaded, "Video uploaded successfully."));
-  } catch (err) {
-    // Cleanup Cloudinary if either upload fails after one succeeds
-    if (videoRes?.public_id) {
-      await cloudinary.uploader.destroy(videoRes.public_id, { resource_type: "video" });
-    }
-    if (thumbnailRes?.public_id) {
-      await cloudinary.uploader.destroy(thumbnailRes.public_id, { resource_type: "image" });
-    }
-    throw err;
-  } finally {
-    // Always delete local files
-    if (fs.existsSync(videoPath)) fs.unlinkSync(videoPath);
-    if (fs.existsSync(thumbnailPath)) fs.unlinkSync(thumbnailPath);
+  if (!videoUploaded) {
+    throw new error(500, "Failed to save video to database.");
   }
+
+  res
+    .status(201)
+    .json(
+      new response(201, videoUploaded, "Video metadata stored successfully."),
+    );
 });
 
 let editVideo = asyncHandler(async (req, res) => {
@@ -150,7 +207,7 @@ const changeVideoTitle = asyncHandler(async (req, res) => {
   const updatedVideo = await Video.findByIdAndUpdate(
     videoId,
     { $set: { title: trimmedTitle } },
-    { new: true } // return the updated document
+    { new: true }, // return the updated document
   );
 
   if (!updatedVideo) {
@@ -175,7 +232,7 @@ const changeVideoDescription = asyncHandler(async (req, res) => {
   const updatedVideo = await Video.findByIdAndUpdate(
     videoId,
     { $set: { description: trimmedDescription } },
-    { new: true }
+    { new: true },
   );
 
   if (!updatedVideo) {
@@ -199,7 +256,7 @@ const changeVideoThumbnail = asyncHandler(async (req, res) => {
   const uploadResult = await uploadOnCloudinary(
     thumbnailLocalPath,
     "image",
-    "video/thumbnail"
+    "video/thumbnail",
   );
 
   if (!uploadResult) {
@@ -232,7 +289,7 @@ const changeVideoThumbnail = asyncHandler(async (req, res) => {
         thumbnailPublicId: uploadResult.public_id,
       },
     },
-    { new: true }
+    { new: true },
   );
 
   // Clean up local file
@@ -284,10 +341,14 @@ let deleteVideo = asyncHandler(async (req, res) => {
 
   try {
     await session.withTransaction(async () => {
-      const comments = await Comment.find({ video: video._id }).session(session);
+      const comments = await Comment.find({ video: video._id }).session(
+        session,
+      );
       const commentIds = comments.map((comment) => comment._id);
 
-      await CommentReview.deleteMany({ comment: { $in: commentIds } }).session(session);
+      await CommentReview.deleteMany({ comment: { $in: commentIds } }).session(
+        session,
+      );
       await Comment.deleteMany({ video: video._id }).session(session);
       await Review.deleteMany({ video: video._id }).session(session);
       await History.deleteMany({ video: video._id }).session(session);
@@ -298,7 +359,7 @@ let deleteVideo = asyncHandler(async (req, res) => {
     res
       .status(200)
       .json(
-        new response(200, [], "Video and related data deleted successfully")
+        new response(200, [], "Video and related data deleted successfully"),
       );
   } catch (err) {
     throw new error(500, "Error while deleting video and associated data");
@@ -610,7 +671,6 @@ let deleteReview = asyncHandler(async (req, res) => {
   res.status(200).json(new response(200, [], "Review deleted successfully"));
 });
 
-
 export {
   uploadVideo,
   editVideo,
@@ -624,5 +684,4 @@ export {
   getVideo,
   getVideoQuality,
   deleteReview,
-
 };

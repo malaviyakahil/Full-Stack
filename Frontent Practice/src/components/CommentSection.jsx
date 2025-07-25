@@ -427,24 +427,24 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
   return (
     <>
       <div className="flex  gap-5 items-center mb-2 relative" ref={sortRef}>
-        <h2 className="text-xl font-semibold text-white">
+        <h2 className=" font-semibold text-md md:text-lg">
           {totalCount} Comments
         </h2>
         <div className="relative">
           <button
             onClick={() => setShowSortMenu(!showSortMenu)}
-            className="text-sm  hover:text-white transition flex gap-1.5"
+            className=" transition flex gap-1.5 items-center text-sm md:text-md"
           >
-            <MdOutlineSort className="text-xl" /> Sort by
+            <MdOutlineSort  /> Sort by
           </button>
           {showSortMenu && (
-            <ul className="absolute overflow-hidden right-0 z-50 mt-1 w-40 bg-gray-700 rounded-md">
+            <ul className="absolute overflow-hidden right-0 z-50 mt-1 w-30 md:w-40 bg-gray-700 rounded-md">
               <li
                 onClick={() => {
                   setSortBy("newest");
                   setShowSortMenu(false);
                 }}
-                className="px-4 py-2 text-sm text-white hover:bg-gray-600 cursor-pointer"
+                className="px-2 py-1 md:px-4 md:py-2  text-sm md:text-md  hover:bg-gray-600 cursor-pointer "
               >
                 Newest
               </li>
@@ -453,7 +453,7 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
                   setSortBy("top");
                   setShowSortMenu(false);
                 }}
-                className="px-4 py-2 text-sm text-white hover:bg-gray-600 cursor-pointer"
+                className="px-2 py-1 md:px-4 md:py-2 text-sm md:text-md  hover:bg-gray-600 cursor-pointer"
               >
                 Top comments
               </li>
@@ -466,7 +466,7 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
         <div className="w-full border-b border-gray-700">
           <input
             type="text"
-            className="rounded px-3 py-2 w-full outline-none"
+            className="rounded py-1 text-sm md:text-md md:px-3 md:py-2 w-full outline-none"
             placeholder="Add a public comment..."
             value={
               typeof commentText === "string"
@@ -486,7 +486,7 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
           />
         </div>
         <button
-          className="bg-gray-700 hover:bg-gray-600 text-white min-w-[7rem] px-6 py-2 rounded-md text-center"
+          className="bg-gray-700 hover:bg-gray-600 px-4 py-1 md:px-6 md:py-2  text-sm md:text-md rounded-md text-center"
           onClick={handlePostComment}
         >
           Comment
@@ -510,7 +510,7 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
         }
         endMessage={
           totalCount > 0 && (
-            <p className="text-center text-sm py-1 text-gray-400">
+            <p className="text-center  py-1 text-gray-400">
               No more comments to load.
             </p>
           )
@@ -519,7 +519,7 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
         {comments.map((comment) => (
           <div
             key={comment._id}
-            className="mb-4 border-b pb-4 border-gray-700 flex gap-3"
+            className="mb-4 border-b pb-2 border-gray-700 flex gap-3"
             ref={(el) => (commentRefs.current[comment._id] = el)}
           >
             <img
@@ -530,9 +530,9 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
 
             <div className="flex-1">
               {comment.pinByChannel && (
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 text-xs md:text-sm">
                   <BsPinAngle className="text-[13px]" />
-                  <span className="text-gray-300 text-[13px]">
+                  <span className="font-semibold text-gray-300">
                     Pinned by @{channelDetails?.name}
                   </span>
                 </div>
@@ -549,7 +549,7 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
                 </span>
               </div>
               <div
-                className={`comment-text text-sm text-gray-100 whitespace-pre-line transition-all duration-300 break-words`}
+                className={`comment-text  text-gray-100 whitespace-pre-line transition-all duration-300 break-words`}
               >
                 {comment?.editing ? (
                   <TextareaAutosize
@@ -562,27 +562,27 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
                     minRows={1}
                     maxRows={10}
                     autoFocus
-                    className="w-full p-1 mb-0 resize-none outline-1 outline-gray-700 text-white text-sm rounded-md"
+                    className="w-full p-1 mb-0 text-sm md:text-md  resize-none outline-1 outline-gray-700   rounded-md"
                   />
                 ) : (
                   <p
-                    className={`p-1 mb-[13px] text-sm ${comment.readMore ? "" : "line-clamp-3"}`}
+                    className={`p-1 mb-[13px] text-sm md:text-md  ${comment.readMore ? "" : "line-clamp-3"}`}
                     ref={(el) => (commentRefs.current[comment._id] = el)}
                   >
-                    {comment.comment}
+                    {comment.comment} Lorem ipsum dolor sit amet consectetur adipisicing elit. Eligendi distinctio voluptatem fugit, totam assumenda nulla voluptas itaque recusandae unde deserunt cupiditate quia perspiciatis. Necessitatibus fugiat ducimus, saepe fuga non laborum?
                   </p>
                 )}
               </div>
               {comment?.hasOverflow && !comment.editing && (
                 <button
                   onClick={() => toggleReadMore(comment._id)}
-                  className="text-white text-sm font-medium"
+                  className="font-medium text-sm md:text-md"
                 >
                   {comment.readMore ? "Show less" : "Show more"}
                 </button>
               )}
               <div className="flex mt-2 justify-between">
-                <div className="flex gap-4 text-sm text-gray-300 items-center">
+                <div className="flex gap-4  text-gray-300 items-center">
                   <button
                     className="flex items-center gap-1"
                     onClick={() => toggleLike(comment?._id)}
@@ -640,7 +640,7 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
                       onClick={() => {
                         cancelEdit(comment?._id);
                       }}
-                      className={`text-white px-2 py-0.25 rounded-md text-[13px] bg-gray-700 hover:bg-gray-600
+                      className={`   px-2 py-0.25 rounded-md text-[13px] bg-gray-700 hover:bg-gray-600
                     `}
                     >
                       Cancel
@@ -649,7 +649,7 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
                       onClick={() => {
                         handleEditComment(comment?._id);
                       }}
-                      className={`text-white px-2 py-0.25 rounded-md text-[13px] bg-gray-700 hover:bg-gray-600
+                      className={` px-2 py-0.25 rounded-md text-[13px] bg-gray-700 hover:bg-gray-600
                     `}
                     >
                       Save
@@ -668,12 +668,12 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
                   <BiDotsVertical size={20} />
                 </button>
                 {comment?.showDropdown && (
-                  <div className="absolute right-0 w-32 mt-2 bg-gray-700 rounded-md shadow-lg overflow-hidden z-50">
-                    <ul className="text-sm text-gray-100">
+                  <div className="absolute right-0 w-22 md:w-32 text-sm mt-2 bg-gray-700 rounded-md shadow-lg overflow-hidden z-50">
+                    <ul className=" text-gray-100">
                       {currentUser?.data?._id == comment.user._id && (
                         <li>
                           <button
-                            className="block w-full px-4 py-2 text-left hover:bg-gray-600"
+                            className="block w-full px-3 py-1.5 md:px-4 md:py-2 text-left hover:bg-gray-600"
                             onClick={() => {
                               toggleEditing(comment?._id, comment?.comment);
                             }}
@@ -684,7 +684,7 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
                       )}
                       <li>
                         <button
-                          className="block w-full px-4 py-2 text-left hover:bg-gray-600"
+                          className="block w-full px-3 py-1.5 md:px-4 md:py-2 text-left hover:bg-gray-600"
                           onClick={() => {
                             handleDeleteComment(comment?._id);
                           }}
@@ -695,7 +695,7 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
                       {countPinnedComments() < 1 ? (
                         <li>
                           <button
-                            className="block w-full px-4 py-2 text-left hover:bg-gray-600"
+                            className="block w-full px-3 py-1.5 md:px-4 md:py-2 text-left hover:bg-gray-600"
                             onClick={() => {
                               togglePin(comment?.pinByChannel, comment?._id);
                             }}
@@ -707,7 +707,7 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
                         comment?.pinByChannel && (
                           <li>
                             <button
-                              className="block w-full px-4 py-2 text-left hover:bg-gray-600"
+                              className="block w-full px-3 py-1.5 md:px-4 md:py-2 text-left hover:bg-gray-600"
                               onClick={() => {
                                 togglePin(comment?.pinByChannel, comment?._id);
                               }}
@@ -722,7 +722,7 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
                 )}
               </div>
             ) : comment.user._id == currentUser.data._id ? (
-              <div className="relative ml-3">
+              <div className="relative ml-3 ">
                 <button
                   className="text-gray-200"
                   onClick={() => toggleDropdown(comment?._id)}
@@ -730,11 +730,11 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
                   <BiDotsVertical size={20} />
                 </button>
                 {comment?.showDropdown && (
-                  <div className="absolute right-0 w-32 mt-2 bg-gray-700 rounded-md shadow-lg overflow-hidden">
-                    <ul className="text-sm text-gray-100">
+                  <div className="absolute right-0 w-22 md:w-32 text-sm mt-2 bg-gray-700 rounded-md shadow-lg overflow-hidden">
+                    <ul className=" text-gray-100"> 
                       <li>
                         <button
-                          className="block w-full px-4 py-2 text-left hover:bg-gray-600"
+                          className="block px-3 py-1.5 md:px-4 md:py-2  w-full text-left hover:bg-gray-600"
                           onClick={() => {
                             toggleEditing(comment?._id, comment?.comment);
                           }}
@@ -744,7 +744,7 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
                       </li>
                       <li>
                         <button
-                          className="block w-full px-4 py-2 text-left hover:bg-gray-600"
+                          className="block w-full px-3 py-1.5 md:px-4 md:py-2  text-left hover:bg-gray-600"
                           onClick={() => {
                             handleDeleteComment(comment?._id);
                           }}
@@ -766,4 +766,4 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
   );
 };
 
-export default CommentSection;
+export default CommentSection; 

@@ -1,5 +1,5 @@
 import React from "react";
-import { clearVideos } from "../store/videos.slice.js";
+import { clearVideos, fetchVideos } from "../store/videos.slice.js";
 import { useDispatch } from "react-redux";
 import { TbRefresh } from "react-icons/tb";
 
@@ -7,6 +7,7 @@ const Refresh = () => {
   let dispatch = useDispatch();
   let refresh = () => {
     dispatch(clearVideos());
+    dispatch(fetchVideos())
   };
   return (
     <button

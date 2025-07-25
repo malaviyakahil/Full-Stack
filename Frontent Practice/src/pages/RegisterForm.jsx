@@ -59,9 +59,11 @@ const RegisterForm = () => {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen">
-      <div className="w-full max-w-md p-5">
-        <h1 className="text-center text-[40px] mb-5">Register Here</h1>
+    <div className="h-[100dvh] w-screen flex justify-center items-center">
+      <div className="w-full max-w-md justify-end px-5">
+        <h1 className="text-center text-white text-[40px] mb-5">
+          Register Here
+        </h1>
 
         <form
           className="w-full"
@@ -76,7 +78,7 @@ const RegisterForm = () => {
             className="input validator w-full my-2 rounded-md"
           >
             <svg
-              className="h-[1em] opacity-50"
+              className="h-[1em] opacity-100"
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
             >
@@ -110,7 +112,7 @@ const RegisterForm = () => {
             className="input validator w-full my-2 rounded-md"
           >
             <svg
-              className="h-[1em] opacity-50"
+              className="h-[1em] opacity-100"
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
             >
@@ -142,7 +144,7 @@ const RegisterForm = () => {
             className="input validator w-full my-2 rounded-md"
           >
             <svg
-              className="h-[1em] opacity-50"
+              className="h-[1em] opacity-100"
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
             >
@@ -173,7 +175,7 @@ const RegisterForm = () => {
             className="input validator w-full my-2 relative rounded-md"
           >
             <svg
-              className="h-[1em] opacity-50"
+              className="h-[1em] opacity-100"
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
             >
@@ -199,7 +201,7 @@ const RegisterForm = () => {
             />
             <span
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-sm"
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer "
             >
               {showPassword ? (
                 <RiEyeLine className="text-gray-400 text-[15px]" />
@@ -211,7 +213,7 @@ const RegisterForm = () => {
 
           {/* Avatar Upload */}
           <fieldset className="fieldset my-2 rounded-md">
-            <legend className="fieldset-legend opacity-50">
+            <legend className="fieldset-legend font-medium opacity-50">
               Pick an Avatar Image
             </legend>
             <input
@@ -221,12 +223,12 @@ const RegisterForm = () => {
               className="file-input w-full rounded-md"
               {...register("avatar")}
             />
-            <label className="fieldset-label">Max size 5MB</label>
+            <label className="fieldset-label  font-medium">Max size 5MB</label>
           </fieldset>
 
           {/* Cover Image Upload */}
           <fieldset className="fieldset my-2">
-            <legend className="fieldset-legend opacity-50 ">
+            <legend className="fieldset-legend  font-medium opacity-50 ">
               Pick a Cover Image (Optional)
             </legend>
             <input
@@ -235,7 +237,7 @@ const RegisterForm = () => {
               className="file-input w-full rounded-md"
               {...register("coverImage")}
             />
-            <label className="fieldset-label">Max size 5MB</label>
+            <label className="fieldset-label font-medium">Max size 5MB</label>
           </fieldset>
 
           {/* Errors / Success */}
@@ -247,21 +249,23 @@ const RegisterForm = () => {
           )}
 
           {/* Submit / Loader */}
-          {loader ? (
-            <div className="relative w-full h-[40px] rounded-md overflow-hidden border border-gray-600 my-2">
-              <div className="absolute top-[0px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-5" />
-              <div className="absolute top-[9px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-3" />
-              <div className="absolute top-[17px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-4" />
-              <div className="absolute top-[22px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-6" />
-            </div>
-          ) : (
-            <button
-              className="btn bg-gray-600 w-full my-2 rounded-md"
-              type="submit"
-            >
-              Register
-            </button>
-          )}
+          <div className="h-[40px] w-full mt-5">
+            {loader ? (
+              <div className="relative w-full h-full rounded-md overflow-hidden box-border border border-gray-600">
+                <div className="absolute top-[0px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-5" />
+                <div className="absolute top-[9px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-3" />
+                <div className="absolute top-[17px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-4" />
+                <div className="absolute top-[22px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-6" />
+              </div>
+            ) : (
+              <button
+                className="btn bg-gray-600 h-full w-full rounded-md"
+                type="submit"
+              >
+                Register
+              </button>
+            )}
+          </div>
         </form>
       </div>
     </div>

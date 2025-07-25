@@ -6,6 +6,7 @@ import axios from "axios";
 import InfiniteScroll from "react-infinite-scroll-component";
 import formatTime from "../utils/formatTime";
 import { getChannelVideos } from "../apis/channel.apis";
+import formatNumber from "../utils/formatNumber";
 
 const SingleChannelVideos = ({ ownerId }) => {
   const [videos, setVideos] = useState([]);
@@ -17,7 +18,8 @@ const SingleChannelVideos = ({ ownerId }) => {
   const [total, setTotal] = useState(0);
   const [initialLoad, setInitialLoad] = useState(true);
   const [error, setError] = useState("");
-  
+  const [filterLock, setFilterLock] = useState(false);
+
   useEffect(() => {
     const calculateLimit = () => {
       const width = window.innerWidth;
@@ -54,14 +56,16 @@ const SingleChannelVideos = ({ ownerId }) => {
       setHasMore(false);
     } finally {
       setLoading(false);
+      setFilterLock(false);
     }
   };
 
   useEffect(() => {
+  
     setVideos([]);
     setPage(1);
     setHasMore(true);
-    setInitialLoad(true); // mark for first fetch
+    setInitialLoad(true);
   }, [filter, limit]);
 
   useEffect(() => {
@@ -74,15 +78,19 @@ const SingleChannelVideos = ({ ownerId }) => {
   return (
     <div className="w-full py-5">
       <div className="space-x-4 w-full">
-        <button className=" font-semibold hover:border-b-2 hover:border-white">
-          Videos
-        </button>
+        <button className=" font-semibold text-gray-400 text-lg">Videos</button>
         {total != 0 ? (
-          <div className="flex flex-wrap gap-3 text-sm mt-3">
+          <div className="flex flex-wrap gap-3  mt-3 text-sm">
             {["latest", "top", "oldest"].map((type) => (
               <button
                 key={type}
-                onClick={() => setFilter(type)}
+                onClick={() => {
+                  if (!filterLock && filter !== type) {
+                    setFilterLock(true);
+                    setFilter(type);
+                  }
+                }}
+                disabled={filterLock}
                 className={`px-4 py-1 rounded-md ${
                   filter === type ? "bg-gray-700" : "bg-gray-800"
                 } hover:bg-gray-600 capitalize`}
@@ -110,7 +118,7 @@ const SingleChannelVideos = ({ ownerId }) => {
                   key={idx}
                   className="flex flex-col w-full sm:w-[320px] md:w-[336px] lg:w-[360px] xl:w-[370px] cursor-pointer animate-pulse"
                 >
-                  <div className="relative aspect-video overflow-hidden rounded-lg bg-gray-800"></div>
+                  <div className="relative aspect-video overflow-hidden rounded-md bg-gray-800"></div>
                   <div className="flex flex-row mt-3 pl-3 gap-3">
                     <div className="flex flex-col flex-1 overflow-hidden space-y-2">
                       <div className="h-4 bg-gray-700 rounded w-3/4"></div>
@@ -127,7 +135,7 @@ const SingleChannelVideos = ({ ownerId }) => {
           }
           endMessage={
             videos?.length > 0 && (
-              <p className="text-center text-sm py-2 text-gray-400">
+              <p className="text-center  py-2 text-gray-400">
                 No more videos to load.
               </p>
             )
@@ -166,21 +174,21 @@ const ChannelVideoCard = ({ video }) => {
           alt={video?.title}
           className="h-full object-contain"
         />
-        <div className="absolute bottom-2 right-2 bg-black bg-opacity-75 text-white text-xs px-1 py-0.5 rounded">
+        <div className="absolute text-xs bottom-2 right-2 bg-black bg-opacity-75   px-1 py-0.5 rounded">
           {formatTime(video?.duration)}
         </div>
       </div>
-      <div className="flex flex-row mt-3 pl-3 gap-3">
+      <div className="flex flex-row mt-3 gap-3">
         <div className="flex flex-col flex-1 overflow-hidden">
-          <h3 className="text-sm font-semibold leading-tight break-words overflow-hidden text-ellipsis line-clamp-2">
+          <h3 className=" font-semibold  text-md md:text-lg leading-tight break-words overflow-hidden text-ellipsis line-clamp-2">
             {video?.title}
           </h3>
-          <div className="flex items-center gap-1">
-            <p className="text-xs text-gray-400 whitespace-nowrap overflow-hidden text-ellipsis">
-              {video?.views} views
+          <div className="flex items-center gap-1 text-sm md:md">
+            <p className=" text-gray-400 whitespace-nowrap overflow-hidden text-ellipsis">
+              {formatNumber(video?.views)} views
             </p>
             <p className="text-[12px] text-gray-400">•</p>
-            <p className="text-xs text-gray-400 whitespace-nowrap overflow-hidden text-ellipsis">
+            <p className=" text-gray-400 whitespace-nowrap overflow-hidden text-ellipsis">
               {formatDistanceToNowStrict(new Date(video?.createdAt), {
                 addSuffix: true,
               })}
@@ -201,7 +209,7 @@ const SingleChannelVideosSkeleton = ({ limit }) => {
             key={idx}
             className="flex flex-col w-full sm:w-[320px] md:w-[336px] lg:w-[360px] xl:w-[370px] cursor-pointer"
           >
-            <div className="relative aspect-video overflow-hidden rounded-lg bg-gray-800"></div>
+            <div className="relative aspect-video overflow-hidden rounded-md bg-gray-800"></div>
             <div className="flex flex-row mt-3 pl-3 gap-3">
               <div className="flex flex-col flex-1 overflow-hidden space-y-2">
                 <div className="h-4 bg-gray-700 rounded w-3/4"></div>

@@ -7,7 +7,7 @@ import SingleChannelVideos from "../components/SingleChannelVideos";
 const SingleChannel = () => {
   let { ownerId } = useParams();
   return (
-    <div className="mx-auto flex flex-col items-center text-white max-w-6xl">
+    <div className="mx-auto flex flex-col items-center  max-w-6xl">
       <SingleChannelDetails ownerId={ownerId} />
       <SingleChannelVideos ownerId={ownerId} />
     </div>

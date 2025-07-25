@@ -6,6 +6,7 @@ import {
   subscribeTo,
   unSubscribeTo,
 } from "../apis/channel.apis.js";
+import formatNumber from "../utils/formatNumber.js";
 
 const SingleChannelDetails = ({ ownerId }) => {
   let [currentChannel, setCurrentChannel] = useState({});
@@ -18,11 +19,15 @@ const SingleChannelDetails = ({ ownerId }) => {
   let currentUser = useSelector((store) => store.currentUser);
   let [error, setError] = useState("");
 
+  const [subLock, setSubLock] = useState(false); // ✅ lock state
+
   const subscribeToggle = async () => {
+    if (subLock) return; // prevent re-entry
+    setSubLock(true);
+
     const prevSubCount = { ...subCount };
 
     try {
-      // Optimistically update
       const updated = {
         ...subCount,
         status: !subCount.status,
@@ -31,16 +36,16 @@ const SingleChannelDetails = ({ ownerId }) => {
 
       setSubCount(updated);
 
-      // Perform the actual request
       if (subCount.status) {
         await unSubscribeTo(ownerId);
       } else {
         await subscribeTo(ownerId);
       }
     } catch (error) {
-      // Rollback UI
-      setSubCount(prevSubCount);
+      setSubCount(prevSubCount); // rollback on error
       setError(error?.message);
+    } finally {
+      setSubLock(false); // release lock
     }
   };
 
@@ -71,7 +76,7 @@ const SingleChannelDetails = ({ ownerId }) => {
         <SingleChannelSkeleton />
       ) : (
         <div className="w-full md:max-w-3xl xs:max-w-1xl py-5 lg:max-w-6xl border-gray-600 border-b-[1px]">
-          <div className="w-full bg-black aspect-[4/1] overflow-hidden flex justify-center items-center rounded-lg">
+          <div className="w-full bg-black aspect-[4/1] overflow-hidden flex justify-center items-center rounded-md">
             {currentChannel?.coverImage && (
               <img
                 src={currentChannel?.coverImage}
@@ -90,19 +95,19 @@ const SingleChannelDetails = ({ ownerId }) => {
               />
             </div>
             <div className="md:ml-6 text-center md:text-left mt-4 md:mt-0">
-              <h2 className="text-2xl font-bold">{currentChannel?.name}</h2>
-              <p className="text-gray-400">
-                @{currentChannel?.name} • {subCount?.count} subscribers •{" "}
-                {currentChannel?.totalVideos} videos
+              <h2 className=" font-bold text-lg">{currentChannel?.name}</h2>
+              <p className="text-gray-400 text-sm md:text-md">
+                @{currentChannel?.name} • {formatNumber(subCount?.count)}{" "}
+                subscribers • {currentChannel?.totalVideos} videos
               </p>
               {currentChannel?._id == currentUser.data?._id ? (
                 ""
               ) : (
                 <div className="flex gap-4 mt-4 justify-center md:justify-start">
                   <button
-                    disabled={subCount.disabled}
+                    disabled={subCount.disabled || subLock}
                     onClick={subscribeToggle}
-                    className={`text-white px-4 py-1 rounded-4xl text-md ${
+                    className={` px-4 py-1 rounded-4xl ${
                       subCount?.status
                         ? "bg-gray-800"
                         : "bg-gray-700 hover:bg-gray-600"
@@ -125,7 +130,7 @@ export default SingleChannelDetails;
 const SingleChannelSkeleton = () => {
   return (
     <div className="w-full md:max-w-3xl xs:max-w-1xl py-5 lg:max-w-6xl border-gray-600 border-b-[1px] animate-pulse">
-      <div className="w-full aspect-[4/1] bg-gray-800 rounded-lg"></div>
+      <div className="w-full aspect-[4/1] bg-gray-800 rounded-md"></div>
       <div className="flex flex-col md:flex-row items-center md:items-start mt-6 px-4 w-full">
         <div className="w-24 h-24 bg-gray-800 rounded-full"></div>
         <div className="md:ml-6 text-center md:text-left mt-4 md:mt-0 space-y-3 w-full max-w-md">

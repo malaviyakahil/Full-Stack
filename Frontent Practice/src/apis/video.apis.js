@@ -7,7 +7,7 @@ const getAllVideos = async ({ page, limit }) => {
 };
 
 const uploadVideo = async (formData) => {
-  return await axiosInstance.post(`/video/upload-video`, { formData });
+  return await axiosInstance.post(`/video/upload-video`, formData);
 };
 
 const deleteVideo = async (id) => {

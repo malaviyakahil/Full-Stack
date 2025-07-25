@@ -42,8 +42,8 @@ const ChangePasswordForm = () => {
   };
 
   return (
-    <div className="flex justify-center items-center h-full">
-      <div className="w-full max-w-md justify-end p-5">
+    <div className="flex w-full justify-center items-center h-full">
+      <div className="w-full max-w-md  py-5">
         <h1 className="text-center text-[40px] mb-5">Change password</h1>
         <form
           className="w-full"
@@ -53,7 +53,7 @@ const ChangePasswordForm = () => {
         >
           <label className="input validator w-full my-2 relative rounded-md">
             <svg
-              className="h-[1em] opacity-50"
+              className="h-[1em]"
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
             >
@@ -81,7 +81,7 @@ const ChangePasswordForm = () => {
             />
             <span
               onClick={() => setShowOldPassword(!showOldPassword)}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-sm"
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer "
             >
               {showOldPassword ? (
                 <RiEyeLine className="text-gray-400 text-[15px]" />
@@ -93,7 +93,7 @@ const ChangePasswordForm = () => {
 
           <label className="input validator w-full my-2 relative rounded-md">
             <svg
-              className="h-[1em] opacity-50"
+              className="h-[1em]"
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
             >
@@ -121,7 +121,7 @@ const ChangePasswordForm = () => {
             />
             <span
               onClick={() => setShowNewPassword(!showNewPassword)}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-sm"
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer "
             >
               {showNewPassword ? (
                 <RiEyeLine className="text-gray-400 text-[15px]" />
@@ -132,21 +132,23 @@ const ChangePasswordForm = () => {
           </label>
 
           {error && <p className="text-red-500 text-center my-2">{error}</p>}
-          {loader ? (
-            <div className="relative w-full h-[40px] rounded-md overflow-hidden border border-gray-600 my-2">
-              <div className="absolute top-[0px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-5" />
-              <div className="absolute top-[9px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-3" />
-              <div className="absolute top-[17px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-4" />
-              <div className="absolute top-[22px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-6" />
-            </div>
-          ) : (
-            <button
-              className="btn bg-gray-600 w-full my-2 rounded-md"
-              type="submit"
-            >
-              Change
-            </button>
-          )}
+          <div className="h-[40px] w-full mt-5">
+            {loader ? (
+              <div className="relative w-full h-full rounded-md overflow-hidden box-border border border-gray-600">
+                <div className="absolute top-[0px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-5" />
+                <div className="absolute top-[9px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-3" />
+                <div className="absolute top-[17px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-4" />
+                <div className="absolute top-[22px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-6" />
+              </div>
+            ) : (
+              <button
+                className="btn bg-gray-600 h-full w-full rounded-md"
+                type="submit"
+              >
+                Change
+              </button>
+            )}
+          </div>
         </form>
       </div>
     </div>

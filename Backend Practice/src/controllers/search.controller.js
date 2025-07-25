@@ -162,6 +162,7 @@ let getChannelAndVideo = asyncHandler(async (req, res) => {
           thumbnail: 1,
           title: 1,
           duration: 1,
+          description:1,
           views: 1,
           "owner._id": 1,
           "owner.name": 1,

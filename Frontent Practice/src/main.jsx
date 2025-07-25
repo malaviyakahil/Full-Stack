@@ -27,6 +27,7 @@ import LikedVideos from "./pages/LikedVideos.jsx";
 import { AuthProvider } from "./components/AuthContext.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import DeleteUser from "./pages/DeleteUser.jsx";
+import SettingsOptions from "./pages/SettingsOptions.jsx";
 
 let router = createBrowserRouter([
   {
@@ -43,9 +44,11 @@ let router = createBrowserRouter([
   },
   {
     path: "/app",
-    element: <ProtectedRoute>
+    element: (
+      <ProtectedRoute>
         <App />
-      </ProtectedRoute>,
+      </ProtectedRoute>
+    ),
     children: [
       {
         path: "dashboard",
@@ -110,6 +113,10 @@ let router = createBrowserRouter([
         element: <SettingDashboard />,
         children: [
           {
+            index: true,
+            element: <SettingsOptions />,
+          },
+          {
             path: "edit-profile",
             element: <EditProfileForm />,
           },
@@ -133,7 +140,7 @@ let router = createBrowserRouter([
 
 createRoot(document.getElementById("root")).render(
   <Provider store={store}>
-     <AuthProvider>
+    <AuthProvider>
       <RouterProvider router={router} />
     </AuthProvider>
   </Provider>,

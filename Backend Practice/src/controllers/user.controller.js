@@ -17,8 +17,8 @@ import { CommentReview } from "../models/commentReview.model.js";
 
 let generatingAccessAndRefreshToken = async function (id) {
   let user = await User.findById(id);
-  let accessToken =await user.generateAccessToken();
-  let refreshToken =await user.generateRefreshToken();
+  let accessToken = await user.generateAccessToken();
+  let refreshToken = await user.generateRefreshToken();
   let loginedUser = await User.findByIdAndUpdate(
     id,
     { $set: { refreshToken } },
@@ -573,6 +573,7 @@ let getHistory = asyncHandler(async (req, res) => {
           title: "$videoData.title",
           thumbnail: "$videoData.thumbnail",
           duration: "$videoData.duration",
+          description: "$videoData.description",
           views: "$videoData.views",
           createdAt: "$videoData.createdAt",
           owner: {
@@ -652,6 +653,7 @@ const getLikedVideos = asyncHandler(async (req, res) => {
                 title: "$videoData.title",
                 thumbnail: "$videoData.thumbnail",
                 duration: "$videoData.duration",
+                description: "$videoData.description",
                 views: "$videoData.views",
                 createdAt: "$videoData.createdAt",
                 owner: {
@@ -757,13 +759,13 @@ const deleteUser = asyncHandler(async (req, res) => {
   if (!user) {
     throw new error(404, "User not found");
   }
+
   password = password.trim();
-  if (password == "") {
+  if (password === "") {
     throw new error(401, "Password cannot be empty");
   }
 
-  let passwordCheck = await user.comparePassword(password);
-
+  const passwordCheck = await user.comparePassword(password);
   if (!passwordCheck) {
     throw new error(401, "Wrong password");
   }
@@ -772,51 +774,64 @@ const deleteUser = asyncHandler(async (req, res) => {
 
   try {
     await session.withTransaction(async () => {
-      // 1. Find all videos uploaded by this user
-      const videos = await Video.find({ owner: userId }).session(session);
+      // 1. Delete avatar and cover image from Cloudinary
+      if (user.avatar?.public_id) {
+        await cloudinary.uploader.destroy(user.avatar.public_id);
+      }
+      if (user.coverImage?.public_id) {
+        await cloudinary.uploader.destroy(user.coverImage.public_id);
+      }
 
+      // 2. Delete videos and their Cloudinary files
+      const videos = await Video.find({ owner: userId }).session(session);
       for (const video of videos) {
         const videoId = video._id;
 
-        // a. Find all comments on this video
+        // a. Delete video file from Cloudinary
+        if (video.video?.public_id) {
+          await cloudinary.uploader.destroy(video.video.public_id, {
+            resource_type: "video",
+          });
+        }
+
+        // b. Delete thumbnail from Cloudinary
+        if (video.thumbnail?.public_id) {
+          await cloudinary.uploader.destroy(video.thumbnail.public_id);
+        }
+
+        // c. Delete comments on this video
         const comments = await Comment.find({ video: videoId }).session(
           session,
         );
-        const commentIds = comments.map((comment) => comment._id);
+        const commentIds = comments.map((c) => c._id);
 
-        // b. Delete reviews on comments of this video
         await CommentReview.deleteMany({
           comment: { $in: commentIds },
         }).session(session);
-
-        // c. Delete comments on this video
         await Comment.deleteMany({ video: videoId }).session(session);
-
-        // d. Delete reviews on the video
         await Review.deleteMany({ video: videoId }).session(session);
-
-        // e. Delete from all users' history and liked lists
         await History.deleteMany({ video: videoId }).session(session);
         await LikedVideos.deleteMany({ video: videoId }).session(session);
 
-        // f. Delete the video itself
         await Video.findByIdAndDelete(videoId).session(session);
       }
 
-      // 2. Delete the user’s activity on other videos
+      // 3. Delete user's own comments/reviews/history on others' videos
       await CommentReview.deleteMany({ user: userId }).session(session);
       await Comment.deleteMany({ user: userId }).session(session);
       await Review.deleteMany({ user: userId }).session(session);
-      await History.deleteMany({ user: userId }).session(session); // user's watched videos
-      await LikedVideos.deleteMany({ user: userId }).session(session); // user's liked videos
+      await History.deleteMany({ user: userId }).session(session);
+      await LikedVideos.deleteMany({ user: userId }).session(session);
 
-      // 3. Delete the user
+      // 4. Delete the user itself
       await User.findByIdAndDelete(userId).session(session);
     });
-    let options = {
+
+    const options = {
       httpOnly: true,
       secure: true,
     };
+
     res
       .status(200)
       .clearCookie("accessToken", options)
@@ -832,7 +847,6 @@ const deleteUser = asyncHandler(async (req, res) => {
     session.endSession();
   }
 });
-
 
 const getCurrentUserVideos = asyncHandler(async (req, res) => {
   const id = req.user?._id;
@@ -936,5 +950,5 @@ export {
   deleteLikedVideos,
   authMe,
   deleteUser,
-  getCurrentUserVideos
+  getCurrentUserVideos,
 };

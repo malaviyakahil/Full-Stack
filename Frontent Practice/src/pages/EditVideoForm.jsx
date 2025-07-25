@@ -4,7 +4,11 @@ import { useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { updateCurrentUserVideo } from "../store/userVideos.slice";
-import { changeVideoDescription, changeVideoThumbnail, changeVideoTitle } from "../apis/video.apis";
+import {
+  changeVideoDescription,
+  changeVideoThumbnail,
+  changeVideoTitle,
+} from "../apis/video.apis";
 
 const EditVideoForm = () => {
   const location = useLocation();
@@ -56,7 +60,7 @@ const EditVideoForm = () => {
         const formData = new FormData();
         formData.append("description", trimmedDescription);
 
-        const res = await changeVideoDescription(id,formData)
+        const res = await changeVideoDescription(id, formData);
         Object.assign(combinedUpdatedVideo, res?.data);
       }
 
@@ -65,7 +69,7 @@ const EditVideoForm = () => {
         const formData = new FormData();
         formData.append("thumbnail", thumbnailFile);
 
-        const res = await changeVideoThumbnail(id,formData)
+        const res = await changeVideoThumbnail(id, formData);
         Object.assign(combinedUpdatedVideo, res?.data);
       }
 
@@ -84,16 +88,17 @@ const EditVideoForm = () => {
   };
 
   return (
-    <div className="flex justify-center items-center h-full">
-      <div className="w-full max-w-md justify-end p-5">
-        <h1 className="text-center text-[40px]">Edit video</h1>
+    <div className=" w-full flex justify-center items-center h-full">
+      <div className="w-full max-w-md">
+        <h1 className="text-center text-[40px] mb-5">Edit video</h1>
         <form
           className="w-full"
           autoComplete="off"
           encType="multipart/form-data"
           onSubmit={handleSubmit(submit)}
         >
-          <p className="text-md font-semibold my-2">Title</p>
+         <div className="w-full py-2">
+           <p className=" text-gray-400 mb-1">Title</p>
           <input
             type="text"
             defaultValue={title}
@@ -104,7 +109,9 @@ const EditVideoForm = () => {
             minLength="3"
             maxLength="60"
           />
-          <p className="text-md font-semibold my-2">Description</p>
+         </div>
+         <div className="w-full py-2">
+           <p className=" text-gray-400 mb-1">Description</p>
           <input
             type="text"
             defaultValue={description}
@@ -115,24 +122,25 @@ const EditVideoForm = () => {
             {...register("description")}
             placeholder="Description"
           />
-          <p className="text-md font-semibold my-2">Thumbnail</p>
-          <div className="relative aspect-video overflow-hidden rounded-md bg-black flex justify-center ">
-            <img
-              src={thumbnail}
-              alt={title}
-              className="h-full object-contain"
-            />
-            <button
-              type="button"
-              onClick={handleChangeClick}
-              className="absolute bottom-2 left-2 bg-gray-700 hover:bg-gray-600 px-4 py-0.5 rounded-md text-[14px] text-white"
-            >
-              {showFileInput ? "Cancel" : "Change"}
-            </button>
-          </div>
-
-          {showFileInput && (
-            <fieldset className="fieldset mb-3">
+         </div>
+          <div className="w-full py-2">
+            <p className=" text-gray-400 mb-1">Thumbnail</p>
+            <div className="relative aspect-video mb-3 overflow-hidden rounded-md bg-black flex justify-center ">
+              <img
+                src={thumbnail}
+                alt={title}
+                className="h-full object-contain"
+              />
+              <button
+                type="button"
+                onClick={handleChangeClick}
+                className="absolute bottom-2 left-2 bg-gray-700 hover:bg-gray-600 px-4 py-0.5 rounded-md text-[14px] "
+              >
+                {showFileInput ? "Cancel" : "Change"}
+              </button>
+            </div>
+            {showFileInput && (
+            <fieldset className="fieldset">
               <legend className="fieldset-legend opacity-50">
                 Pick an image for Thumbnail
               </legend>
@@ -145,23 +153,26 @@ const EditVideoForm = () => {
               <label className="fieldset-label">Max size 5MB</label>
             </fieldset>
           )}
+          </div>
 
           {error && <p className="text-red-500 text-center my-3.5">{error}</p>}
-          {loader ? (
-            <div className="relative w-full h-[40px] rounded-md overflow-hidden border border-gray-600 my-2">
-              <div className="absolute top-[0px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-5" />
-              <div className="absolute top-[9px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-3" />
-              <div className="absolute top-[17px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-4" />
-              <div className="absolute top-[22px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-6" />
-            </div>
-          ) : (
-            <button
-              className="btn bg-gray-600 w-full my-2 rounded-md"
-              type="submit"
-            >
-              Save
-            </button>
-          )}
+          <div className="h-[40px] w-full mt-5">
+            {loader ? (
+              <div className="relative w-full h-full rounded-md overflow-hidden box-border border border-gray-600">
+                <div className="absolute top-[0px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-5" />
+                <div className="absolute top-[9px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-3" />
+                <div className="absolute top-[17px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-4" />
+                <div className="absolute top-[22px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-6" />
+              </div>
+            ) : (
+              <button
+                className="btn bg-gray-600 h-full w-full rounded-md"
+                type="submit"
+              >
+                Save
+              </button>
+            )}
+          </div>
         </form>
       </div>
     </div>

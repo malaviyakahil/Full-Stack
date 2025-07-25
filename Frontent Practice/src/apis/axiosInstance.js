@@ -18,6 +18,7 @@ axiosInstance.interceptors.response.use(
       error?.response?.data?.message ||
       error?.message ||
       'An unexpected error occurred.';
+      console.log(error)
     return Promise.reject(error);
   }
 );

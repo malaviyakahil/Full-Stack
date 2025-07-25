@@ -1,23 +1,18 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import axios from "axios";
+import { getLikedVideos } from "../apis/user.apis";
 
 let fetchLikedVideos = createAsyncThunk(
   "fetchLikedVideos",
   async (_, { getState, rejectWithValue }) => {
     try {
       let { page, limit } = getState().likedVideos;
-      let res = await axios.get(
-        `${import.meta.env.VITE_API_URL}/user/get-liked-videos?page=${page}&limit=${limit}`,
-        {
-          withCredentials: true,
-        },
-      );
-      let { videos, total, pages } = res.data.data;
+      let res = await getLikedVideos({page,limit})
+      let { videos, total, pages } = res.data;
       
       return { videos, total, pages, limit, page };
     } catch (error) {
       return rejectWithValue(
-        err.response?.data?.message || "Failed to fetch videos",
+        error?.message
       );
     }
   },
@@ -36,7 +31,7 @@ let likedVideosSlice = createSlice({
   },
   reducers: {
     clearLikedVideos: (state, action) => {
-      state.data = null;
+      state.data = [];
       state.loading = false;
       state.fetched = false;
       state.error = null;
@@ -44,7 +39,7 @@ let likedVideosSlice = createSlice({
       state.page = 1;
     },
     deleteFromLikedVideos: (state, action) => {
-      state.data = state.data?.filter((item) => item._id !== action.payload);
+      state.data = state.data?.filter((item) => item.video._id != action.payload);
     },
     addToLikedVideos: (state, action) => {
       state.data?.unshift(action.payload);

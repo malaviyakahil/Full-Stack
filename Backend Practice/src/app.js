@@ -33,11 +33,9 @@ app.use(express.urlencoded({ extended: true }));
   //     console.log('Format:', resource.format);
   //     console.log('URL:', resource.secure_url);
   //   });
-    app.listen(process.env.PORT, () => {
-      console.log("====================================");
-      console.log(`http://localhost:${process.env.PORT}`);
-      console.log("====================================");
-    });
+  app.listen(process.env.PORT, '0.0.0.0', () => {
+  console.log(`Server is running at http://0.0.0.0:${process.env.PORT}`);
+});
   } catch (error) {
     console.log(error);
     console.log("Cannot connect to mongoDB atlas");

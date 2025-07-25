@@ -2,7 +2,12 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
 import { updateCurrentUser, deleteCoverImage } from "../store/user.slice.js";
-import { changeAvatar, changeCoverImage, changeFullName, removeCoverImage } from "../apis/user.apis.js";
+import {
+  changeAvatar,
+  changeCoverImage,
+  changeFullName,
+  removeCoverImage,
+} from "../apis/user.apis.js";
 
 const EditProfileForm = () => {
   let currentUser = useSelector((store) => store.currentUser);
@@ -70,14 +75,14 @@ const EditProfileForm = () => {
 
         const res = await changeFullName(formData);
         Object.assign(updatedUser, res?.data);
-      } 
+      }
 
       // Avatar
       if (avatarFile) {
         const formData = new FormData();
         formData.append("avatar", avatarFile);
 
-        const res = await changeAvatar(formData)
+        const res = await changeAvatar(formData);
         Object.assign(updatedUser, res?.data);
       }
 
@@ -86,7 +91,7 @@ const EditProfileForm = () => {
         const formData = new FormData();
         formData.append("coverImage", coverImageFile);
 
-        const res = await changeCoverImage(formData)
+        const res = await changeCoverImage(formData);
         Object.assign(updatedUser, res?.data);
       }
 
@@ -112,7 +117,7 @@ const EditProfileForm = () => {
 
   return (
     <div className="flex justify-center">
-      <div className="w-full max-w-md justify-end p-5">
+      <div className="w-full max-w-md justify-end py-5">
         <h1 className="text-center text-[40px] mb-5">Edit profile</h1>
         <form
           className="w-full"
@@ -120,117 +125,121 @@ const EditProfileForm = () => {
           encType="multipart/form-data"
           onSubmit={handleSubmit(submit)}
         >
-          <p className="text-md font-semibold my-2">Full name</p>
-
-          <label htmlFor="fullName" className="input w-full rounded-md">
-            <svg
-              className="h-[1em] opacity-50"
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-            >
-              <g
-                strokeLinejoin="round"
-                strokeLinecap="round"
-                strokeWidth="2.5"
-                fill="none"
-                stroke="currentColor"
+          <div className="w-full py-2">
+            <p className=" text-gray-400 mb-1">Full name</p>
+            <label htmlFor="fullName" className="input w-full rounded-md">
+              <svg
+                className="h-[1em]"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
               >
-                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
-              </g>
-            </svg>
-            <input
-              id="fullName"
-              defaultValue={currentUser.data?.fullName}
-              type="text"
-              required
-              placeholder="Full name"
-              className="w-full "
-              minLength={3}
-              maxLength={30}
-              {...register("fullName")}
-            />
-          </label>
-
-          <p className="text-md font-semibold my-2">Avatar</p>
-
-          <div className="relative aspect-video overflow-hidden rounded-md bg-black flex justify-center items-center">
-            <img
-              src={currentUser.data?.avatar}
-              alt="img"
-              className="h-full object-contain"
-            />
-
-            <button
-              type="button"
-              onClick={handleAvatarChangeClick}
-              className="absolute bottom-2 left-2 bg-gray-700 hover:bg-gray-600 px-4 py-0.5 rounded-md text-[14px] text-white"
-            >
-              {showAvatarFileInput ? "Cancel" : "Change"}
-            </button>
-          </div>
-
-          {showAvatarFileInput && (
-            <fieldset className="fieldset mb-3 ">
-              <legend className="fieldset-legend opacity-50">
-                Pick an image for Avatar
-              </legend>
+                <g
+                  strokeLinejoin="round"
+                  strokeLinecap="round"
+                  strokeWidth="2.5"
+                  fill="none"
+                  stroke="currentColor"
+                >
+                  <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </g>
+              </svg>
               <input
-                type="file"
-                accept="image/*"
-                {...register("avatar")}
-                className="file-input w-full rounded-md"
+                id="fullName"
+                defaultValue={currentUser.data?.fullName}
+                type="text"
+                required
+                placeholder="Full name"
+                className="w-full "
+                minLength={3}
+                maxLength={30}
+                {...register("fullName")}
               />
-              <label className="fieldset-label">Max size 5MB</label>
-            </fieldset>
-          )}
-          <p className="text-md font-semibold my-2">Cover Image</p>
+            </label>
+          </div>
+          <div className="w-full py-2">
+            <p className=" text-gray-400 mb-1">Avatar</p>
 
-          <div className="relative aspect-video overflow-hidden rounded-md bg-black flex justify-center items-center">
-            {currentUser.data?.coverImage ? (
-              <>
-                {!coverImageRemove ? (
-                  <img
-                    src={currentUser.data?.coverImage}
-                    alt="img"
-                    className="h-full object-contain"
-                  />
-                ) : (
+            <div className="relative aspect-video overflow-hidden rounded-md bg-black flex justify-center items-center">
+              <img
+                src={currentUser.data?.avatar}
+                alt="img"
+                className="h-full object-contain"
+              />
+
+              <button
+                type="button"
+                onClick={handleAvatarChangeClick}
+                className="absolute bottom-2 left-2 bg-gray-700 hover:bg-gray-600 px-4 py-0.5 rounded-md text-[14px] "
+              >
+                {showAvatarFileInput ? "Cancel" : "Change"}
+              </button>
+            </div>
+
+            {showAvatarFileInput && (
+              <fieldset className="fieldset">
+                <legend className="fieldset-legend opacity-50">
+                  Pick an image for Avatar
+                </legend>
+                <input
+                  type="file"
+                  accept="image/*"
+                  {...register("avatar")}
+                  className="file-input w-full rounded-md"
+                />
+                <label className="fieldset-label">Max size 5MB</label>
+              </fieldset>
+            )}
+          </div>
+          <div className="w-full py-2">
+            <p className=" text-gray-400 mb-1">Cover Image</p>
+
+            <div className="relative aspect-video overflow-hidden rounded-md bg-black flex justify-center items-center">
+              {currentUser.data?.coverImage ? (
+                <>
+                  {!coverImageRemove ? (
+                    <img
+                      src={currentUser.data?.coverImage}
+                      alt="img"
+                      className="h-full object-contain"
+                    />
+                  ) : (
+                    <p>You haven’t uploaded a cover image yet.</p>
+                  )}
+                  {!coverImageRemove && (
+                    <button
+                      type="button"
+                      onClick={handleCoverImageChangeClick}
+                      className="absolute bottom-2 left-2 bg-gray-700 hover:bg-gray-600 px-4 py-0.5 rounded-md text-[14px] "
+                    >
+                      {showCoverImageFileInput ? "Cancel" : "Change"}
+                    </button>
+                  )}
+                  {!showCoverImageFileInput && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCoverImageRemove(!coverImageRemove);
+                      }}
+                      className="absolute bottom-2 right-2 bg-gray-700 hover:bg-gray-600 px-4 py-0.5 rounded-md text-[14px] "
+                    >
+                      {coverImageRemove ? "Cancel" : "Remove"}
+                    </button>
+                  )}
+                </>
+              ) : (
+                <>
                   <p>You haven’t uploaded a cover image yet.</p>
-                )}
-                {!coverImageRemove && (
                   <button
                     type="button"
                     onClick={handleCoverImageChangeClick}
-                    className="absolute bottom-2 left-2 bg-gray-700 hover:bg-gray-600 px-4 py-0.5 rounded-md text-[14px] text-white"
+                    className="absolute bottom-2 left-2 bg-gray-700 hover:bg-gray-600 px-4 py-0.5 rounded-md text-[14px] "
                   >
-                    {showCoverImageFileInput ? "Cancel" : "Change"}
+                    {showCoverImageFileInput ? "Cancel" : "Add"}
                   </button>
-                )}
-                {!showCoverImageFileInput && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCoverImageRemove(!coverImageRemove);
-                    }}
-                    className="absolute bottom-2 right-2 bg-gray-700 hover:bg-gray-600 px-4 py-0.5 rounded-md text-[14px] text-white"
-                  >
-                    {coverImageRemove ? "Cancel" : "Remove"}
-                  </button>
-                )}
-              </>
-            ) : (
-              <>
-                <p>You haven’t uploaded a cover image yet.</p>
-                <button
-                  type="button"
-                  onClick={handleCoverImageChangeClick}
-                  className="absolute bottom-2 left-2 bg-gray-700 hover:bg-gray-600 px-4 py-0.5 rounded-md text-[14px] text-white"
-                >
-                  {showCoverImageFileInput ? "Cancel" : "Add"}
-                </button>
-              </>
-            )}
+                </>
+              )}
+            </div>
           </div>
 
           {showCoverImageFileInput && (
@@ -249,21 +258,23 @@ const EditProfileForm = () => {
           )}
 
           {error && <p className="text-red-500 text-center my-2">{error}</p>}
-          {loader ? (
-            <div className="relative w-full h-[40px] rounded-md overflow-hidden border border-gray-600 my-2">
-              <div className="absolute top-[0px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-5" />
-              <div className="absolute top-[9px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-3" />
-              <div className="absolute top-[17px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-4" />
-              <div className="absolute top-[22px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-6" />
-            </div>
-          ) : (
-            <button
-              className="btn bg-gray-600 w-full my-2 rounded-md"
-              type="submit"
-            >
-              Save
-            </button>
-          )}
+          <div className="h-[40px] w-full mt-5">
+            {loader ? (
+              <div className="relative w-full h-full rounded-md overflow-hidden box-border border border-gray-600">
+                <div className="absolute top-[0px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-5" />
+                <div className="absolute top-[9px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-3" />
+                <div className="absolute top-[17px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-4" />
+                <div className="absolute top-[22px] w-[16px] h-[16px] rounded-full bg-white animate-slide-left-6" />
+              </div>
+            ) : (
+              <button
+                className="btn bg-gray-600 h-full w-full rounded-md"
+                type="submit"
+              >
+                Save
+              </button>
+            )}
+          </div>
         </form>
       </div>
     </div>

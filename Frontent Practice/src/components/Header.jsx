@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import axios from "axios";
 import { clearCurrentUser, fetchCurrentUser } from "../store/user.slice.js";
 import { Link, useNavigate } from "react-router-dom";
 import { clearCurrentUserVideos } from "../store/userVideos.slice.js";
@@ -19,7 +18,7 @@ const Header = () => {
     if (!fetched) {
       dispatch(fetchCurrentUser());
     }
-  }, [fetched, dispatch]);
+  }, []);
 
   let handleLogout = async () => {
     setLoader(true);
@@ -41,7 +40,7 @@ const Header = () => {
   return (
     <>
       {loading ? (
-        <div className="navbar bg-base-100 shadow-sm px-6 animate-pulse ">
+        <div className="navbar bg-base-100 shadow-sm px-3 md:px-6 animate-pulse ">
           <div className="flex-1">
             <div className="h-6 w-24 bg-gray-200 dark:bg-gray-700 rounded"></div>
           </div>
@@ -59,10 +58,10 @@ const Header = () => {
           </div>
         </div>
       ) : (
-        <div className="navbar bg-base-100 shadow-sm px-6 border-b-[1px] border-gray-600">
+        <div className="navbar bg-base-100 shadow-sm px-3 md:px-6 border-b-[1px] border-gray-600">
           <div className="flex-1">
             <Link
-              className=" text-xl p-0 font-semibold"
+              className="p-0 font-medium text-xl text-white"
               to="/app/dashboard/all"
             >
               Dashboard
@@ -74,7 +73,7 @@ const Header = () => {
               <div
                 tabIndex={0}
                 role="button"
-                className="btn btn-ghost btn-circle avatar"
+                className="btn-ghost btn-circle avatar"
               >
                 <div className="w-8 rounded-full">
                   <img alt="avatar" src={data?.avatar} />
@@ -82,7 +81,7 @@ const Header = () => {
               </div>
               <ul
                 tabIndex={0}
-                className="menu menu-sm dropdown-content bg-base-100 rounded-md border-[1px] border-gray-600 z-1 mt-5 w-30 md:w-52 p-2 shadow"
+                className="menu menu-sm dropdown-content bg-base-100 text-white rounded-md border-[1px] border-gray-600 z-1 mt-5 w-35 md:w-52 p-2 shadow"
               >
                 <li>
                   <Link className="justify-between" to="/app/profile/details">
@@ -100,19 +99,19 @@ const Header = () => {
                 <li>
                   <Link
                     className="justify-between"
-                    to="/app/settings/edit-profile"
+                    to="/app/settings"
                   >
                     Settings
                   </Link>
                 </li>
                 <li>
-                  <a onClick={handleLogout}>
+                  <button onClick={handleLogout}>
                     {loader ? (
-                      <span className="loading loading-dots loading-md"></span>
+                      <span className="loading loading-infinity loading-md"></span>
                     ) : (
                       "Logout"
                     )}
-                  </a>
+                  </button>
                 </li>
               </ul>
             </div>

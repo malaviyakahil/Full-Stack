@@ -38,8 +38,14 @@ const changeCoverImage = async (formData) => {
 const removeCoverImage = async () => {
   return axiosInstance.post("/user/remove-cover-image");
 };
+const getHistory = async () => {
+  return axiosInstance.get(`/user/get-history`);
+};
 const deleteHistory = async (id) => {
   return axiosInstance.post(`/user/delete-history/${id}`);
+};
+const getLikedVideos = async ({page,limit}) => {
+  return axiosInstance.get(`/user/get-liked-videos`,{params:{page,limit}});
 };
 const getReviewStatus = async (videoId) => {
   return axiosInstance.post(`/user/get-review-status/${videoId}`);
@@ -58,6 +64,8 @@ export {
   changeAvatar,
   changeCoverImage,
   removeCoverImage,
+  getHistory,
   deleteHistory,
+  getLikedVideos,
   getReviewStatus
 };

@@ -1,14 +1,13 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import axios from "axios";
+import { getHistory } from "../apis/user.apis";
 
 let fetchHistory = createAsyncThunk("fetchHistory", async () => {
-  let res = await axios.get(
-    `${import.meta.env.VITE_API_URL}/user/get-history`,
-    {
-      withCredentials: true,
-    },
-  );
-  return res.data;
+  try {
+    let res = await getHistory();
+    return res.data;
+  } catch (error) {
+    return rejectWithValue(error?.message);
+  }
 });
 
 let historySlice = createSlice({
@@ -19,7 +18,7 @@ let historySlice = createSlice({
     loading: false,
   },
   reducers: {
-    clearHistory: (state, action) => {
+    clearHistory: (state) => {
       state.data = null;
       state.loading = false;
       state.error = null;
@@ -33,25 +32,26 @@ let historySlice = createSlice({
         state.data = state.data.slice(0, 10);
       }
     },
-     setHistory: (state, action) => {
-      state.data = action.payload
+    setHistory: (state, action) => {
+      state.data = action.payload;
     },
   },
   extraReducers: (builder) => {
-    builder.addCase(fetchHistory.pending, (state, action) => {
+    builder.addCase(fetchHistory.pending, (state) => {
       state.loading = true;
     });
     builder.addCase(fetchHistory.fulfilled, (state, action) => {
-      state.data = action.payload.data;
+      state.data = action.payload;
       state.loading = false;
     });
-    builder.addCase(fetchHistory.rejected, (state, action) => {
+    builder.addCase(fetchHistory.rejected, (state) => {
       state.error = false;
     });
   },
 });
 
-let { clearHistory, deleteFromHsitory, addToHistory,setHistory } = historySlice.actions;
+let { clearHistory, deleteFromHsitory, addToHistory, setHistory } =
+  historySlice.actions;
 
 export {
   clearHistory,
@@ -59,5 +59,5 @@ export {
   fetchHistory,
   deleteFromHsitory,
   addToHistory,
-  setHistory
+  setHistory,
 };

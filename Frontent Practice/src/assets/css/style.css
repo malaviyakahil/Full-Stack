@@ -22,14 +22,31 @@
 }
 
 .animate-slide-left-3 {
-  animation: slide-left 3s ease-in-out infinite;
+  animation: slide-left 4s ease-in-out infinite;
+  animation-delay: 0s;
 }
+
 .animate-slide-left-4 {
   animation: slide-left 4s ease-in-out infinite;
+  animation-delay: -0.75s;
 }
+
 .animate-slide-left-5 {
-  animation: slide-left 5s ease-in-out infinite;
+  animation: slide-left 4s ease-in-out infinite;
+  animation-delay: -1.5s;
 }
+
 .animate-slide-left-6 {
-  animation: slide-left 6s ease-in-out infinite;
+  animation: slide-left 4s ease-in-out infinite;
+  animation-delay: -2.25s;
+}
+
+/* Hide scrollbar cross-browser */
+.scrollbar-hidden {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Internet Explorer/Edge */
+}
+
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
