@@ -194,7 +194,6 @@ const loginUser = asyncHandler(async (req, res) => {
     throw new error(400, "All credentials are required.");
   }
 
-  // Authentication
   const user = await User.findOne({ name, email });
   if (!user) {
     throw new error(401, "Invalid credentials.");
