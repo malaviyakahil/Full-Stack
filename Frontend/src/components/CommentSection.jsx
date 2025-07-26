@@ -557,7 +557,7 @@ const CommentSection = ({ videoId, channelDetails, ownerId }) => {
                 </span>
               </div>
               <div
-                className={`comment-text  text-gray-100 whitespace-pre-line transition-all duration-300 break-words`}
+                className={`comment-text  text-gray-100 whitespace-pre-line transition-all duration-300 break-all`}
               >
                 {comment?.editing ? (
                   <TextareaAutosize

@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate, useLocation } from "react-router-dom";
-import axios from "axios";
 import { useAuth } from "../components/AuthContext";
 import { RiEyeLine, RiEyeOffLine } from "react-icons/ri";
 import { authMe, loginUser } from "../apis/user.apis";
@@ -74,10 +73,10 @@ const LoginForm = () => {
               required
               {...register("name")}
               placeholder="Username"
-              pattern="[A-Za-z][A-Za-z0-9\-]*"
+              pattern="[a-z][a-z0-9\-_]*"
               minLength={3}
-              maxLength={30}
-              title="Only letters, numbers or dash"
+              maxLength={16}
+              title="Only lower-case letters, numbers, dash or underscore"
             />
           </label>
 
@@ -139,7 +138,7 @@ const LoginForm = () => {
             />
             <span
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer "
+              className="cursor-pointer "
             >
               {showPassword ? (
                 <RiEyeLine className="text-gray-400 text-[15px]" />

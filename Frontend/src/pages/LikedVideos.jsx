@@ -135,7 +135,7 @@ const LikedVideos = () => {
                     <Link
                       to={`/app/dashboard/single-video/${item?.video?.owner._id}/${item?.video?._id}`}
                     >
-                      <h3 className=" my-2 text-md md:text-lg font-semibold leading-tight break-words overflow-hidden text-ellipsis line-clamp-2">
+                      <h3 className=" my-2 text-md md:text-lg font-semibold leading-tight break-all overflow-hidden text-ellipsis line-clamp-2">
                         {item?.video?.title}
                       </h3>
                     </Link>
@@ -178,7 +178,7 @@ const LikedVideos = () => {
                       </div>
                     </div>
                     <div className="hidden md:block">
-                      <p className="my-2 leading-tight text-gray-300 break-words overflow-hidden text-ellipsis line-clamp-2">
+                      <p className="my-2 leading-tight text-gray-300 break-all overflow-hidden text-ellipsis line-clamp-2">
                         {item?.video?.description}
                       </p>
                     </div>

@@ -605,10 +605,10 @@ const SingleVideo = () => {
   }
 
   return (
-    <div className="bg-transparent  max-w-6xl mx-auto">
+    <div className="bg-transparent  max-w-6xl mx-auto py-5">
       <div
         ref={containerRef}
-        className={`relative w-full bg-black aspect-video max-w-screen-xl rounded-md mx-auto mt-4 overflow-hidden ${
+        className={`relative w-full bg-black aspect-video max-w-screen-xl rounded-md mx-auto overflow-hidden ${
           theaterMode ? "xl:h-[80vh]" : ""
         }`}
       >
@@ -736,7 +736,7 @@ const SingleVideo = () => {
       </div>
 
       <div className="mt-3">
-        <h2 className="text-white font-semibold text-lg md:text-xl leading-tight break-words overflow-hidden text-ellipsis line-clamp-2">
+        <h2 className="text-white font-semibold text-lg md:text-xl leading-tight break-all overflow-hidden text-ellipsis line-clamp-2">
           {video?.title}
         </h2>
 
@@ -770,7 +770,7 @@ const SingleVideo = () => {
               <button
                 disabled={subscribeLock}
                 onClick={subscribeToggle}
-                className={`px-4 py-1 rounded-4xl text-sm md:text-md ${
+                className={`px-4 py-1 rounded-4xl text-sm md:text-lg ${
                   subCount?.status
                     ? "bg-gray-800"
                     : "bg-gray-700 hover:bg-gray-600"
@@ -826,7 +826,7 @@ const SingleVideo = () => {
                   })}
               </span>
             </div>
-            <p className="leading-tight break-words">{video?.description}</p>
+            <p className="leading-tight break-all">{video?.description}</p>
           </div>
           <button
             onClick={toggleExpanded}

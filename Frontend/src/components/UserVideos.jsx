@@ -48,7 +48,7 @@ const UserVideoCard = ({ video, index }) => {
           </div>
         </div>
         <div className="p-1">
-          <h3 className=" text-white font-semibold leading-tight break-words overflow-hidden text-ellipsis mt-2 line-clamp-2">
+          <h3 className=" text-white font-semibold leading-tight break-all overflow-hidden text-ellipsis mt-2 line-clamp-2">
             {video?.title}
           </h3>
           <p className="text-sm text-gray-400">
@@ -144,7 +144,7 @@ const UserVideos = () => {
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-[80dvh]">
-              <h2 className="text-4xl font-bold text-gray-300  text-center">
+              <h2 className="text-4xl font-bold text-gray-300 text-center  text-center">
                 You haven't uploaded any video yet
               </h2>
               <p className=" text-md text-gray-500 mt-2 text-center">

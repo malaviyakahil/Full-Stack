@@ -81,7 +81,7 @@ const ChangePasswordForm = () => {
             />
             <span
               onClick={() => setShowOldPassword(!showOldPassword)}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer "
+              className="cursor-pointer "
             >
               {showOldPassword ? (
                 <RiEyeLine className="text-gray-400 text-[15px]" />
@@ -121,7 +121,7 @@ const ChangePasswordForm = () => {
             />
             <span
               onClick={() => setShowNewPassword(!showNewPassword)}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer "
+              className="cursor-pointer "
             >
               {showNewPassword ? (
                 <RiEyeLine className="text-gray-400 text-[15px]" />

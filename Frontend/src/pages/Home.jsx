@@ -18,7 +18,7 @@ const Home = () => {
         </div>
       </div>
       <div className="h-full w-full flex flex-col items-center justify-center">
-        <h2 className="text-center text-4xl font-bold text-gray-300">
+        <h2 className="text-center text-4xl font-bold text-gray-300 text-center">
           Welcome!
         </h2>
         <p className="text-md text-gray-500 mt-2 text-center">Glad to have you here.</p>

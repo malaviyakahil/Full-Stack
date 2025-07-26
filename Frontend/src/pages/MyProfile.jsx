@@ -19,23 +19,23 @@ const MyProfile = () => {
           </div>
         </div>
         <p className="text-center mt-3 text-lg md:text-lg">Name</p>
-        <h1 className="text-[30px] text-gray-400 md:text-[40px] text-center break-words">
+        <h1 className="text-[30px] text-gray-400 md:text-[40px] text-center break-all">
           {data?.name}
         </h1>
         <p className="text-center mt-3 text-lg md:text-lg">Full Name</p>
-        <h1 className="text-[30px] text-gray-400 md:text-[40px] text-center break-words">
+        <h1 className="text-[30px] text-gray-400 md:text-[40px] text-center break-all">
           {data?.fullName}
         </h1>
         <p className="text-center mt-3 text-lg md:text-lg">Email</p>
-        <h1 className="text-[30px] text-gray-400 md:text-[40px] text-center break-words">
+        <h1 className="text-[30px] text-gray-400 md:text-[40px] text-center break-all">
           {data?.email}
         </h1>
         <p className="text-center mt-3 text-lg md:text-lg">Subscribers</p>
-        <h1 className="text-[30px] text-gray-400 md:text-[40px] text-center break-words">
+        <h1 className="text-[30px] text-gray-400 md:text-[40px] text-center break-all">
           {formatNumber(data?.subs)}
         </h1>
         <p className="text-center mt-3 text-lg md:text-lg">Total views</p>
-        <h1 className="text-[30px] text-gray-400 md:text-[40px] text-center break-words">
+        <h1 className="text-[30px] text-gray-400 md:text-[40px] text-center break-all">
           {formatNumber(data?.totalViews)}
         </h1>
       </div>

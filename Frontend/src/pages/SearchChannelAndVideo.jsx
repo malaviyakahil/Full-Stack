@@ -185,7 +185,7 @@ const SearchChannelAndVideo = () => {
                           <Link
                             to={`/app/dashboard/single-video/${profile?._id}/${video?._id}`}
                           >
-                            <h3 className=" my-2 text-md md:text-lg  font-semibold leading-tight break-words overflow-hidden text-ellipsis line-clamp-2">
+                            <h3 className=" my-2 text-md md:text-lg  font-semibold leading-tight break-all overflow-hidden text-ellipsis line-clamp-2">
                               {video?.title}
                             </h3>
                           </Link>
@@ -218,7 +218,7 @@ const SearchChannelAndVideo = () => {
                             </Link>
                           </div>
                           <div className="hidden md:block">
-                            <p className="my-2 leading-tight text-gray-300 break-words overflow-hidden text-ellipsis line-clamp-2">
+                            <p className="my-2 leading-tight text-gray-300 break-all overflow-hidden text-ellipsis line-clamp-2">
                               {video.description}
                             </p>
                           </div>
@@ -235,7 +235,7 @@ const SearchChannelAndVideo = () => {
                             </Link>
                           </div>
                           <div className="flex flex-col flex-1 overflow-hidden">
-                            <h3 className="text-white font-semibold leading-tight break-words overflow-hidden text-ellipsis line-clamp-2">
+                            <h3 className="text-white font-semibold leading-tight break-all overflow-hidden text-ellipsis line-clamp-2">
                               {video?.title}
                             </h3>
                             <div className="text-sm text-gray-400 flex md:block items-center gap-1">
@@ -296,7 +296,7 @@ const SearchChannelAndVideo = () => {
                     <Link
                       to={`/app/dashboard/single-video/${video.owner._id}/${video?._id}`}
                     >
-                      <h3 className=" my-2 text-md md:text-lg  font-semibold leading-tight break-words overflow-hidden text-ellipsis line-clamp-2">
+                      <h3 className=" my-2 text-md md:text-lg  font-semibold leading-tight break-all overflow-hidden text-ellipsis line-clamp-2">
                         {video?.title}
                       </h3>
                     </Link>
@@ -326,7 +326,7 @@ const SearchChannelAndVideo = () => {
                       </Link>
                     </div>
                     <div className="hidden md:block">
-                      <p className="my-2 leading-tight text-gray-300 break-words overflow-hidden text-ellipsis line-clamp-2">
+                      <p className="my-2 leading-tight text-gray-300 break-all overflow-hidden text-ellipsis line-clamp-2">
                         {video.description}
                       </p>
                     </div>
@@ -344,7 +344,7 @@ const SearchChannelAndVideo = () => {
                       </Link>
                     </div>
                     <div className="flex flex-col flex-1 overflow-hidden">
-                      <h3 className="text-white font-semibold leading-tight break-words overflow-hidden text-ellipsis line-clamp-2">
+                      <h3 className="text-white font-semibold leading-tight break-all overflow-hidden text-ellipsis line-clamp-2">
                         {video?.title}
                       </h3>
                       <div className="text-sm text-gray-400 flex md:block items-center gap-1">

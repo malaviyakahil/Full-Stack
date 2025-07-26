@@ -105,7 +105,7 @@ const History = () => {
                     <Link
                       to={`/app/dashboard/single-video/${item?.video?.owner._id}/${item?.video?._id}`}
                     >
-                      <h3 className=" my-2 text-md md:text-lg font-semibold leading-tight break-words overflow-hidden text-ellipsis line-clamp-2">
+                      <h3 className=" my-2 text-md md:text-lg font-semibold leading-tight break-all overflow-hidden text-ellipsis line-clamp-2">
                         {item?.video?.title}
                       </h3>
                     </Link>
@@ -151,7 +151,7 @@ const History = () => {
 
                   <div className="w-full  md:hidden mt-3 flex flex-nowrap gap-2">
                     <div className="flex flex-col flex-1 overflow-hidden w-full">
-                      <h3 className="text-white  font-semibold leading-tight break-words overflow-hidden text-ellipsis line-clamp-2">
+                      <h3 className="text-white  font-semibold leading-tight break-all overflow-hidden text-ellipsis line-clamp-2">
                         {item?.video?.title}
                       </h3>
                       <div className="text-sm text-gray-400 flex md:block items-center gap-1">
@@ -196,7 +196,7 @@ const History = () => {
             </>
           ) : (
             <div className="flex flex-col items-center justify-center h-[80vh]">
-              <h2 className=" text-4xl font-bold text-gray-300 ">
+              <h2 className=" text-4xl font-bold text-gray-300 text-center ">
                 No history to show
               </h2>
               <p className="text-md text-gray-500 mt-2">

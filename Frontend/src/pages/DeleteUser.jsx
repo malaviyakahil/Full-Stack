@@ -86,7 +86,7 @@ const DeleteUser = () => {
               />
               <span
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer "
+                className="cursor-pointer "
               >
                 {showPassword ? (
                   <RiEyeLine className="text-gray-400 text-[15px]" />

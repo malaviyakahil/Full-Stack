@@ -180,7 +180,7 @@ const ChannelVideoCard = ({ video }) => {
       </div>
       <div className="flex flex-row mt-3 gap-3">
         <div className="flex flex-col flex-1 overflow-hidden">
-          <h3 className=" font-semibold  text-md md:text-lg leading-tight break-words overflow-hidden text-ellipsis line-clamp-2">
+          <h3 className=" font-semibold  text-md md:text-lg leading-tight break-all overflow-hidden text-ellipsis line-clamp-2">
             {video?.title}
           </h3>
           <div className="flex items-center gap-1 text-sm md:md">
