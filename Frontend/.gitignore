@@ -17,6 +17,7 @@ dist-ssr/
 
 # Firebase credentials or config
 src/firebase.js
+.firebase/
 
 # Environment variables
 .env
