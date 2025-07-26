@@ -1,8 +1,8 @@
 import multer from "multer";
 import fs from "fs";
-const tempDir = path.resolve("public", "temp");
+import path from "path";
 
-// Ensure the directory exists
+const tempDir = path.resolve("public", "temp");
 if (!fs.existsSync(tempDir)) {
   fs.mkdirSync(tempDir, { recursive: true });
 }
