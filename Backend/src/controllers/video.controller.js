@@ -610,7 +610,6 @@ let likeVideo = asyncHandler(async (req, res) => {
 let disLikeVideo = asyncHandler(async (req, res) => {
   let id = req.user?.id;
   let videoId = req.params?.id;
-  let user = req.user?.id;
 
   let video = await Video.findById(videoId);
 
@@ -631,14 +630,6 @@ let disLikeVideo = asyncHandler(async (req, res) => {
 
   if (!review) {
     throw new error(500, "Something went wrong while disliking video");
-  }
-
-  let likedDeleteSuccess = await LikedVideos.findOneAndDelete({
-    $and: [{ video }, { user }],
-  });
-
-  if (!likedDeleteSuccess) {
-    throw new error(500, "Error while deleting liked video from liked videos");
   }
 
   res.status(200).json(new response(200, [], "Disliked video successfully"));
