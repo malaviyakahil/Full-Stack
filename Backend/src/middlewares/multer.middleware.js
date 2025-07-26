@@ -1,5 +1,5 @@
 import multer from "multer";
-
+import fs from "fs";
 const tempDir = path.resolve("public", "temp");
 
 // Ensure the directory exists
