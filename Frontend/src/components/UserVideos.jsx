@@ -34,10 +34,10 @@ const UserVideoCard = ({ video, index }) => {
   };
 
   return (
-    <>
+    <div className="w-full">
       {error && <p className="text-red-500 text-center my-2">{error}</p>}
       <div className="flex flex-col w-full sm:w-[320px] md:w-[336px] lg:w-[360px] xl:w-[380px] cursor-pointer">
-        <div className="relative aspect-video overflow-hidden rounded-md bg-black flex justify-center">
+        <div className="relative aspect-video w-full overflow-hidden rounded-md bg-black flex justify-center">
           <img
             src={video?.thumbnail}
             alt={video?.title}
@@ -68,19 +68,19 @@ const UserVideoCard = ({ video, index }) => {
               }}
             >
               <button className="bg-gray-700 hover:bg-gray-600 px-3 py-0.5 rounded-md text-[14px] flex gap-2 justify-center items-center ">
-                 <FiEdit /> Edit
+                <FiEdit /> Edit
               </button>
             </Link>
             <button
               onClick={handleDeleteVideo}
               className="bg-gray-700 hover:bg-gray-600 px-3 py-0.5 rounded-md text-[14px] flex gap-2 justify-center items-center "
             >
-              <AiOutlineDelete className="text-[17px]"/> Delete
+              <AiOutlineDelete className="text-[17px]" /> Delete
             </button>
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 
@@ -97,21 +97,21 @@ const UserVideos = () => {
   const currentUser = useSelector((store) => store.currentUser);
 
   return (
-    <div className="py-5">
-      <div className="mx-auto max-w-6xl flex w-full items-center justify-center flex-wrap gap-3">
+    <div className="w-full py-5">
+      <div className="mx-auto w-full max-w-6xl flex items-center justify-center flex-wrap gap-3">
         <button
           className="bg-gray-700 hover:bg-gray-600 rounded-md p-2 px-4 flex flex-nowrap items-center gap-1 justify-center"
           onClick={() => navigate("/app/my-videos/upload-video")}
         >
           <HiOutlineUpload className="text-[18px] " /> Upload video
         </button>
-       
       </div>
 
       {loading && videos.length === 0 ? (
         <Skeleton />
       ) : (
         <InfiniteScroll
+          className="w-full"
           scrollableTarget="scrollableDiv"
           dataLength={videos.length}
           next={() => {
@@ -122,19 +122,18 @@ const UserVideos = () => {
           hasMore={hasMore}
           loader={<Skeleton />}
           endMessage={
-            <>
-              {videos.length > 0 && (
-                <p className="text-center text-gray-400">
-                  No more videos to load.
-                </p>
-              )}
-            </>
+            videos.length > 0 && (
+              <p className="text-center text-gray-400">
+                No more videos to load.
+              </p>
+            )
           }
         >
           {videos.length > 0 ? (
-            <div className="flex flex-wrap justify-center gap-6 py-4">
+            <div className="flex flex-wrap justify-center gap-6 py-4 w-full">
               {videos.map((video, index) => (
                 <Link
+                  className="w-full"
                   key={video._id}
                   to={`/app/dashboard/single-video/${currentUser.data?._id}/${video._id}`}
                 >

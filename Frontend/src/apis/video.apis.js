@@ -44,8 +44,8 @@ const disLikeVideo = async (id) => {
   return await axiosInstance.post(`/video/dislike-video/${id}`);
 };
 
-const deleteReview = async (videoId) => {
-  return await axiosInstance.post(`/video/delete-review/${videoId}`);
+const deleteReview = async (id) => {
+  return await axiosInstance.post(`/video/delete-review/${id}`);
 };
 
 export {

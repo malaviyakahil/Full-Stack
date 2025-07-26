@@ -66,11 +66,12 @@ const Videos = () => {
   } = useSelector((store) => store.videos);
 
   return (
-    <div>
+    <div className="w-full">
       {loading && !fetched === 0 ? (
         <Skeleton />
       ) : (
         <InfiniteScroll
+          className="w-full"
           scrollableTarget="scrollableDiv"
           dataLength={videos?.length}
           next={() => {
@@ -90,6 +91,7 @@ const Videos = () => {
             <div className="flex flex-wrap w-full justify-center gap-6 py-4">
               {videos.map((video) => (
                 <Link
+                  className="block w-full"
                   key={video._id}
                   to={`/app/dashboard/single-video/${video.owner._id}/${video._id}`}
                 >

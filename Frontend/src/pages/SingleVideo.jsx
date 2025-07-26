@@ -606,6 +606,7 @@ const SingleVideo = () => {
 
   return (
     <div className="bg-transparent  max-w-6xl mx-auto py-5">
+      {error && <p className="text-center text text-red-500">{error}</p>}
       <div
         ref={containerRef}
         className={`relative w-full bg-black aspect-video max-w-screen-xl rounded-md mx-auto overflow-hidden ${

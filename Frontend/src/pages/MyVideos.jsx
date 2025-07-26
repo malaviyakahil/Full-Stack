@@ -4,14 +4,14 @@ import UserVideos from "../components/UserVideos";
 import { useDispatch, useSelector } from "react-redux";
 
 const MyVideos = () => {
-  let { fetched ,limit} = useSelector((store) => store.currentUserVideos);
+  let { fetched } = useSelector((store) => store.currentUserVideos);
   let dispatch = useDispatch();
 
   useEffect(() => {
     if (!fetched) {
       dispatch(fetchcurrentUserVideos());
     }
-  }, [fetched, dispatch, limit]);
+  }, []);
 
   return <UserVideos />;
 };
