@@ -35,7 +35,7 @@ const UserVideoCard = ({ video, index }) => {
 
   return (
     <div className="w-full">
-      {error && <p className="text-red-500 text-center my-2">{error}</p>}
+      {error && <p className="text-red-500 text-center mb-3">{error}</p>}
       <div className="flex flex-col w-full sm:w-[320px] md:w-[336px] lg:w-[360px] xl:w-[380px] cursor-pointer">
         <div className="relative aspect-video w-full overflow-hidden rounded-md bg-black flex justify-center">
           <img

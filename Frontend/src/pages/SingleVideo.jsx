@@ -437,12 +437,7 @@ const SingleVideo = () => {
             video: { ...video, owner: { ...channelDetails } },
           }),
         );
-
-        if (reviewCount.dislike.status) {
-          await Promise.all([deleteReview(videoId), likeVideo(videoId)]);
-        } else {
-          await likeVideo(videoId);
-        }
+        await likeVideo(videoId);
       }
     } catch (error) {
       setReviewCount(prevReviewCount);
@@ -482,12 +477,7 @@ const SingleVideo = () => {
         };
         setReviewCount(newReview);
 
-        if (reviewCount.like.status) {
-          dispatch(deleteFromLikedVideos(video._id));
-          await Promise.all([deleteReview(videoId), disLikeVideo(videoId)]);
-        } else {
-          await disLikeVideo(videoId);
-        }
+        await disLikeVideo(videoId);
       }
     } catch (error) {
       setReviewCount(prevReviewCount);

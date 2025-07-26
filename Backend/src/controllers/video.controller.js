@@ -634,7 +634,7 @@ let disLikeVideo = asyncHandler(async (req, res) => {
   }
 
   let likedDeleteSuccess = await LikedVideos.findOneAndDelete({
-    $and: [{ video:video._id }, { user }],
+    $and: [{ video }, { user }],
   });
 
   if (!likedDeleteSuccess) {
