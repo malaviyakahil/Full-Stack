@@ -400,38 +400,89 @@ const SingleVideo = () => {
     }
   };
 
+  // const likeToggle = async () => {
+  //   if (reviewLock) return; // prevent re-entry
+  //   setReviewLock(true);
+  //   const prevReviewCount = JSON.parse(JSON.stringify(reviewCount));
+
+  //   try {
+  //     if (reviewCount.like.status) {
+  //       // Optimistic unlike
+  //       setReviewCount((prev) => ({
+  //         ...prev,
+  //         like: {
+  //           status: false,
+  //           count: prev.like.count - 1,
+  //         },
+  //       }));
+  //       dispatch(deleteFromLikedVideos(videoId));
+  //       await deleteReview(videoId);
+  //     } else {
+  //       const newReview = {
+  //         like: {
+  //           status: true,
+  //           count: reviewCount.like.count + 1,
+  //         },
+  //         dislike: reviewCount.dislike.status
+  //           ? {
+  //               status: false,
+  //               count: reviewCount.dislike.count - 1,
+  //             }
+  //           : reviewCount.dislike,
+  //       };
+  //       setReviewCount(newReview);
+
+  //       dispatch(
+  //         addToLikedVideos({
+  //           video: { ...video, owner: { ...channelDetails } },
+  //         }),
+  //       );
+  //       await Promise.all([likeVideo(videoId), disLikeVideo(videoId)])
+  //     }
+  //   } catch (error) {
+  //     setReviewCount(prevReviewCount);
+  //     setError(error?.message);
+  //   } finally {
+  //     setReviewLock(false);
+  //   }
+  // };
+
   const likeToggle = async () => {
     if (reviewLock) return; // prevent re-entry
     setReviewLock(true);
     const prevReviewCount = JSON.parse(JSON.stringify(reviewCount));
-
     try {
       if (reviewCount.like.status) {
-        // Optimistic unlike
-        setReviewCount((prev) => ({
-          ...prev,
+        setReviewCount({
+          ...reviewCount,
           like: {
             status: false,
-            count: prev.like.count - 1,
+            count: reviewCount.like.count - 1,
           },
-        }));
+        });
         dispatch(deleteFromLikedVideos(videoId));
         await deleteReview(videoId);
       } else {
-        const newReview = {
-          like: {
-            status: true,
-            count: reviewCount.like.count + 1,
-          },
-          dislike: reviewCount.dislike.status
-            ? {
-                status: false,
-                count: reviewCount.dislike.count - 1,
-              }
-            : reviewCount.dislike,
-        };
-        setReviewCount(newReview);
-
+        if (reviewCount.dislike.status) {
+          setReviewCount({
+            like: {
+              status: true,
+              count: reviewCount.like.count + 1,
+            },
+            dislike: {
+              status: false,
+              count: reviewCount.dislike.count - 1,
+            },
+          });
+        } else {
+          setReviewCount({
+            ...reviewCount,
+            like: {
+              status: true,
+              count: reviewCount.like.count + 1,
+            },
+          });
+        }
         dispatch(
           addToLikedVideos({
             video: { ...video, owner: { ...channelDetails } },
@@ -447,36 +498,82 @@ const SingleVideo = () => {
     }
   };
 
+  // const dislikeToggle = async () => {
+  //   if (reviewLock) return;
+  //   setReviewLock(true);
+  //   const prevReviewCount = JSON.parse(JSON.stringify(reviewCount));
+
+  //   try {
+  //     if (reviewCount.dislike.status) {
+  //       setReviewCount((prev) => ({
+  //         ...prev,
+  //         dislike: {
+  //           status: false,
+  //           count: prev.dislike.count - 1,
+  //         },
+  //       }));
+  //       await deleteReview(videoId);
+  //     } else {
+  //       const newReview = {
+  //         dislike: {
+  //           status: true,
+  //           count: reviewCount.dislike.count + 1,
+  //         },
+  //         like: reviewCount.like.status
+  //           ? {
+  //               status: false,
+  //               count: reviewCount.like.count - 1,
+  //             }
+  //           : reviewCount.like,
+  //       };
+  //       setReviewCount(newReview);
+  //       dispatch(deleteFromLikedVideos(video._id));
+  //       await Promise.all([deleteReview(videoId), disLikeVideo(videoId)]);
+  //     }
+  //   } catch (error) {
+  //     setReviewCount(prevReviewCount);
+  //     setError(error?.message);
+  //   } finally {
+  //     setReviewLock(false);
+  //   }
+  // };
+
   const dislikeToggle = async () => {
     if (reviewLock) return;
     setReviewLock(true);
     const prevReviewCount = JSON.parse(JSON.stringify(reviewCount));
-
     try {
       if (reviewCount.dislike.status) {
-        setReviewCount((prev) => ({
-          ...prev,
+        setReviewCount({
+          ...reviewCount,
           dislike: {
             status: false,
-            count: prev.dislike.count - 1,
+            count: reviewCount.dislike.count - 1,
           },
-        }));
+        });
         await deleteReview(videoId);
       } else {
-        const newReview = {
-          dislike: {
-            status: true,
-            count: reviewCount.dislike.count + 1,
-          },
-          like: reviewCount.like.status
-            ? {
-                status: false,
-                count: reviewCount.like.count - 1,
-              }
-            : reviewCount.like,
-        };
-        setReviewCount(newReview);
-
+        if (reviewCount.like.status) {
+          setReviewCount({
+            dislike: {
+              status: true,
+              count: reviewCount.dislike.count + 1,
+            },
+            like: {
+              status: false,
+              count: reviewCount.like.count - 1,
+            },
+          });
+        } else {
+          setReviewCount({
+            ...reviewCount,
+            dislike: {
+              status: true,
+              count: reviewCount.dislike.count + 1,
+            },
+          });
+        }
+        dispatch(deleteFromLikedVideos(video._id));
         await disLikeVideo(videoId);
       }
     } catch (error) {
