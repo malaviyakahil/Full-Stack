@@ -740,7 +740,7 @@ const SingleVideo = () => {
           {video?.title}
         </h2>
 
-        <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-6 mt-4">
+        <div className="flex gap-3 flex-wrap flex-row items-center space-y-3 mt-4">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 md:h-12 md:w-12 overflow-hidden rounded-full">
               <Link to={`/app/dashboard/single-channel/${channelDetails?._id}`}>
@@ -766,19 +766,17 @@ const SingleVideo = () => {
           {channelDetails?._id == currentUser.data?._id ? (
             ""
           ) : (
-            <div className="flex space-x-3">
-              <button
-                disabled={subscribeLock}
-                onClick={subscribeToggle}
-                className={`px-4 py-1 rounded-4xl text-sm md:text-lg ${
-                  subCount?.status
-                    ? "bg-gray-800"
-                    : "bg-gray-700 hover:bg-gray-600"
-                }`}
-              >
-                {subCount.status ? "Subscribed" : "Subscribe"}
-              </button>
-            </div>
+            <button
+              disabled={subscribeLock}
+              onClick={subscribeToggle}
+              className={`px-4 py-1 rounded-4xl text-sm md:text-lg ${
+                subCount?.status
+                  ? "bg-gray-800"
+                  : "bg-gray-700 hover:bg-gray-600"
+              }`}
+            >
+              {subCount.status ? "Subscribed" : "Subscribe"}
+            </button>
           )}
         </div>
 
