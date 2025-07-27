@@ -75,6 +75,7 @@ const SingleVideo = () => {
   let [error, setError] = useState("");
   const [reviewLock, setReviewLock] = useState(false);
   const [subscribeLock, setSubscribeLock] = useState(false);
+  const [isSeeking, setIsSeeking] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -235,7 +236,7 @@ const SingleVideo = () => {
     const resetControlsTimer = () => {
       clearTimeout(timeoutRef.current);
       setShowControls(true);
-      if (!showSettings) {
+      if (!showSettings && !isSeeking) {
         timeoutRef.current = setTimeout(() => {
           setShowControls(false);
         }, 1500);
@@ -400,53 +401,6 @@ const SingleVideo = () => {
     }
   };
 
-  // const likeToggle = async () => {
-  //   if (reviewLock) return; // prevent re-entry
-  //   setReviewLock(true);
-  //   const prevReviewCount = JSON.parse(JSON.stringify(reviewCount));
-
-  //   try {
-  //     if (reviewCount.like.status) {
-  //       // Optimistic unlike
-  //       setReviewCount((prev) => ({
-  //         ...prev,
-  //         like: {
-  //           status: false,
-  //           count: prev.like.count - 1,
-  //         },
-  //       }));
-  //       dispatch(deleteFromLikedVideos(videoId));
-  //       await deleteReview(videoId);
-  //     } else {
-  //       const newReview = {
-  //         like: {
-  //           status: true,
-  //           count: reviewCount.like.count + 1,
-  //         },
-  //         dislike: reviewCount.dislike.status
-  //           ? {
-  //               status: false,
-  //               count: reviewCount.dislike.count - 1,
-  //             }
-  //           : reviewCount.dislike,
-  //       };
-  //       setReviewCount(newReview);
-
-  //       dispatch(
-  //         addToLikedVideos({
-  //           video: { ...video, owner: { ...channelDetails } },
-  //         }),
-  //       );
-  //       await Promise.all([likeVideo(videoId), disLikeVideo(videoId)])
-  //     }
-  //   } catch (error) {
-  //     setReviewCount(prevReviewCount);
-  //     setError(error?.message);
-  //   } finally {
-  //     setReviewLock(false);
-  //   }
-  // };
-
   const likeToggle = async () => {
     if (reviewLock) return; // prevent re-entry
     setReviewLock(true);
@@ -497,46 +451,6 @@ const SingleVideo = () => {
       setReviewLock(false);
     }
   };
-
-  // const dislikeToggle = async () => {
-  //   if (reviewLock) return;
-  //   setReviewLock(true);
-  //   const prevReviewCount = JSON.parse(JSON.stringify(reviewCount));
-
-  //   try {
-  //     if (reviewCount.dislike.status) {
-  //       setReviewCount((prev) => ({
-  //         ...prev,
-  //         dislike: {
-  //           status: false,
-  //           count: prev.dislike.count - 1,
-  //         },
-  //       }));
-  //       await deleteReview(videoId);
-  //     } else {
-  //       const newReview = {
-  //         dislike: {
-  //           status: true,
-  //           count: reviewCount.dislike.count + 1,
-  //         },
-  //         like: reviewCount.like.status
-  //           ? {
-  //               status: false,
-  //               count: reviewCount.like.count - 1,
-  //             }
-  //           : reviewCount.like,
-  //       };
-  //       setReviewCount(newReview);
-  //       dispatch(deleteFromLikedVideos(video._id));
-  //       await Promise.all([deleteReview(videoId), disLikeVideo(videoId)]);
-  //     }
-  //   } catch (error) {
-  //     setReviewCount(prevReviewCount);
-  //     setError(error?.message);
-  //   } finally {
-  //     setReviewLock(false);
-  //   }
-  // };
 
   const dislikeToggle = async () => {
     if (reviewLock) return;
@@ -693,7 +607,7 @@ const SingleVideo = () => {
 
   return (
     <div className="bg-transparent  max-w-6xl mx-auto py-5">
-      {error && <p className="text-center text text-red-500">{error}</p>}
+      {error && <p className="text-center text text-red-500 mb-3">{error}</p>}
       <div
         ref={containerRef}
         className={`relative w-full bg-black aspect-video max-w-screen-xl rounded-md mx-auto overflow-hidden ${
@@ -720,6 +634,10 @@ const SingleVideo = () => {
             step="0.1"
             value={Number.isFinite(progress) ? progress : 0}
             onChange={handleSeek}
+            onMouseDown={() => setIsSeeking(true)}
+            onMouseUp={() => setIsSeeking(false)}
+            onTouchStart={() => setIsSeeking(true)}
+            onTouchEnd={() => setIsSeeking(false)}
             style={{ accentColor: "#ffffff" }}
             className="w-full h-1 md:h-3"
           />

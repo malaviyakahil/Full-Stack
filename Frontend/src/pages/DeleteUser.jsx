@@ -33,6 +33,8 @@ const DeleteUser = () => {
       dispatch(clearVideos());
       dispatch(clearHistory());
       dispatch(clearLikedVideos());
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
       navigate("/");
     } catch (error) {
       setError(error?.message);

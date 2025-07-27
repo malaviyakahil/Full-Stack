@@ -29,6 +29,8 @@ const Header = () => {
       dispatch(clearVideos());
       dispatch(clearHistory());
       dispatch(clearLikedVideos());
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
       navigate("/");
     } catch (error) {
       alert(error?.message);
@@ -97,10 +99,7 @@ const Header = () => {
                   </Link>
                 </li>
                 <li>
-                  <Link
-                    className="justify-between"
-                    to="/app/settings"
-                  >
+                  <Link className="justify-between" to="/app/settings">
                     Settings
                   </Link>
                 </li>

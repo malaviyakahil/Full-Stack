@@ -1,9 +1,9 @@
 import React, { useEffect } from "react";
 import { useDispatch } from "react-redux";
-import { setVideoLimit } from "./store/videos.slice";
+import { setVideoLimit } from "./store/videos.slice.js";
 import Header from "./components/Header";
 import { Outlet } from "react-router-dom";
-import { setCurrentUserVideoLimit } from "./store/userVideos.slice";
+import { setCurrentUserVideoLimit } from "./store/userVideos.slice.js";
 
 const App = () => {
   const dispatch = useDispatch();

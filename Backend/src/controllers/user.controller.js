@@ -208,17 +208,24 @@ const loginUser = asyncHandler(async (req, res) => {
     user._id,
   );
 
+  // Set cookies for compatible environments (same-site or user-enabled)
   const cookieOptions = {
     httpOnly: true,
-    sameSite: "None",
-    secure: true,
+    sameSite: "None", // Required for cross-site
+    secure: true, // Required with SameSite=None
   };
 
   res
     .status(200)
     .cookie("accessToken", accessToken, cookieOptions)
     .cookie("refreshToken", refreshToken, cookieOptions)
-    .json(new response(200, user, "Logged in successfully"));
+    .json(
+      new response(
+        200,
+        { user, accessToken, refreshToken },
+        "Logged in successfully",
+      ),
+    );
 });
 
 let getCurrentUser = asyncHandler(async (req, res) => {
