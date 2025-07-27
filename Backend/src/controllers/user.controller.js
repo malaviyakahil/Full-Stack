@@ -743,7 +743,9 @@ let getReviewStatus = asyncHandler(async (req, res) => {
 const authMe = asyncHandler(async (req, res) => {
   const token =
     req.cookies?.accessToken ||
-    req.header("Authorization")?.replace("Bearer ", "");
+    (authHeader?.startsWith("Bearer ")
+      ? authHeader.split(" ")[1].trim()
+      : null);
 
   if (!token) {
     throw new error(401, "Not authorised");
