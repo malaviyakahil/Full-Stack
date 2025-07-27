@@ -753,6 +753,14 @@ const authMe = asyncHandler(async (req, res) => {
     throw new error(401, "Not authorised");
   }
 
+  const source = req.cookies?.accessToken
+    ? "cookie"
+    : req.header("Authorization")
+      ? "header"
+      : "none";
+
+  console.log("Auth source:", source);
+
   try {
     jsonWebToken.verify(token, process.env.ACCESS_TOKEN_KEY);
     res.status(200).json(new response(200, [], "Authorized user"));
