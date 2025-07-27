@@ -741,6 +741,8 @@ let getReviewStatus = asyncHandler(async (req, res) => {
 });
 
 const authMe = asyncHandler(async (req, res) => {
+  const authHeader = req.header("Authorization");
+
   const token =
     req.cookies?.accessToken ||
     (authHeader?.startsWith("Bearer ")

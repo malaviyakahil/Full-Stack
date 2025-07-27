@@ -9,7 +9,9 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("accessToken");
-
+    console.log("====================================");
+    console.log(token);
+    console.log("====================================");
     if (token) {
       config.headers["Authorization"] = `Bearer ${token}`;
     }
@@ -18,24 +20,24 @@ axiosInstance.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 axiosInstance.interceptors.response.use(
   (response) => {
     return {
       ...response,
-      data: response.data?.data ?? response.data, 
+      data: response.data?.data ?? response.data,
     };
   },
   (error) => {
     error.message =
       error?.response?.data?.message ||
       error?.message ||
-      'An unexpected error occurred.';
-      console.log(error)
+      "An unexpected error occurred.";
+    console.log(error);
     return Promise.reject(error);
-  }
+  },
 );
 
 export default axiosInstance;
