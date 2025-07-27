@@ -17,10 +17,15 @@ dotenv.config();
 const app = express();
 
 // Strict CORS (only allow your frontend origin)
-app.use(cors({
-  origin: process.env.CROSS_ORIGIN,
-  credentials: true,
-}));
+
+app.use(
+  cors({
+    origin: [process.env.CROSS_ORIGIN], // ✅ your actual frontend domain
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true, // ✅ important if you're using cookies too
+    allowedHeaders: ["Content-Type", "Authorization"], // ✅ ensure Authorization is allowed
+  })
+);
 
 // Middleware
 app.use(cookieParser());
