@@ -762,7 +762,7 @@ const authMe = asyncHandler(async (req, res) => {
   console.log("Auth source:", source);
 
 try {
-  jwt.verify(token, process.env.ACCESS_TOKEN_KEY);
+  jsonWebToken.verify(token, process.env.ACCESS_TOKEN_KEY);
   res.status(200).json(new response(200, [], "Authorized user"));
 } catch (err) {
   if (err.name === "TokenExpiredError") {
