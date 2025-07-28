@@ -133,7 +133,7 @@ const UserVideos = () => {
             <div className="flex flex-wrap justify-center gap-6 py-4 w-full">
               {videos.map((video, index) => (
                 <Link
-                  className="w-full"
+                  className="block w-full sm:w-[320px] md:w-[336px] lg:w-[360px] xl:w-[380px]"
                   key={video._id}
                   to={`/app/dashboard/single-video/${currentUser.data?._id}/${video._id}`}
                 >

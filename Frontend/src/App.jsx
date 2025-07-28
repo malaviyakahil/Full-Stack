@@ -6,6 +6,22 @@ import { Outlet } from "react-router-dom";
 import { setCurrentUserVideoLimit } from "./store/userVideos.slice.js";
 
 const App = () => {
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    const calculateLimit = () => {
+      const width = window.innerWidth;
+      const limit = width >= 768 ? 6 : 3;
+      dispatch(setVideoLimit(limit));
+      dispatch(setCurrentUserVideoLimit(limit));    
+    };
+
+    calculateLimit();
+    window.addEventListener("resize", calculateLimit);
+
+    return () => window.removeEventListener("resize", calculateLimit);
+  }, []);
+
   return (
     <div className="wrapper h-[100dvh] w-full flex flex-col">
       <Header />
