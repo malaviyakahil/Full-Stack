@@ -13,6 +13,7 @@ const auth = async (req, res, next) => {
     if (!token) {
       throw new error(401, "Login required");
     }
+console.log(token);
 
     const decodedToken = jsonWebToken.verify(token, process.env.ACCESS_TOKEN_KEY);
 
@@ -26,7 +27,7 @@ const auth = async (req, res, next) => {
     next();
   } catch (err) {
     if (err.name === "TokenExpiredError") {
-      return next(new error(401, "Session expired. Please log in again."));
+     next("Session expired. Please log in again.");
     }
     next(err);
   }

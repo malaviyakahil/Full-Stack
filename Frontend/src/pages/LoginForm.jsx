@@ -28,7 +28,7 @@ const LoginForm = () => {
     try {
       let res = await loginUser(formData);
       localStorage.setItem("accessToken", res.data.accessToken);
-      localStorage.setItem("accessToken", res.data.refreshToken);
+      localStorage.setItem("refreshToken", res.data.refreshToken);
       await authMe();
       setUser({ authenticated: true });
       const redirect =

@@ -43,7 +43,7 @@ userRouter.post("/logout", upload.none(), auth, logoutUser);
 userRouter.post("/delete-user", upload.none(), auth, deleteUser);
 userRouter.get("/get-current-user", upload.none(), auth, getCurrentUser);
 userRouter.post("/renew-access-token", upload.none(), renewAccessToken);
-userRouter.get("/auth-me", upload.none(),auth, authMe);
+userRouter.get("/auth-me", upload.none(), authMe);
 userRouter.post("/change-password", upload.none(), auth, changePassword);
 userRouter.post("/change-full-name", upload.none(), auth, changeFullName);
 userRouter.post("/change-avatar", upload.single("avatar"), auth, changeAvatar);
