@@ -75,7 +75,9 @@ const SingleVideo = () => {
   let [error, setError] = useState("");
   const [reviewLock, setReviewLock] = useState(false);
   const [subscribeLock, setSubscribeLock] = useState(false);
+
   const [isSeeking, setIsSeeking] = useState(false);
+  const seekBarRef = useRef(null);
 
   useEffect(() => {
     (async () => {
@@ -230,17 +232,21 @@ const SingleVideo = () => {
     };
   }, [loading]);
 
+  const resetControlsTimer = () => {
+    if (isSeeking) return; // Prevent triggering while dragging
+
+    clearTimeout(timeoutRef.current);
+    setShowControls(true);
+
+    timeoutRef.current = setTimeout(() => {
+      if (!showSettings && !isSeeking) {
+        setShowControls(false);
+      }
+    }, 1500);
+  };
+
   useEffect(() => {
     if (loading) return;
-    const resetControlsTimer = () => {
-      clearTimeout(timeoutRef.current);
-      setShowControls(true);
-      if (!showSettings && !isSeeking) {
-        timeoutRef.current = setTimeout(() => {
-          setShowControls(false);
-        }, 1500);
-      }
-    };
 
     const container = containerRef.current;
     container.addEventListener("mousemove", resetControlsTimer);
@@ -254,7 +260,36 @@ const SingleVideo = () => {
       container.removeEventListener("click", resetControlsTimer);
       container.removeEventListener("touchstart", resetControlsTimer);
     };
-  }, [loading, showSettings]);
+  }, [loading, showSettings, isSeeking]); // ✅ include isSeeking
+
+  useEffect(() => {
+    const seekBar = seekBarRef.current;
+    if (!seekBar) return;
+
+    const handlePointerMove = () => {
+      if (!isSeeking) return;
+      clearTimeout(timeoutRef.current);
+      setShowControls(true);
+    };
+
+    const handlePointerUp = () => {
+      setIsSeeking(false);
+      timeoutRef.current = setTimeout(() => {
+        if (!showSettings) {
+          setShowControls(false);
+        }
+      }, 1500);
+    };
+    seekBar.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
+    window.addEventListener("pointercancel", handlePointerUp);
+
+    return () => {
+      seekBar.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+      window.removeEventListener("pointercancel", handlePointerUp);
+    };
+  }, [showSettings]);
 
   const handleSeek = (e) => {
     const video = videoRef.current;
@@ -619,22 +654,42 @@ const SingleVideo = () => {
         )}
         <div
           className={`absolute bottom-0 w-full transition-opacity duration-300 ${
-            showControls || showSettings
-              ? "opacity-100"
-              : "opacity-0 pointer-events-none"
-          } bg-gradient-to-t from-black/80 to-transparent  p-1 px-2  md:p-3 flex flex-col gap-2`}
+            isSeeking
+              ? "opacity-100 pointer-events-auto"
+              : showControls || showSettings
+                ? "opacity-100 pointer-events-auto"
+                : "opacity-0 pointer-events-none"
+          } bg-gradient-to-t from-black/80 to-transparent p-1 px-2 md:p-3 flex flex-col gap-2`}
         >
           <input
+            ref={seekBarRef}
             type="range"
             min="0"
             max="100"
             step="0.1"
             value={Number.isFinite(progress) ? progress : 0}
             onChange={handleSeek}
-            onMouseDown={() => setIsSeeking(true)}
-            onMouseUp={() => setIsSeeking(false)}
-            onTouchStart={() => setIsSeeking(true)}
-            onTouchEnd={() => setIsSeeking(false)}
+            onInput={(e) => {
+              const inputValue = parseFloat(e.target.value);
+              const clampedValue = Math.min(Math.max(inputValue, 0), 100);
+
+              // 🔄 Live update the slider UI
+              setProgress(clampedValue);
+
+              // ⏱ Live update the current time preview
+              setCurrentTime((clampedValue / 100) * duration);
+            }}
+            onPointerDown={() => {
+              setIsSeeking(true);
+              setShowControls(true);
+              clearTimeout(timeoutRef.current);
+            }}
+            onPointerUp={() => {
+              setIsSeeking(false);
+              timeoutRef.current = setTimeout(() => {
+                if (!showSettings) setShowControls(false);
+              }, 1500);
+            }}
             style={{ accentColor: "#ffffff" }}
             className="w-full h-1 md:h-3"
           />
