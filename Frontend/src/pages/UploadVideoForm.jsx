@@ -99,7 +99,6 @@ const UploadVideoForm = () => {
       navigate("/app/my-videos/uploaded-videos");
     } catch (err) {
       setError(err?.message);
-      console.log(err);
     } finally {
       setLoader(false);
     }

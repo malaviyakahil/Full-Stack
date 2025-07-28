@@ -63,7 +63,7 @@ const SingleChannelDetails = ({ ownerId }) => {
         });
         setLoading(false);
       } catch (error) {
-        console.log(error?.message);
+        setError(error?.message);
       } finally {
         setLoading(false);
       }
@@ -95,7 +95,9 @@ const SingleChannelDetails = ({ ownerId }) => {
               />
             </div>
             <div className="md:ml-6 text-center md:text-left mt-4 md:mt-0">
-              <h2 className=" font-bold text-lg md:text-xl ">{currentChannel?.name}</h2>
+              <h2 className=" font-bold text-lg md:text-xl ">
+                {currentChannel?.name}
+              </h2>
               <p className="text-gray-400 text-sm md:text-md">
                 @{currentChannel?.name} • {formatNumber(subCount?.count)}{" "}
                 subscribers • {currentChannel?.totalVideos} videos

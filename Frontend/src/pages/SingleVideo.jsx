@@ -120,7 +120,6 @@ const SingleVideo = () => {
         }
       } catch (error) {
         setError(error?.message);
-        console.log(error);
       } finally {
         setLoading(false);
       }
@@ -271,7 +270,6 @@ const SingleVideo = () => {
     if (seekTarget >= duration) {
       video.pause();
       setPlaying(false);
-      console.log("Paused after end");
       return;
     }
 
@@ -286,7 +284,6 @@ const SingleVideo = () => {
             } else {
               video.pause();
               setPlaying(false);
-              console.log("Auto-paused because seek was at end");
             }
           })
           .catch((err) => {

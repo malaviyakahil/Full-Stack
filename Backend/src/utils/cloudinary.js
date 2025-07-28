@@ -18,7 +18,6 @@ let uploadOnCloudinary = async (localPath,type = "auto",folder = "others") => {
     }
     return response
   } catch (error) {
-    console.log(error);
     if(fs.existsSync(localPath)){
       fs.unlinkSync(localPath)
     }

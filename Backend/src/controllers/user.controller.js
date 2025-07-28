@@ -761,17 +761,17 @@ const authMe = asyncHandler(async (req, res) => {
 
   console.log("Auth source:", source);
 
-try {
-  jsonWebToken.verify(token, process.env.ACCESS_TOKEN_KEY);
-  res.status(200).json(new response(200, [], "Authorized user"));
-} catch (err) {
-  if (err.name === "TokenExpiredError") {
-    throw new error(401, "Session expired. Please login again. (authMe)");
-  }
-  throw new error(401, "Invalid or expired token");
-}
+  try {
+    let tokenVerify = jsonWebToken.verify(token, process.env.ACCESS_TOKEN_KEY);
+    console.log(tokenVerify);
 
-  
+    res.status(200).json(new response(200, [], "Authorized user"));
+  } catch (err) {
+    if (err.name === "TokenExpiredError") {
+      throw new error(401, "Session expired. Please login again. (authMe)");
+    }
+    throw new error(401, "Invalid or expired token");
+  }
 });
 
 const deleteUser = asyncHandler(async (req, res) => {
