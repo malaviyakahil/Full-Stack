@@ -65,14 +65,14 @@ userSchema.methods.generateAccessToken =async function () {
   return  jsonWebToken.sign(
     { _id: this._id }, 
     process.env.ACCESS_TOKEN_KEY, 
-    {expiresIn: process.env.ACCESS_TOKEN_EXPIERY,});
+    {expiresIn: process.env.ACCESS_TOKEN_EXPIERY});
 };
 
 userSchema.methods.generateRefreshToken = async function () {
   return  jsonWebToken.sign(
     { _id: this._id }, 
     process.env.REFRESH_TOKEN_KEY, 
-    {expiresIn: process.env.REFRESH_TOKEN_EXPIERY,});
+    {expiresIn: process.env.REFRESH_TOKEN_EXPIERY});
 };
 
 export let User = mongoose.model("User", userSchema);

@@ -741,6 +741,7 @@ let getReviewStatus = asyncHandler(async (req, res) => {
 });
 
 const authMe = asyncHandler(async (req, res) => {
+  let user = req.user?.id;
   const authHeader = req.header("Authorization");
 
   const token =
@@ -762,13 +763,9 @@ const authMe = asyncHandler(async (req, res) => {
   console.log("Auth source:", source);
 
   const tokenVerify = jsonWebToken.verify(token, process.env.ACCESS_TOKEN_KEY);
-  console.log(1);
-  
-  console.log(tokenVerify);
-  console.log(2);
 
-  if (!tokenVerify) {
-    throw new error(401, "Invalid or expired token");
+  if (!tokenVerify._id == user) {
+    throw new error(401, "Ops not authorized user");
   }
 
   res.status(200).json(new response(200, [], "Authorized user"));
