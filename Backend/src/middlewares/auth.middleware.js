@@ -8,14 +8,18 @@ const auth = async (req, res, next) => {
 
     const token =
       req.cookies?.accessToken ||
-      (authHeader?.startsWith("Bearer ") ? authHeader.split(" ")[1].trim() : null);
+      (authHeader?.startsWith("Bearer ")
+        ? authHeader.split(" ")[1].trim()
+        : null);
 
     if (!token) {
       throw new error(401, "Login required");
     }
-console.log(token);
 
-    const decodedToken = jsonWebToken.verify(token, process.env.ACCESS_TOKEN_KEY);
+    const decodedToken = jsonWebToken.verify(
+      token,
+      process.env.ACCESS_TOKEN_KEY,
+    );
 
     const user = await User.findById(decodedToken._id);
 
@@ -27,7 +31,7 @@ console.log(token);
     next();
   } catch (err) {
     if (err.name === "TokenExpiredError") {
-     next("Session expired. Please log in again.");
+      next("Session expired. Please log in again.");
     }
     next(err);
   }
