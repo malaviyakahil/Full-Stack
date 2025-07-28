@@ -761,8 +761,11 @@ const authMe = asyncHandler(async (req, res) => {
 
   console.log("Auth source:", source);
 
-  let tokenVerify = jsonWebToken.verify(token, process.env.ACCESS_TOKEN_KEY);
+  const tokenVerify = jsonWebToken.verify(token, process.env.ACCESS_TOKEN_KEY);
+  console.log(1);
+  
   console.log(tokenVerify);
+  console.log(2);
 
   if (!tokenVerify) {
     throw new error(401, "Invalid or expired token");
