@@ -531,24 +531,13 @@ const SingleVideo = () => {
   };
 
   const handleShare = async () => {
+    const url = window.location.href;
+
     if (navigator.share) {
       try {
-        await navigator.share({
-          title: video?.title || "Check out this video!",
-          text: video?.description || "",
-          url: window.location.href,
-        });
+        await navigator.share({ url }); // ✅ only URL
       } catch (err) {
         console.warn("Sharing failed:", err);
-      }
-    } else {
-      // Optional fallback
-      try {
-        await navigator.clipboard.writeText(window.location.href);
-        alert("Link copied to clipboard!");
-      } catch (err) {
-        alert("Unable to copy link. Please copy it manually.");
-        console.error("Clipboard error:", err);
       }
     }
   };
