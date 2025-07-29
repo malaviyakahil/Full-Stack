@@ -195,6 +195,7 @@ const RegisterForm = () => {
               id="password"
               type={showPassword ? "text" : "password"}
               placeholder="Password"
+              autoComplete="new-password"
               required
               pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"
               title="Must be at least 8 characters and include uppercase, lowercase, and a number"

@@ -70,7 +70,6 @@ const ChangePasswordForm = () => {
             </svg>
             <input
               type={showOldPassword ? "text" : "password"}
-              autoComplete="old-password"
               required
               key={"oldpassword"}
               name="oldPassword"
@@ -110,7 +109,6 @@ const ChangePasswordForm = () => {
             </svg>
             <input
               type={showNewPassword ? "text" : "password"}
-              autoComplete="new-password"
               required
               key={"newpassword"}
               name="newPassword"

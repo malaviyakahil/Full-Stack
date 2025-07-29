@@ -79,7 +79,6 @@ const DeleteUser = () => {
               </svg>
               <input
                 type={showPassword ? "text" : "password"}
-                autoComplete="new-password"
                 required
                 {...register("password")}
                 placeholder="Password"
