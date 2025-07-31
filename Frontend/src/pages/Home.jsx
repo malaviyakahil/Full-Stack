@@ -6,14 +6,14 @@ const Home = () => {
     <div className="wrapper h-[100dvh] w-screen flex flex-col">
       <div className="navbar border-b-[1px] border-gray-600">
         <div className="navbar-start">
-          <a className="text-white text-xl font-semibold inline-block ml-2">Kadeo</a>
+          <a className="text-xl font-semibold inline-block ml-2">Kadeo</a>
         </div>
         <div className="navbar-end flex gap-2">
           <Link to={"/register"}>
-            <button className="btn bg-gray-600 text-white m-1s">Register</button>
+            <button className="btn rounded-md bg-gray-600 m-1s">Register</button>
           </Link>
           <Link to={"/login"}>
-            <button className="btn text-white bg-gray-600 m-1">Log in</button>
+            <button className="btn rounded-md bg-gray-600 m-1">Log in</button>
           </Link>
         </div>
       </div>

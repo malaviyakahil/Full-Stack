@@ -61,7 +61,7 @@ const RegisterForm = () => {
   return (
     <div className="h-[100dvh] w-screen flex justify-center items-center">
       <div className="w-full max-w-md justify-end px-5">
-        <h1 className="text-center text-white text-[40px] mb-5">
+        <h1 className="text-center  text-[40px] mb-5">
           Register Here
         </h1>
 

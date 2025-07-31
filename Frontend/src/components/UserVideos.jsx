@@ -48,7 +48,7 @@ const UserVideoCard = ({ video, index }) => {
           </div>
         </div>
         <div className="p-1">
-          <h3 className=" text-white font-semibold leading-tight break-all overflow-hidden text-ellipsis mt-2 line-clamp-2">
+          <h3 className="  font-semibold leading-tight break-all overflow-hidden text-ellipsis mt-2 line-clamp-2">
             {video?.title}
           </h3>
           <p className="text-sm text-gray-400">

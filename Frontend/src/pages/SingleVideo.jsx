@@ -783,7 +783,7 @@ const SingleVideo = () => {
       </div>
 
       <div className="mt-3">
-        <h2 className="text-white font-semibold text-lg md:text-xl leading-tight break-all overflow-hidden text-ellipsis line-clamp-2">
+        <h2 className=" font-semibold text-lg md:text-xl leading-tight break-all overflow-hidden text-ellipsis line-clamp-2">
           {video?.title}
         </h2>
 

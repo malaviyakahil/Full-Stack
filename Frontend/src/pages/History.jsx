@@ -151,7 +151,7 @@ const History = () => {
 
                   <div className="w-full  md:hidden mt-3 flex flex-nowrap gap-2">
                     <div className="flex flex-col flex-1 overflow-hidden w-full">
-                      <h3 className="text-white  font-semibold leading-tight break-all overflow-hidden text-ellipsis line-clamp-2">
+                      <h3 className="  font-semibold leading-tight break-all overflow-hidden text-ellipsis line-clamp-2">
                         {item?.video?.title}
                       </h3>
                       <div className="text-sm text-gray-400 flex md:block items-center gap-1">

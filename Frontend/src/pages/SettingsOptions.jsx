@@ -8,7 +8,7 @@ import { AiOutlineDelete } from "react-icons/ai";
 const SettingsOptions = () => {
   return (
     <div className="h-full w-full flex flex-col items-center justify-center py-5">
-      <h2 className="text-white text-[40px] mb-5">Settings</h2>
+      <h2 className=" text-[40px] mb-5">Settings</h2>
       <div className="w-full flex flex-col items-center max-w-md ">
         <NavLink
           className={({ isActive }) =>

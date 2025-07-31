@@ -63,7 +63,7 @@ const Header = () => {
         <div className="navbar bg-base-100 shadow-sm px-3 md:px-6 border-b-[1px] border-gray-600">
           <div className="flex-1">
             <Link
-              className="p-0 font-medium text-xl text-white"
+              className="p-0 font-medium text-xl "
               to="/app/dashboard/all"
             >
               Dashboard
@@ -83,7 +83,7 @@ const Header = () => {
               </div>
               <ul
                 tabIndex={0}
-                className="menu menu-sm dropdown-content bg-base-100 text-white rounded-md border-[1px] border-gray-600 z-1 mt-5 w-35 md:w-52 p-2 shadow"
+                className="menu menu-sm dropdown-content bg-base-100  rounded-md border-[1px] border-gray-600 z-1 mt-5 w-35 md:w-52 p-2 shadow"
               >
                 <li>
                   <Link className="justify-between" to="/app/profile/details">

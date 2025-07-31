@@ -31,7 +31,7 @@ const VideoCard = ({ video }) => {
           </Link>
         </div>
         <div className="flex flex-col flex-1 overflow-hidden">
-          <h3 className="text-white font-semibold leading-tight break-all overflow-hidden text-ellipsis line-clamp-2">
+          <h3 className=" font-semibold leading-tight break-all overflow-hidden text-ellipsis line-clamp-2">
             {video?.title}
           </h3>
           <div className="text-sm text-gray-400 flex md:block items-center gap-1">

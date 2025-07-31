@@ -19,7 +19,7 @@ const QualitySelector = ({ selectedQuality, availableQualities = [], onChange })
     <div ref={dropdownRef} className="w-full">
       <button
         onClick={() => setOpen((prev) => !prev)}
-        className="w-full bg-gray-700 text-white text-xs md:text-md px-2 py-1 md:px-4 md:py-2 rounded-md text-left"
+        className="w-full bg-gray-700  text-xs md:text-md px-2 py-1 md:px-4 md:py-2 rounded-md text-left"
       >
         {selectedQuality}
       </button>
